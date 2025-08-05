@@ -1,0 +1,305 @@
+# Epic 7 Gear Optimization Business Rules
+
+## 1. Data Structure Overview
+
+### File Information
+
+- **Data Structure**: JSON has top-level `items` and `heroes` keys containing arrays of gear objects and heroes objects
+- **Validation**: Each gear object must contain required fields (type, set, rank, level, enhance, mainStat, substats)
+- **Hero Information**: Gear objects may include `equippedBy` field indicating which hero has the gear equipped
+- **Source**: Data comes from Fribbels' Epic 7 Optimizer auto-importer or manual export
+
+### Database Schema Structure
+
+- **Gears Table**: Core gear items with stats and properties
+- **Heroes Table**: Epic 7 heroes with base stats and equipment slots
+- **SubStats Table**: Individual substats for each gear piece
+- **StatTypes Table**: Reference table for valid stat types and weights
+- **GearSets Table**: Reference table for gear sets and their effects
+- **Relationships**: Proper foreign key relationships between all tables
+
+## 2. Gear Types and Main Stats
+
+| Gear Type | Main Stat Options    | Icon | Fixed/Variable |
+| --------- | -------------------- | ---- | -------------- |
+| Weapon    | Flat Attack (Fixed)  | ⚔️   | Fixed          |
+| Helm      | Flat Health (Fixed)  | 🪖   | Fixed          |
+| Armor     | Flat Defense (Fixed) | 🛡️   | Fixed          |
+| Necklace  | Variable             | 📿   | Variable       |
+| Ring      | Variable             | 💍   | Variable       |
+| Boots     | Variable             | 🥾   | Variable       |
+
+### Fixed Main Stats
+
+- **Weapon**: Flat Attack (always)
+- **Helm**: Flat Health (always)
+- **Armor**: Flat Defense (always)
+
+### Variable Main Stats
+
+- **Necklace**: Flat Attack, Flat Defense, Flat HP, Atk%, HP%, Def%, Crit Rate%, Crit Damage%
+- **Ring**: Flat Attack, Flat Defense, Flat HP, Atk%, HP%, Def%, Effectiveness%, Effect Resistance%
+- **Boots**: Flat Attack, Flat Defense, Flat HP, Atk%, HP%, Def%, Speed
+
+### Main Stat Types (Enum)
+
+- **att**: Flat Attack
+- **def**: Flat Defense
+- **max_hp**: Flat Health
+- **att_rate**: Attack Percentage
+- **def_rate**: Defense Percentage
+- **max_hp_rate**: Health Percentage
+- **cri**: Critical Hit Chance
+- **cri_dmg**: Critical Hit Damage
+- **speed**: Speed
+- **acc**: Effectiveness
+- **res**: Effect Resistance
+
+## 3. Gear Ranks and Enhancement
+
+### Gear Ranks (Enum)
+
+- **Common**: White (lowest)
+- **Uncommon**: Green
+- **Rare**: Blue
+- **Epic**: Purple
+- **Heroic**: Orange (highest)
+
+### Enhancement Levels
+
+- **Range**: 0-15
+- **Effect**: Increases main stat value
+- **Cost**: Increases with each level
+- **Failure**: Possible at higher levels
+
+## 4. Substats Rules
+
+### Available Substats (Any gear)
+
+- Speed
+- Flat Attack / Attack%
+- Flat Defense / Defense%
+- Flat HP / HP%
+- Crit Chance
+- Crit Damage
+- Effectiveness
+- Effect Resistance
+
+### Substat Mechanics
+
+- **Rolls**: Each substat can have 1-5 rolls
+- **Modified**: Substats can be modified (reforged)
+- **Values**: Range from 0 to maximum based on gear rank and type
+- **Weight**: Decimal value for optimization calculations
+- **Categories**: flat or percentage
+
+### Stat Categories (Enum)
+
+- **flat**: Flat stat values (Attack, Defense, Health, Speed)
+- **percentage**: Percentage-based stats (Attack%, Defense%, Health%, Crit%, etc.)
+
+## 5. Gear Sets and Effects
+
+| Set Name       | Pieces | Effect                            |
+| -------------- | ------ | --------------------------------- |
+| SpeedSet       | 4      | +25% Speed                        |
+| AttackSet      | 4      | +35% Attack                       |
+| HealthSet      | 2      | +15% Health                       |
+| DefenseSet     | 2      | +15% Defense                      |
+| CriticalSet    | 2      | +12% Crit Chance                  |
+| HitSet         | 2      | +20% Effectiveness                |
+| DestructionSet | 4      | +40% Crit Damage                  |
+| LifestealSet   | 4      | Heal 20% of damage dealt          |
+| CounterSet     | 4      | 20% chance to counterattack       |
+| ImmunitySet    | 2      | Grants Immunity for 1 turn        |
+| ResistSet      | 2      | +20% Effect Resistance            |
+| TorrentSet     | 2      | +10% Atk, -10% HP                 |
+| InjurySet      | 4      | Reduces enemy max HP              |
+| PenetrationSet | 2      | Ignores 15% Defense               |
+| UnitySet       | 2      | +4% Ally Dual Attack Chance       |
+| RageSet        | 4      | +30% Crit Dmg vs debuffed targets |
+| ProtectionSet  | 2      | +15% Barrier strength             |
+
+## 6. Hero Classes and Elements
+
+### Hero Classes (Enum)
+
+- **Warrior**: Physical damage dealers
+- **Knight**: Tank/defensive units
+- **Ranger**: Ranged physical damage
+- **Mage**: Magic damage dealers
+- **SoulWeaver**: Support/healing units
+- **Thief**: High speed, utility units
+
+### Hero Elements (Enum)
+
+- **Fire**: Strong vs Earth, Weak vs Ice
+- **Ice**: Strong vs Wind, Weak vs Fire
+- **Earth**: Strong vs Fire, Weak vs Wind
+- **Light**: Neutral, strong vs Dark
+- **Dark**: Neutral, strong vs Light
+
+### Hero Rarities (Enum)
+
+- **THREE_STAR**: 3-star heroes
+- **FOUR_STAR**: 4-star heroes
+- **FIVE_STAR**: 5-star heroes
+
+## 7. Database Relationships
+
+### Gear-Hero Relationships
+
+- **equippedBy**: Gear references hero ingameId when equipped
+- **Equipment Slots**: Hero equipment slots reference gear ingameId
+  - weaponId: References gear ingameId
+  - armorId: References gear ingameId
+  - helmetId: References gear ingameId
+  - necklaceId: References gear ingameId
+  - ringId: References gear ingameId
+  - bootId: References gear ingameId
+
+### SubStat Relationships
+
+- **gearId**: References Gears.id (cascade delete)
+- **statTypeId**: References StatTypes.id
+- **StatTypes**: Contains stat definitions and weights
+
+### Data Integrity
+
+- **Foreign Keys**: All relationships use proper foreign key constraints
+- **Cascade Deletes**: SubStats cascade when Gears are deleted
+- **Unique Constraints**: ingameId fields are unique across tables
+- **Enum Validation**: All enum fields enforce valid values
+
+## 8. Optimization Rules
+
+### Stat Priority Guidelines
+
+- **DPS Units**: High priority on Atk/Crit/Crit Damage/Speed
+- **Tank Units**: High priority on HP/Def/Speed
+- **Support Units**: High priority on Speed/Effectiveness/Effect Resistance
+- **Bruisers**: Balanced priority on Atk/HP/Def/Speed
+
+### Gear Selection Rules
+
+- **Main Stat Priority**: Must match hero role
+- **Substat Optimization**: Focus on 2-3 key substats
+- **Set Bonuses**: Consider 2-piece and 4-piece set effects
+- **Speed Tuning**: Critical for turn order in PvP
+
+### Weight-Based Optimization
+
+- **StatTypes.weight**: Used for optimization calculations
+- **SubStats.weight**: Individual substat weights
+- **Algorithm**: Weighted scoring system for gear combinations
+
+## 9. Data Import/Export Rules
+
+### Import Validation
+
+- **Required Fields**: type, set, rank, level, enhance, mainStat, substats
+- **Data Integrity**: Validate stat ranges and gear combinations
+- **Duplicate Detection**: Prevent duplicate gear entries
+- **Hero Association**: Link equipped gear to heroes
+- **Enum Validation**: Ensure all enum values are valid
+
+### Export Rules
+
+- **Format**: JSON compatible with Fribbels Optimizer
+- **Compression**: Include all metadata for optimization
+- **Versioning**: Track data format versions
+- **Backup**: Maintain data integrity during operations
+
+## 10. Performance Considerations
+
+### Database Optimization
+
+- **Indexing**: Index on ingameId, type, set, rank
+- **Relationships**: Efficient hero-gear relationships
+- **Queries**: Optimize for common filter combinations
+- **Caching**: Cache frequently accessed gear data
+- **Foreign Keys**: Proper indexing on relationship fields
+
+### Application Performance
+
+- **Lazy Loading**: Load gear data on demand
+- **Pagination**: Handle large gear inventories
+- **Search**: Efficient gear filtering and search
+- **Real-time Updates**: Handle gear modifications
+
+## 11. Security and Validation
+
+### Data Validation
+
+- **Stat Ranges**: Validate all stat values within game limits
+- **Gear Combinations**: Prevent invalid gear setups
+- **Hero Compatibility**: Ensure gear matches hero class
+- **Set Validation**: Verify set piece requirements
+- **Enum Constraints**: Database-level enum validation
+
+### Access Control
+
+- **User Permissions**: Control gear modification access
+- **Data Ownership**: Secure user gear data
+- **Audit Trail**: Track gear modifications
+- **Backup Strategy**: Regular data backups
+
+## 12. Integration Rules
+
+### Epic 7 Optimizer Integration
+
+- **Data Format**: Maintain compatibility with Fribbels format
+- **Import Process**: Handle auto-importer data
+- **Export Process**: Generate compatible export files
+- **Version Sync**: Keep up with optimizer updates
+
+### API Design
+
+- **RESTful Endpoints**: Standard CRUD operations
+- **Filtering**: Support complex gear queries
+- **Pagination**: Handle large datasets
+- **Real-time**: WebSocket for live updates
+
+## 13. Business Logic Implementation
+
+### Gear Management
+
+- **CRUD Operations**: Create, Read, Update, Delete gear
+- **Bulk Operations**: Import/export multiple items
+- **Validation**: Ensure data integrity
+- **Relationships**: Manage hero-gear associations
+
+### Optimization Engine
+
+- **Algorithm**: Implement gear optimization logic
+- **Constraints**: Handle hero-specific requirements
+- **Performance**: Optimize for speed and accuracy
+- **Results**: Rank and present optimization results
+
+### User Experience
+
+- **Interface**: Intuitive gear management UI
+- **Feedback**: Clear error messages and validation
+- **Progress**: Show import/export progress
+- **Help**: Provide guidance for complex operations
+
+## 14. Database Schema Details
+
+### Table Structures
+
+- **gears**: Core gear data with enums and relationships
+- **heroes**: Hero data with equipment slot references
+- **substats**: Individual substat records with weights
+- **stat_types**: Reference table for stat definitions
+- **gear_sets**: Reference table for set effects
+
+### Enum Usage
+
+- **GearType**: weapon, armor, helm, neck, ring, boot
+- **GearDisplayName**: Weapon, Armor, Helmet, Necklace, Ring, Boots
+- **GearRank**: Common, Uncommon, Rare, Epic, Heroic
+- **MainStatType**: All main stat types (att, def, max_hp, etc.)
+- **StatCategory**: flat, percentage
+- **HeroElement**: Fire, Ice, Earth, Light, Dark
+- **HeroRarity**: THREE_STAR, FOUR_STAR, FIVE_STAR
+- **HeroClass**: Warrior, Knight, Ranger, Mage, SoulWeaver, Thief

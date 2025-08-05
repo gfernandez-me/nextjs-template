@@ -1,0 +1,313 @@
+# Project Structure and Tech Stack Documentation
+
+## 1. Technology Stack Overview
+
+### Frontend Framework
+
+- **Next.js**: 15.4.5 (React-based full-stack framework)
+- **React**: 19.1.0 (Latest version)
+- **React DOM**: 19.1.0
+- **TypeScript**: ^5 (Static typing)
+
+### Styling and UI
+
+- **Tailwind CSS**: ^4 (Utility-first CSS framework)
+- **PostCSS**: Configured for Tailwind processing
+
+### Database and ORM
+
+- **PostgreSQL**: 16.3 (Primary database)
+- **Prisma**: ^6.13.0 (Database ORM)
+- **Prisma Accelerate**: ^2.0.2 (Database connection pooling)
+
+### Development Tools
+
+- **ESLint**: ^9 (Code linting)
+- **ESLint Config Next**: 15.4.5 (Next.js specific rules)
+- **TypeScript**: ^5 (Type checking)
+- **tsx**: ^4.20.3 (TypeScript execution)
+
+### Infrastructure
+
+- **Docker**: Containerization
+- **Redis**: 7-alpine (Caching and session storage)
+- **DevContainer**: Development environment containerization
+
+## 2. Project Architecture
+
+### Directory Structure
+
+```
+/
+├── .devcontainer/          # Development container configuration
+│   ├── devcontainer.json   # VS Code dev container settings
+│   └── compose.yaml        # Docker services (PostgreSQL, Redis)
+├── .cursor/               # Cursor IDE configuration
+│   └── rules/             # Business rules and documentation
+├── prisma/                # Database schema and migrations
+│   └── schema.prisma      # Database schema definition
+├── src/                   # Application source code
+│   └── app/               # Next.js app directory (App Router)
+│       ├── layout.tsx     # Root layout component
+│       ├── page.tsx       # Home page component
+│       ├── globals.css    # Global styles
+│       └── upload/        # File upload functionality
+│           └── gear.txt   # Epic 7 gear data sample
+├── public/                # Static assets
+├── package.json           # Node.js dependencies and scripts
+├── tsconfig.json          # TypeScript configuration
+├── next.config.ts         # Next.js configuration
+├── postcss.config.mjs     # PostCSS configuration
+├── eslint.config.mjs      # ESLint configuration
+└── README.md             # Project documentation
+```
+
+### Database Schema Architecture
+
+- **Gears Table**: Core gear items with enums and relationships
+- **Heroes Table**: Epic 7 heroes with equipment slot references
+- **SubStats Table**: Individual substat records with weights
+- **StatTypes Table**: Reference table for stat definitions
+- **GearSets Table**: Reference table for set effects
+- **Relationships**: Proper foreign key relationships between all tables
+
+### Enum System
+
+- **GearType**: weapon, armor, helm, neck, ring, boot
+- **GearDisplayName**: Weapon, Armor, Helmet, Necklace, Ring, Boots
+- **GearRank**: Common, Uncommon, Rare, Epic, Heroic
+- **MainStatType**: All main stat types (att, def, max_hp, etc.)
+- **StatCategory**: flat, percentage
+- **HeroElement**: Fire, Ice, Earth, Light, Dark
+- **HeroRarity**: THREE_STAR, FOUR_STAR, FIVE_STAR
+- **HeroClass**: Warrior, Knight, Ranger, Mage, SoulWeaver, Thief
+
+## 3. Development Environment
+
+### DevContainer Configuration
+
+- **Base Image**: `mcr.microsoft.com/devcontainers/javascript-node:1-22-bookworm`
+- **Services**:
+  - PostgreSQL 16.3 (Database)
+  - Redis 7-alpine (Cache)
+  - Node.js application container
+
+### VS Code Extensions
+
+- **Tailwind CSS IntelliSense**: CSS class autocomplete
+- **Prettier**: Code formatting
+- **ESLint**: Code linting
+- **Prisma**: Database schema support
+- **GitLens**: Git integration
+- **File Utils**: File management utilities
+
+### Port Configuration
+
+- **PostgreSQL**: 5432
+- **Redis**: 6379
+- **Next.js**: 3000 (default)
+
+## 4. Dependencies Analysis
+
+### Production Dependencies
+
+```json
+{
+  "@prisma/client": "^6.13.0", // Database client
+  "@prisma/extension-accelerate": "^2.0.2", // Connection pooling
+  "next": "15.4.5", // React framework
+  "react": "19.1.0", // UI library
+  "react-dom": "19.1.0" // React DOM
+}
+```
+
+### Development Dependencies
+
+```json
+{
+  "@eslint/eslintrc": "^3", // ESLint configuration
+  "@tailwindcss/postcss": "^4", // Tailwind PostCSS plugin
+  "@types/node": "^20", // Node.js types
+  "@types/react": "^19", // React types
+  "@types/react-dom": "^19", // React DOM types
+  "eslint": "^9", // Code linting
+  "eslint-config-next": "15.4.5", // Next.js ESLint config
+  "prisma": "^6.13.0", // Database ORM
+  "tailwindcss": "^4", // CSS framework
+  "tsx": "^4.20.3", // TypeScript execution
+  "typescript": "^5" // TypeScript compiler
+}
+```
+
+## 5. Configuration Files
+
+### TypeScript Configuration (tsconfig.json)
+
+- **Target**: ES2017
+- **Module**: ESNext
+- **JSX**: Preserve
+- **Strict**: Enabled
+- **Paths**: Configured for module resolution
+
+### Next.js Configuration (next.config.ts)
+
+- **Framework**: Next.js 15.4.5
+- **TypeScript**: Enabled
+- **Turbopack**: Enabled for development
+
+### ESLint Configuration (eslint.config.mjs)
+
+- **Framework**: ESLint 9
+- **Next.js**: Specific rules
+- **TypeScript**: Type-aware linting
+
+### PostCSS Configuration (postcss.config.mjs)
+
+- **Tailwind CSS**: Processing
+- **Autoprefixer**: CSS vendor prefixes
+
+## 6. Database Architecture
+
+### PostgreSQL Setup
+
+- **Version**: 16.3
+- **User**: postgres
+- **Password**: 123456
+- **Database**: postgres
+- **Port**: 5432
+
+### Redis Setup
+
+- **Version**: 7-alpine
+- **Port**: 6379
+- **Purpose**: Caching and session storage
+
+### Prisma Configuration
+
+- **Provider**: PostgreSQL
+- **Client Output**: `../app/generated/prisma`
+- **Accelerate**: Enabled for connection pooling
+
+### Database Schema Details
+
+- **Relational Design**: Proper foreign key relationships
+- **Enum Constraints**: Database-level enum validation
+- **Cascade Deletes**: SubStats cascade when Gears are deleted
+- **Unique Constraints**: ingameId fields are unique across tables
+- **Decimal Precision**: Proper decimal types for stat values
+
+## 7. Application Features
+
+### Epic 7 Integration
+
+- **Gear Management**: Import/export gear data with proper relationships
+- **Hero Management**: Track hero stats and equipment slots
+- **Optimization**: Weight-based gear optimization algorithms
+- **Data Validation**: Enum-based validation and data integrity
+
+### File Upload System
+
+- **Gear Import**: Handle Epic 7 Optimizer exports
+- **Data Processing**: Parse and validate gear data with enum constraints
+- **Error Handling**: Graceful error management with validation feedback
+
+### User Interface
+
+- **Responsive Design**: Mobile-first approach
+- **Tailwind CSS**: Utility-first styling
+- **TypeScript**: Type-safe development with enum types
+- **Next.js App Router**: Modern React patterns
+
+## 8. Development Workflow
+
+### Local Development
+
+1. **DevContainer**: Automatic environment setup
+2. **Hot Reload**: Next.js development server
+3. **Database**: PostgreSQL with persistent data and proper schema
+4. **Caching**: Redis for performance optimization
+
+### Code Quality
+
+- **ESLint**: Code linting and style enforcement
+- **TypeScript**: Static type checking with enum support
+- **Prettier**: Code formatting
+- **Git Hooks**: Pre-commit validation
+
+### Database Management
+
+- **Prisma Migrations**: Schema versioning with enum support
+- **Prisma Studio**: Database GUI for data management
+- **Seeding**: Test data population with proper relationships
+- **Backup**: Data persistence strategies
+
+## 9. Deployment Considerations
+
+### Production Environment
+
+- **Containerization**: Docker-based deployment
+- **Database**: Managed PostgreSQL service with enum support
+- **Caching**: Redis cluster for scalability
+- **CDN**: Static asset optimization
+
+### Performance Optimization
+
+- **Next.js**: Built-in optimizations
+- **Prisma Accelerate**: Database connection pooling
+- **Redis**: Caching layer
+- **Image Optimization**: Next.js image component
+- **Database Indexing**: Proper indexing on foreign keys and enums
+
+### Security
+
+- **Environment Variables**: Secure configuration
+- **Database**: Connection security with enum validation
+- **API**: Rate limiting and validation
+- **Authentication**: User session management
+
+## 10. Monitoring and Maintenance
+
+### Application Monitoring
+
+- **Error Tracking**: Exception monitoring
+- **Performance**: Response time tracking
+- **Database**: Query performance monitoring with relationship analysis
+- **Uptime**: Service availability
+
+### Database Maintenance
+
+- **Backups**: Regular data backups with relationship integrity
+- **Indexing**: Query performance optimization for foreign keys
+- **Migrations**: Schema updates with enum compatibility
+- **Cleanup**: Data archival strategies
+
+### Code Maintenance
+
+- **Dependency Updates**: Security patches
+- **TypeScript**: Type safety improvements with enum types
+- **ESLint**: Code quality enforcement
+- **Documentation**: API and component docs with schema details
+
+## 11. Database Schema Evolution
+
+### Schema Design Principles
+
+- **Normalization**: Proper table relationships and normalization
+- **Enum Usage**: Database-level enum constraints for data integrity
+- **Foreign Keys**: Proper referential integrity
+- **Cascade Operations**: Appropriate cascade delete rules
+- **Indexing Strategy**: Efficient indexing on frequently queried fields
+
+### Migration Strategy
+
+- **Version Control**: Schema changes tracked in migrations
+- **Backward Compatibility**: Maintain API compatibility during transitions
+- **Data Migration**: Proper data transformation for schema changes
+- **Rollback Plans**: Ability to rollback schema changes if needed
+
+### Performance Considerations
+
+- **Query Optimization**: Efficient queries with proper joins
+- **Indexing**: Strategic indexing on foreign keys and enum fields
+- **Connection Pooling**: Prisma Accelerate for connection management
+- **Caching Strategy**: Redis caching for frequently accessed data

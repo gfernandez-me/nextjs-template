@@ -1,0 +1,35 @@
+{
+    "name": "nextjs-template",
+    "dockerComposeFile": "compose.yaml",
+    "service": "app",
+    "workspaceFolder": "/workspace",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "bradlc.vscode-tailwindcss",
+                "esbenp.prettier-vscode",
+                "dotenv.dotenv-vscode",
+                "yoavbls.pretty-ts-errors",
+                "streetsidesoftware.code-spell-checker",
+                "eamodio.gitlens",
+                "vitest.explorer",
+                "dbaeumer.vscode-eslint",
+                "Prisma.prisma",
+                "IronGeek.vscode-env",
+                "sleistner.vscode-fileutils",
+                "whtouche.vscode-js-console-utils"
+            ]
+        }
+    },
+    "remoteUser": "node",
+    "mounts": [
+        "source=${env:HOME}/.gitconfig,target=/home/node/.gitconfig,type=bind,consistency=cached"
+    ],
+    "features": {
+        "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
+    },
+    "forwardPorts": [
+        5432,
+        6379
+    ]
+}
