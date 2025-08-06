@@ -185,7 +185,7 @@
 ### Prisma Configuration
 
 - **Provider**: PostgreSQL
-- **Client Output**: `../app/generated/prisma`
+- **Client Output**: `../src/generated/prisma`
 - **Accelerate**: Enabled for connection pooling
 
 ### Database Schema Details
