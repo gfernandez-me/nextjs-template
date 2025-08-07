@@ -11,8 +11,9 @@
 
 ### Styling and UI
 
-- **Tailwind CSS**: ^4 (Utility-first CSS framework)
+- **Tailwind CSS**: ^3.4.0 (Utility-first CSS framework)
 - **PostCSS**: Configured for Tailwind processing
+- **Autoprefixer**: CSS vendor prefix automation
 
 ### Database and ORM
 
@@ -58,6 +59,7 @@
 ├── tsconfig.json          # TypeScript configuration
 ├── next.config.ts         # Next.js configuration
 ├── postcss.config.mjs     # PostCSS configuration
+├── tailwind.config.ts     # Tailwind CSS configuration
 ├── eslint.config.mjs      # ESLint configuration
 └── README.md             # Project documentation
 ```
@@ -126,14 +128,15 @@
 ```json
 {
   "@eslint/eslintrc": "^3", // ESLint configuration
-  "@tailwindcss/postcss": "^4", // Tailwind PostCSS plugin
   "@types/node": "^20", // Node.js types
   "@types/react": "^19", // React types
   "@types/react-dom": "^19", // React DOM types
+  "autoprefixer": "^10", // CSS vendor prefixes
   "eslint": "^9", // Code linting
   "eslint-config-next": "15.4.5", // Next.js ESLint config
+  "postcss": "^8", // CSS processing
   "prisma": "^6.13.0", // Database ORM
-  "tailwindcss": "^4", // CSS framework
+  "tailwindcss": "^3.4.0", // CSS framework
   "tsx": "^4.20.3", // TypeScript execution
   "typescript": "^5" // TypeScript compiler
 }
@@ -163,8 +166,14 @@
 
 ### PostCSS Configuration (postcss.config.mjs)
 
-- **Tailwind CSS**: Processing
+- **Tailwind CSS**: v3.4.0 processing
 - **Autoprefixer**: CSS vendor prefixes
+
+### Tailwind CSS Configuration (tailwind.config.ts)
+
+- **Content**: App directory scanning
+- **Theme**: Custom color variables and fonts
+- **Plugins**: None (base configuration)
 
 ## 6. Database Architecture
 
@@ -214,7 +223,7 @@
 ### User Interface
 
 - **Responsive Design**: Mobile-first approach
-- **Tailwind CSS**: Utility-first styling
+- **Tailwind CSS v3.4.0**: Utility-first styling with traditional configuration
 - **TypeScript**: Type-safe development with enum types
 - **Next.js App Router**: Modern React patterns
 
@@ -311,3 +320,51 @@
 - **Indexing**: Strategic indexing on foreign keys and enum fields
 - **Connection Pooling**: Prisma Accelerate for connection management
 - **Caching Strategy**: Redis caching for frequently accessed data
+
+## 12. CSS Framework Configuration
+
+### Tailwind CSS v3.4.0 Setup
+
+- **Migration from v4**: Moved from beta Tailwind v4 to stable v3.4.0
+- **Configuration**: Traditional `tailwind.config.ts` setup
+- **PostCSS**: Standard plugins (tailwindcss, autoprefixer)
+- **Global Styles**: `@tailwind` directives in `globals.css`
+
+### CSS Architecture
+
+```css
+/* globals.css - Traditional Tailwind v3 setup */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+```
+
+### PostCSS Configuration
+
+```javascript
+// postcss.config.mjs
+const config = {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+};
+```
+
+### Turbopack Compatibility
+
+- **Issue**: Tailwind v4 beta caused Turbopack compilation errors
+- **Solution**: Downgraded to stable Tailwind v3.4.0
+- **Benefits**: Improved stability and broader ecosystem compatibility
