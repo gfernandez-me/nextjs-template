@@ -51,21 +51,33 @@
 │   └── generated/         # Generated Prisma client (gitignored)
 │       └── client/        # Prisma client files
 ├── src/                   # Application source code
-│   ├── app/               # Next.js app directory (App Router)
-│   │   ├── layout.tsx     # Root layout with navigation
-│   │   ├── page.tsx       # Home page (gear table)
-│   │   ├── globals.css    # Global styles with shadcn/ui
-│   │   ├── upload/        # Upload page route
-│   │   │   └── page.tsx   # Upload form component
-│   │   └── api/           # API routes
-│   │       └── upload/    # File upload endpoint
-│   │           └── route.ts # POST handler for gear import
-│   ├── components/        # React components
-│   │   ├── navigation.tsx # Main navigation component
-│   │   └── ui/           # shadcn/ui components
-│   ├── lib/              # Utilities and configuration
-│   │   ├── db.ts         # Prisma database singleton
-│   │   └── utils.ts      # shadcn/ui utilities
+│   ├── app/                    # Next.js App Router
+│   │   ├── (main)/             # Route group with shared layout
+│   │   │   ├── layout.tsx      # Shared layout with navigation
+│   │   │   ├── page.tsx        # Home page (gear table)
+│   │   │   ├── statistics/
+│   │   │   │   └── page.tsx    # Statistics dashboard
+│   │   │   └── upload/
+│   │   │       └── page.tsx    # Upload page
+│   │   ├── api/
+│   │   │   └── upload/
+│   │   │       └── route.ts    # Upload API route
+│   │   ├── lib/
+│   │   │   └── gear.ts         # Centralized server-side data methods
+│   │   ├── not-found.tsx       # 404 page
+│   │   └── globals.css         # Global styles
+│   ├── components/             # Shared/generic components
+│   │   ├── control-bar.tsx     # Filters bar (client)
+│   │   ├── statistics-charts.tsx # Charts (client)
+│   │   ├── gear-table.tsx      # Re-export for legacy compatibility
+│   │   ├── GearTable.tsx       # Legacy PascalCase (to be migrated)
+│   │   ├── icons.tsx           # Icon helpers
+│   │   └── ui/                 # shadcn/ui primitives
+│   └── lib/                    # Utilities
+│       ├── db.ts               # Prisma db singleton
+│       ├── decimal.ts          # Decimal converters
+│       ├── stats.ts            # Stat formatting helpers
+│       └── utils.ts            # Misc utilities
 
 ├── public/                # Static assets
 ├── package.json           # Node.js dependencies and scripts
@@ -242,6 +254,22 @@
 - **Next.js App Router**: Modern React patterns with Server and Client Components
 
 ## 8. Development Workflow
+
+## 13. Naming and Organization Rules
+
+### File Names
+
+- Use kebab-case for new files: `control-bar.tsx`, `statistics-charts.tsx`, `gear-table.tsx`, `icons.tsx`, `gear.ts`.
+- Pages and layouts use Next.js reserved names: `page.tsx`, `layout.tsx`, `not-found.tsx`, `route.ts`.
+- Prefer kebab-case for all modules and components. Legacy PascalCase files (e.g., `GearTable.tsx`) will be migrated to kebab-case; a temporary re-export (`gear-table.tsx`) exists for compatibility.
+
+### Folder Names
+
+- Use kebab-case for directories.
+- Route groups: `(group-name)`.
+- Shared components live in `src/components`. Page-specific components can be colocated under the route when they are not reused.
+- Server-side data access for a domain is centralized in `src/app/lib/<domain>.ts` (e.g., `gear.ts`). Avoid scattering queries across routes.
+- Do not create `src/features/*` unless a cross-route, cross-domain feature truly requires it. Default to App Router colocation and shared `components/`.
 
 ### Local Development
 

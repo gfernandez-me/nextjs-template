@@ -15,6 +15,11 @@ const routes = [
     label: "Upload",
     description: "Upload gear data from Fribbels optimizer",
   },
+  {
+    href: "/statistics",
+    label: "Statistics",
+    description: "Detailed gear statistics dashboard",
+  },
 ];
 
 export function Navigation() {

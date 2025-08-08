@@ -16,7 +16,8 @@ export function isDecimalLike(
   return (
     typeof value === "object" &&
     value !== null &&
-    Object.prototype.hasOwnProperty.call(value as object, "toNumber") &&
+    // Prisma Decimal comes from decimal.js; methods are usually on the prototype.
+    // We only need to check that a callable toNumber exists anywhere on the object.
     typeof (value as { toNumber?: unknown }).toNumber === "function"
   );
 }

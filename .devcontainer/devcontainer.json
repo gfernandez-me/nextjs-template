@@ -31,5 +31,7 @@
     "forwardPorts": [
         5432,
         6379
-    ]
+    ],
+    "postCreateCommand": "bash -lc 'cp -f .devcontainer/.zshrc-optimized /home/node/.zshrc || true'",
+    "postStartCommand": "bash -lc 'cp -f .devcontainer/.zshrc-optimized /home/node/.zshrc || true'"
 }
