@@ -148,6 +148,10 @@ model Gears {
   level    Int
   enhance  Int // Enhancement level (0-15)
 
+  // Precomputed scores (optional)
+  fScore Float? // Fribbels-like score
+  score  Float? // Custom score
+
   // Main stat
   mainStatType      MainStatType // att, def, max_hp, att_rate, def_rate, max_hp_rate, cri, cri_dmg, speed, acc, res
   mainStatValue     Float
@@ -171,11 +175,11 @@ model Gears {
   hero     Heroes?    @relation(fields: [equippedBy], references: [ingameId])
   substats SubStats[]
 
-  @@map("gears")
   @@index([createdAt])
   @@index([rank])
   @@index([enhance])
   @@index([equipped])
+  @@map("gears")
 }
 
 model Heroes {

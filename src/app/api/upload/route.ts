@@ -301,6 +301,9 @@ export async function POST(request: NextRequest) {
       );
 
       const substatInserts: Array<Prisma.SubStatsCreateManyInput> = [];
+      // Prepare in-memory scores per gear
+      const gearIdToFScore = new Map<number, number>();
+      const gearIdToScore = new Map<number, number>();
 
       function mapSubstatType(
         t: string
@@ -337,6 +340,8 @@ export async function POST(request: NextRequest) {
         const gearId = ingameToId.get(BigInt(src.ingameId).toString());
         if (!gearId) continue;
         if (!src.substats || !Array.isArray(src.substats)) continue;
+        let fSum = 0;
+        let mySum = 0;
         for (const s of src.substats) {
           const mappedType = mapSubstatType(s.type);
           if (!mappedType) continue;
@@ -350,7 +355,27 @@ export async function POST(request: NextRequest) {
             weight: 1,
             isModified: false,
           });
+          // Accumulate scores
+          const weight = 1; // default; can be synced from StatTypes if desired at upload time
+          fSum += Number(s.value) * weight;
+          // Custom score weights
+          const customWeights: Record<string, number> = {
+            Speed: 2.0,
+            "Crit %": 1.5,
+            "Crit Dmg %": 1.3,
+            "Attack %": 1.2,
+            "Defense %": 0.8,
+            "Health %": 0.8,
+            "Effectiveness %": 0.7,
+            "Effect Resist %": 0.6,
+            Attack: 0.3,
+            Defense: 0.2,
+            Health: 0.2,
+          };
+          mySum += Number(s.value) * (customWeights[mappedType.statName] ?? 1);
         }
+        gearIdToFScore.set(gearId, Math.round(fSum * 100) / 100);
+        gearIdToScore.set(gearId, Math.round(mySum * 100) / 100);
       }
 
       if (substatInserts.length > 0) {
@@ -360,6 +385,20 @@ export async function POST(request: NextRequest) {
           await db.subStats.createMany({ data: sChunk });
         }
       }
+
+      // Update scores in gears table for this chunk
+      const updates: Promise<unknown>[] = [];
+      for (const g of gearsInDb) {
+        const f = gearIdToFScore.get(g.id) ?? null;
+        const s = gearIdToScore.get(g.id) ?? null;
+        updates.push(
+          db.gears.update({
+            where: { id: g.id },
+            data: { fScore: f, score: s },
+          })
+        );
+      }
+      if (updates.length) await Promise.all(updates);
     }
 
     const response = {

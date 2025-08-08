@@ -73,8 +73,26 @@ export default async function Home({
     };
   }
 
+  // Backend hero name filter (case-insensitive contains) via search param `hero`
+  const heroParam = String(resolved?.hero ?? "").trim();
+  if (heroParam) {
+    where.hero = {
+      is: {
+        name: { contains: heroParam, mode: "insensitive" },
+      },
+    } as unknown as {
+      is?: { name?: { contains?: string; mode?: "insensitive" } };
+    };
+  }
+
+  // Sorting from URL: ?sort=column&dir=asc|desc
+  const sortBy = String(resolved?.sort ?? "createdAt");
+  const sortDir = (
+    String(resolved?.dir ?? "desc").toLowerCase() === "asc" ? "asc" : "desc"
+  ) as "asc" | "desc";
+
   const [{ rows: allGears, total }, stats] = await Promise.all([
-    getGearsPage({ page, perPage, orderBy: [{ createdAt: "desc" }], where }),
+    getGearsPage({ page, perPage, where, sortBy, sortDir }),
     getGearStats(),
   ]);
   const totalPages = Math.max(1, Math.ceil(total / perPage));
@@ -112,15 +130,7 @@ export default async function Home({
         </CardContent>
       </Card>
 
-      {allGears.length === 0 ? (
-        <Card>
-          <CardContent className="py-10 text-center text-sm text-muted-foreground">
-            No gear data found. Upload your gear.txt file to get started.
-          </CardContent>
-        </Card>
-      ) : (
-        <GearTable rows={allGears} />
-      )}
+      <GearTable rows={allGears} />
 
       <div className="flex items-center justify-between mt-3 text-xs">
         <span>

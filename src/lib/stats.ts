@@ -66,6 +66,9 @@ export function formatMainStatValue(
     String(statType).includes("rate") ||
     statType === "cri" ||
     statType === "cri_dmg";
+  // Fribbels main stat percents are often stored as decimals (e.g., 0.65 for 65%)
+  // Normalize: if percent and value <= 1, multiply by 100
+  const normalized = isPercent && value <= 1 ? value * 100 : value;
   const digits = isPercent ? 1 : 0;
-  return `${value.toFixed(digits)}${isPercent ? "%" : ""}`;
+  return `${normalized.toFixed(digits)}${isPercent ? "%" : ""}`;
 }

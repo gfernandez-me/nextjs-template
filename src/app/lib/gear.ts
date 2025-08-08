@@ -12,11 +12,15 @@ export type GearRow = Prisma.GearsGetPayload<{
     mainStatType: true;
     mainStatValue: true;
     equipped: true;
+    fScore: true;
+    score: true;
     hero: { select: { name: true; ingameId: true } };
     substats: {
       select: {
         statValue: true;
-        statType: { select: { statName: true; statCategory: true } };
+        statType: {
+          select: { statName: true; statCategory: true; weight: true };
+        };
       };
     };
   };
@@ -25,18 +29,19 @@ export type GearRow = Prisma.GearsGetPayload<{
 export async function getGearsPage(params: {
   page: number;
   perPage: number;
-  orderBy?: Prisma.GearsOrderByWithRelationInput[];
   where?: Prisma.GearsWhereInput;
+  sortBy?: string;
+  sortDir?: "asc" | "desc";
 }): Promise<{ rows: GearRow[]; total: number }> {
-  const { page, perPage, orderBy, where } = params;
+  const { page, perPage, where, sortBy, sortDir } = params;
   const skip = Math.max(0, (page - 1) * perPage);
-  const [rows, total] = await Promise.all([
-    db.gears.findMany({
-      skip,
-      take: perPage,
+
+  const total = await db.gears.count({ where });
+
+  // Score-based sorts: compute in memory then paginate
+  if (sortBy === "fscore" || sortBy === "score") {
+    const rowsAll = await db.gears.findMany({
       where,
-      orderBy:
-        orderBy && orderBy.length > 0 ? orderBy : [{ createdAt: "desc" }],
       select: {
         id: true,
         gear: true,
@@ -46,17 +51,105 @@ export async function getGearsPage(params: {
         mainStatType: true,
         mainStatValue: true,
         equipped: true,
+        fScore: true,
+        score: true,
         hero: { select: { name: true, ingameId: true } },
         substats: {
           select: {
             statValue: true,
-            statType: { select: { statName: true, statCategory: true } },
+            statType: {
+              select: { statName: true, statCategory: true, weight: true },
+            },
           },
         },
       },
-    }),
-    db.gears.count({ where }),
-  ]);
+    });
+    const rowsWithScore = convertDecimals(rowsAll).map((r) => {
+      const f =
+        typeof r.fScore === "number"
+          ? r.fScore
+          : r.substats.reduce((acc, s) => {
+              const w =
+                typeof s.statType.weight === "number" ? s.statType.weight : 1;
+              return acc + Number(s.statValue) * w;
+            }, 0);
+      const customWeights: Record<string, number> = {
+        Speed: 2.0,
+        "Crit %": 1.5,
+        "Crit Dmg %": 1.3,
+        "Attack %": 1.2,
+        "Defense %": 0.8,
+        "Health %": 0.8,
+        "Effectiveness %": 0.7,
+        "Effect Resist %": 0.6,
+        Attack: 0.3,
+        Defense: 0.2,
+        Health: 0.2,
+      };
+      const my =
+        typeof r.score === "number"
+          ? r.score
+          : r.substats.reduce((acc, s) => {
+              const w = customWeights[s.statType.statName] ?? 1;
+              return acc + Number(s.statValue) * w;
+            }, 0);
+      return {
+        r,
+        fscore: Math.round(f * 100) / 100,
+        score: Math.round(my * 100) / 100,
+      };
+    });
+    const dir = sortDir === "asc" ? 1 : -1;
+    rowsWithScore.sort((a, b) => {
+      const key = sortBy as "fscore" | "score";
+      return (a[key] - b[key]) * dir;
+    });
+    const sliced = rowsWithScore.slice(skip, skip + perPage).map((x) => x.r);
+    return { rows: sliced, total };
+  }
+
+  // Column-based sorts via Prisma
+  const dirFinal: "asc" | "desc" = sortDir === "asc" ? "asc" : "desc";
+  let orderBy: Prisma.GearsOrderByWithRelationInput[] = [{ createdAt: "desc" }];
+  const orderMap: Record<string, Prisma.GearsOrderByWithRelationInput> = {
+    gear: { gear: dirFinal },
+    level: { level: dirFinal },
+    enhance: { enhance: dirFinal },
+    mainStatType: { mainStatType: dirFinal },
+    mainStatValue: { mainStatValue: dirFinal },
+    rank: { rank: dirFinal },
+    createdAt: { createdAt: dirFinal },
+    heroName: { hero: { name: dirFinal } },
+  };
+  if (sortBy && orderMap[sortBy]) orderBy = [orderMap[sortBy]];
+
+  const rows = await db.gears.findMany({
+    skip,
+    take: perPage,
+    where,
+    orderBy,
+    select: {
+      id: true,
+      gear: true,
+      rank: true,
+      level: true,
+      enhance: true,
+      mainStatType: true,
+      mainStatValue: true,
+      equipped: true,
+      fScore: true,
+      score: true,
+      hero: { select: { name: true, ingameId: true } },
+      substats: {
+        select: {
+          statValue: true,
+          statType: {
+            select: { statName: true, statCategory: true, weight: true },
+          },
+        },
+      },
+    },
+  });
   return { rows: convertDecimals(rows), total };
 }
 
