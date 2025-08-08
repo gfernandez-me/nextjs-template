@@ -12,6 +12,7 @@
 ### Styling and UI
 
 - **Tailwind CSS**: ^3.4.0 (Utility-first CSS framework)
+- **shadcn/ui**: Modern component library with Tailwind CSS
 - **PostCSS**: Configured for Tailwind processing
 - **Autoprefixer**: CSS vendor prefix automation
 
@@ -46,14 +47,26 @@
 ├── .cursor/               # Cursor IDE configuration
 │   └── rules/             # Business rules and documentation
 ├── prisma/                # Database schema and migrations
-│   └── schema.prisma      # Database schema definition
+│   ├── schema.prisma      # Prisma schema definition
+│   └── generated/         # Generated Prisma client (gitignored)
+│       └── client/        # Prisma client files
 ├── src/                   # Application source code
-│   └── app/               # Next.js app directory (App Router)
-│       ├── layout.tsx     # Root layout component
-│       ├── page.tsx       # Home page component
-│       ├── globals.css    # Global styles
-│       └── upload/        # File upload functionality
-│           └── gear.txt   # Epic 7 gear data sample
+│   ├── app/               # Next.js app directory (App Router)
+│   │   ├── layout.tsx     # Root layout with navigation
+│   │   ├── page.tsx       # Home page (gear table)
+│   │   ├── globals.css    # Global styles with shadcn/ui
+│   │   ├── upload/        # Upload page route
+│   │   │   └── page.tsx   # Upload form component
+│   │   └── api/           # API routes
+│   │       └── upload/    # File upload endpoint
+│   │           └── route.ts # POST handler for gear import
+│   ├── components/        # React components
+│   │   ├── navigation.tsx # Main navigation component
+│   │   └── ui/           # shadcn/ui components
+│   ├── lib/              # Utilities and configuration
+│   │   ├── db.ts         # Prisma database singleton
+│   │   └── utils.ts      # shadcn/ui utilities
+
 ├── public/                # Static assets
 ├── package.json           # Node.js dependencies and scripts
 ├── tsconfig.json          # TypeScript configuration
@@ -223,9 +236,10 @@
 ### User Interface
 
 - **Responsive Design**: Mobile-first approach
+- **shadcn/ui**: Modern component library with consistent design system
 - **Tailwind CSS v3.4.0**: Utility-first styling with traditional configuration
 - **TypeScript**: Type-safe development with enum types
-- **Next.js App Router**: Modern React patterns
+- **Next.js App Router**: Modern React patterns with Server and Client Components
 
 ## 8. Development Workflow
 
@@ -273,6 +287,13 @@
 - **Database**: Connection security with enum validation
 - **API**: Rate limiting and validation
 - **Authentication**: User session management
+
+### Environment Variables
+
+- `DATABASE_URL` is required for database features (Prisma)
+- If not set, the home page skips DB queries and the upload API returns a descriptive error
+- Next.js will read from `.env.local`, `.env`, `.env.production` automatically
+- A checked-in `.env.example` is provided and copied to `.env` during install
 
 ## 10. Monitoring and Maintenance
 

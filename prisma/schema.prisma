@@ -6,7 +6,7 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/generated/prisma"
+  output   = "./generated/client"
 }
 
 datasource db {
@@ -140,9 +140,8 @@ model Gears {
   id Int @id @default(autoincrement())
 
   // Epic 7 Optimizer specific fields
-  ingameId Int             @unique // Original game ID (verified as Int from gear.txt)
+  ingameId BigInt          @unique // Original game ID (can exceed 32-bit range)
   code     String // Gear code identifier
-  name     String          @default("Unknown")
   type     GearType // weapon, armor, helm, neck, ring, boot
   gear     GearDisplayName // Display name: Weapon, Armor, Helmet, Necklace, Ring, Boots
   rank     GearRank // Common, Uncommon, Rare, Epic, Heroic
@@ -161,7 +160,7 @@ model Gears {
   equipped       Boolean @default(false)
 
   // Equipment relationship - references hero ingameId
-  equippedBy       Int? // Hero ingameId if equipped
+  equippedBy       BigInt? // Hero ingameId if equipped
   ingameEquippedId String?
 
   // Metadata
@@ -173,13 +172,17 @@ model Gears {
   substats SubStats[]
 
   @@map("gears")
+  @@index([createdAt])
+  @@index([rank])
+  @@index([enhance])
+  @@index([equipped])
 }
 
 model Heroes {
   id Int @id @default(autoincrement())
 
   // Epic 7 specific fields
-  ingameId Int          @unique // Original game ID (verified as Int from gear.txt)
+  ingameId BigInt       @unique // Original game ID (can exceed 32-bit range)
   name     String
   element  HeroElement? // Fire, Ice, Earth, Light, Dark
   rarity   HeroRarity? // 3*, 4*, 5*

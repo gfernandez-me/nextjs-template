@@ -1,3 +1,7 @@
+---
+alwaysApply: true
+---
+
 # Epic 7 Gear Optimization Business Rules
 
 ## 1. Data Structure Overview
@@ -303,3 +307,23 @@
 - **HeroElement**: Fire, Ice, Earth, Light, Dark
 - **HeroRarity**: THREE_STAR, FOUR_STAR, FIVE_STAR
 - **HeroClass**: Warrior, Knight, Ranger, Mage, SoulWeaver, Thief
+
+## 15. References and External Resources
+
+### Epic Seven Official Resources
+
+- **Epic Seven Official Global Page**: [Epic Seven Global View](https://page.onstove.com/epicseven/global/view/7902683)
+  - Official game announcements and updates
+  - Hero information and balance changes
+  - Event schedules and patch notes
+  - Official game mechanics documentation
+
+### Third-Party Tools and Optimizers
+
+- **Fribbels' Epic 7 Optimizer**: [GitHub Repository](https://github.com/fribbels/Fribbels-Epic-7-Optimizer)
+  - Comprehensive gear optimization tool
+  - Auto-importer for gear data extraction
+  - Compatible data format standards
+  - Optimization algorithms and calculation methods
+  - Community-maintained gear and hero databases
+  - Export/import functionality for gear management

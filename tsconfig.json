@@ -26,14 +26,35 @@
       "@/*": [
         "./src/*"
       ],
-      "@/styles/*": [
-        "styles/*"
-      ],
       "@/components/*": [
-        "components/*"
+        "./src/components/*"
+      ],
+      "@/lib/*": [
+        "./src/lib/*"
+      ],
+      "@/app/*": [
+        "./src/app/*"
+      ],
+      "@/ui/*": [
+        "./src/components/ui/*"
+      ],
+      "#/*": [
+        "./"
+      ],
+      "#root/*": [
+        "./"
+      ],
+      "#prisma/*": [
+        "./prisma/*"
+      ],
+      "#prisma": [
+        "./prisma/generated/client"
+      ],
+      "#public/*": [
+        "./public/*"
       ]
     },
-    "baseUrl": "./src"
+    "baseUrl": "."
   },
   "include": [
     "next-env.d.ts",

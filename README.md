@@ -1,3 +1,25 @@
+# Setup
+
+1. Copy envs (auto on install):
+
+```bash
+npm install
+# or manually
+cp .env.example .env
+```
+
+2. Generate Prisma client:
+
+```bash
+npx prisma generate
+```
+
+3. Run dev:
+
+```bash
+npm run dev
+```
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started

@@ -1,0 +1,486 @@
+---
+alwaysApply: true
+---
+
+# Next.js Implementation Guide
+
+## 1. Application Architecture
+
+### Technology Stack
+
+- **Next.js**: 15.4.5 with App Router
+- **React**: 19.1.0 (Server and Client Components)
+- **TypeScript**: ^5 (Full type safety)
+- **shadcn/ui**: Modern component library with Tailwind CSS
+- **Prisma**: ^6.13.0 (Database ORM)
+- **PostgreSQL**: 16.3 (Primary database)
+
+### Project Structure
+
+```
+src/
+├── app/                    # Next.js App Router
+│   ├── layout.tsx         # Root layout with navigation
+│   ├── page.tsx           # Home page (gear table)
+│   ├── upload/            # Upload page route
+│   │   └── page.tsx       # Upload form
+│   ├── api/               # API routes
+│   │   └── upload/        # File upload endpoint
+│   │       └── route.ts   # POST handler for gear import
+│   └── globals.css        # Global styles with shadcn/ui
+├── components/            # React components
+│   ├── navigation.tsx     # Main navigation component
+│   └── ui/               # shadcn/ui components
+├── lib/                  # Utilities and configuration
+│   ├── db.ts            # Prisma database singleton
+│   └── utils.ts         # shadcn/ui utilities
+└── generated/           # Generated Prisma client
+    └── prisma/
+```
+
+## 2. Navigation Implementation
+
+### App Router Navigation
+
+Following [Next.js linking and navigating documentation](https://nextjs.org/docs/app/getting-started/linking-and-navigating):
+
+```tsx
+// components/navigation.tsx
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+
+const routes = [
+  { href: "/", label: "Home", description: "View all gear data" },
+  {
+    href: "/upload",
+    label: "Upload",
+    description: "Upload gear data from Fribbels optimizer",
+  },
+];
+
+export function Navigation() {
+  const pathname = usePathname();
+  // Implementation with active state detection
+}
+```
+
+### Layout Integration
+
+- Root layout includes navigation component
+- Container styling with responsive design
+- App Router automatic client-side transitions
+
+## 3. Database Integration
+
+### Prisma Singleton Pattern
+
+Following Next.js best practices for database connections:
+
+```tsx
+// lib/db.ts
+import { PrismaClient } from "#prisma";
+
+const globalForPrisma = globalThis as unknown as {
+  prisma: PrismaClient | undefined;
+};
+
+export const db = globalForPrisma.prisma ?? new PrismaClient();
+
+if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = db;
+```
+
+### Server Component Data Fetching (Typed Data Layer)
+
+Use a typed data-access layer that leverages Prisma types:
+
+```tsx
+// app/data/gears.ts
+import { db } from "@/lib/db";
+import type { Prisma } from "#prisma";
+
+export type GearWithRelations = Prisma.GearsGetPayload<{
+  include: { hero: true; substats: { include: { statType: true } } };
+}>;
+
+export async function getGearsPage(params: { page: number; perPage: number; orderBy?: Prisma.GearsOrderByWithRelationInput[]; }): Promise<GearWithRelations[]> {
+  const { page, perPage, orderBy } = params;
+  return db.gears.findMany({
+    skip: (page - 1) * perPage,
+    take: perPage,
+    orderBy: orderBy?.length ? orderBy : [{ createdAt: "desc" }],
+    include: { hero: true, substats: { include: { statType: true } } },
+  });
+}
+
+export async function getGearStats() {
+  const [total, equipped, epicPlus, maxEnhanced] = await Promise.all([
+    db.gears.count(),
+    db.gears.count({ where: { equipped: true } }),
+    db.gears.count({ where: { OR: [{ rank: "Epic" }, { rank: "Heroic" }] } }),
+    db.gears.count({ where: { enhance: 15 } }),
+  ]);
+  return { total, equipped, epicPlus, maxEnhanced };
+}
+```
+
+## 4. UI Components with shadcn/ui
+
+### Component Installation
+
+```bash
+npx shadcn@latest init
+npx shadcn@latest add table button input form select label card navigation-menu
+```
+
+### Key Components Used
+
+- **Table**: Displays gear data with sorting and responsive design
+- **Card**: Container components for sections
+- **Form**: File upload with validation
+- **Button**: Interactive elements with loading states
+- **Input**: File input with type validation
+
+### Styling Approach
+
+- Tailwind CSS v3.4.0 utility classes
+- shadcn/ui design system with consistent theming
+- Dark/light mode support via CSS variables
+- Responsive design patterns
+
+## 5. File Upload Implementation
+
+### Client-Side Form
+
+Following [Next.js Form component documentation](https://nextjs.org/docs/app/api-reference/components/form):
+
+```tsx
+// app/upload/page.tsx
+"use client";
+
+export default function UploadPage() {
+  const [file, setFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    // FormData API for file upload
+    // Fetch to /api/upload endpoint
+  };
+}
+```
+
+### API Route Handler
+
+Server-side processing with proper error handling:
+
+```tsx
+// app/api/upload/route.ts
+export async function POST(request: NextRequest) {
+  const formData = await request.formData();
+  const file = formData.get("file") as File;
+
+  // Parse Fribbels JSON format
+  // Validate and map data
+  // Import to database via Prisma
+}
+```
+
+## 6. Data Processing
+
+### Fribbels Data Format Mapping
+
+Complete field mapping from Fribbels to database schema:
+
+```tsx
+interface FribbelsGearItem {
+  id: number;
+  ingameId: number;
+  type: string; // weapon, armor, etc.
+  gear: string; // Weapon, Armor, etc.
+  rank: string; // Epic, Heroic, etc.
+  mainStatType: string; // att_rate, speed, etc.
+  // ... additional fields
+}
+```
+
+### Validation and Error Handling
+
+- Required field validation
+- Enum value mapping
+- Duplicate detection by ingameId
+- Comprehensive error reporting
+
+## 7. User Experience Features
+
+### Real-time Feedback
+
+- Upload progress indicators
+- Loading states with disabled controls
+- Success/error messaging with color coding
+- Auto-redirect after successful upload
+
+### Data Visualization
+
+- Gear icons using Unicode emojis (⚔️🛡️🪖📿💍🥾)
+- Color-coded gear ranks
+- Responsive table with stat formatting
+- Statistics dashboard
+
+### Performance Optimization
+
+- Server Components for initial data loading
+- Pagination (limit 100 items)
+- Optimized database queries with includes
+- Client-side state management
+
+## 8. Type Safety
+
+### Prisma Integration
+
+- Generated TypeScript types from schema
+- Full type safety for database operations
+- Enum validation at compile time
+
+### Component Props
+
+- Strict TypeScript interfaces
+- shadcn/ui component type definitions
+- Form validation with type checking
+
+## 9. Error Handling
+
+### Client-Side
+
+- File type validation (.txt files only)
+- Form validation with user feedback
+- Network error handling with retry logic
+
+### Server-Side
+
+- JSON parsing error handling
+- Database constraint validation
+- Comprehensive error logging
+- Structured error responses
+
+## 10. Development Workflow
+
+### Local Development
+
+```bash
+npm run dev          # Start development server with Turbopack
+npm run studio       # Open Prisma Studio for database management
+npm run lint         # ESLint code quality checks
+```
+
+### Code Quality
+
+- ESLint with Next.js configuration
+- TypeScript strict mode
+- Consistent component patterns
+- shadcn/ui design system adherence
+
+## 11. Deployment Considerations
+
+### Environment Variables
+
+- DATABASE_URL for Prisma connection
+- Next.js automatic environment handling
+- Production database configuration
+  \- `.env.example` is copied to `.env` on install (postinstall script)
+
+### Build Optimization
+
+- Next.js automatic code splitting
+- Server Component optimization
+- Static generation for optimal performance
+
+### Database Migration
+
+- Prisma migration system
+- Schema version control
+- Production deployment strategies
+
+## 12. Future Enhancements
+
+### Planned Features
+
+- Gear filtering and sorting
+- Bulk operations (delete, update)
+- Export functionality
+- Advanced statistics dashboard
+
+### Performance Improvements
+
+- Virtual scrolling for large datasets
+- Search functionality with debouncing
+- Caching strategies with Redis
+- Progressive enhancement patterns
+
+## 13. Component Documentation
+
+### Navigation Component
+
+- Client Component with usePathname hook
+- Responsive design (desktop/mobile layouts)
+- Active route highlighting
+- Accessibility features
+
+### Gear Table Component
+
+- Server Component for data fetching
+- Responsive table with scroll
+- Icon mapping for gear types
+- Color coding for ranks and status
+
+### Upload Form Component
+
+- Client Component with state management
+- File validation and preview
+- Progress tracking with feedback
+- Error handling with recovery
+
+## 14. API Design
+
+### RESTful Endpoints
+
+- POST /api/upload - File upload and processing
+- Future: GET /api/gears - Paginated gear data
+- Future: DELETE /api/gears/:id - Individual gear deletion
+
+### Data Format
+
+- Multipart form data for file uploads
+- JSON responses with structured error handling
+- Consistent response patterns across endpoints
+
+## 15. Implementation Issues and Fixes
+
+### Path Resolution Issues (Fixed ✅)
+
+**Problem**: TypeScript could not resolve `@/lib/utils` and other imports
+**Solution**: Updated `tsconfig.json` configuration:
+
+- Changed `baseUrl` from `"./src"` to `"."`
+- Simplified `paths` configuration to only include `"@/*": ["./src/*"]`
+- Cleared Next.js cache and regenerated Prisma client
+
+### Prisma Type Errors (Fixed ✅)
+
+**Problem**: API route had type errors with Prisma enum types
+**Solution**:
+
+- Added proper imports for Prisma enums: `GearType`, `GearDisplayName`, `GearRank`, `MainStatType`
+- Updated mapping functions to return proper enum types instead of strings
+- Regenerated Prisma client to ensure type availability
+
+### Build Success ✅
+
+- **npm run build**: Completed successfully with only warnings from generated Prisma files
+- **TypeScript compilation**: All type errors resolved
+- **Import resolution**: All path aliases working correctly
+- **shadcn/ui components**: Properly integrated and functional
+
+### Enhanced Path Alias System (Best Practice ✅)
+
+**Problem**: Using ugly relative paths like `"../../../../prisma/generated/client"` and limited alias organization
+**Solution**: Implemented comprehensive path alias system following Next.js best practices:
+
+#### Path Alias Configuration (tsconfig.json)
+
+```json
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@/components/*": ["./src/components/*"],
+      "@/lib/*": ["./src/lib/*"],
+      "@/app/*": ["./src/app/*"],
+      "@/ui/*": ["./src/components/ui/*"],
+      "#/*": ["./"],
+      "#root/*": ["./"],
+      "#prisma/*": ["./prisma/*"],
+      "#prisma": ["./prisma/generated/client"],
+      "#public/*": ["./public/*"]
+    }
+  }
+}
+```
+
+#### Alias Usage Patterns
+
+**Source Code Aliases (@ prefix):**
+
+- `@/*` → General src folder access
+- `@/components/*` → React components
+- `@/lib/*` → Utilities and shared code
+- `@/app/*` → Next.js app directory
+- `@/ui/*` → shadcn/ui components
+
+**Root Folder Aliases (# prefix):**
+
+- `#/*` → Root directory access
+- `#prisma` → Prisma client (clean access)
+- `#prisma/*` → Prisma folder contents
+- `#public/*` → Public assets
+
+#### Before vs After Examples
+
+**Before:**
+
+```tsx
+import { PrismaClient } from "../../../../prisma/generated/client";
+import { Button } from "../../../components/ui/button";
+```
+
+**After:**
+
+```tsx
+import { PrismaClient } from "#prisma";
+import { Button } from "@/ui/button";
+```
+
+#### Benefits Achieved
+
+- ✅ **Clean imports**: No more `../../../..` relative paths
+- ✅ **Semantic organization**: `@` for src, `#` for root
+- ✅ **Better maintainability**: Easier refactoring and code organization
+- ✅ **Industry standard**: Following Next.js and TypeScript best practices
+
+### Prisma Client Relocation (Best Practice ✅)
+
+**Problem**: Generated Prisma client was in `src/generated/` causing linting issues and violating best practices
+**Solution**: Moved Prisma client to proper location following industry standards:
+
+- Updated `prisma/schema.prisma` output to `"./generated/client"`
+- Moved generated files from `src/generated/prisma` to `prisma/generated/client`
+- Updated all import paths in `src/lib/db.ts` and `src/app/api/upload/route.ts`
+- Updated `.gitignore` to exclude `prisma/generated/` from source control
+- Removed generated files from src directory
+
+### Warnings Addressed
+
+- ESLint warnings in generated Prisma files are expected and don't affect functionality
+- Tailwind CSS configuration is correct with `tailwindcss-animate` properly installed
+- All custom code passes linting without errors
+
+## 16. Testing Strategy
+
+### Component Testing
+
+- shadcn/ui component integration tests
+- Form validation testing
+- Navigation state testing
+
+### API Testing
+
+- File upload endpoint testing
+- Data validation testing
+- Error handling verification
+
+### Database Testing
+
+- Prisma integration testing
+- Migration testing
+- Data integrity validation
