@@ -1,11 +1,11 @@
 import { getAuth } from "@/lib/auth";
 import { createDataAccess } from "@/lib/data-access";
 import { redirect } from "next/navigation";
-import { UploadForm } from "@/components/upload-form";
+import { ProfileForm } from "@/components/profile-form";
 
 export const dynamic = "force-dynamic";
 
-export default async function UploadPage() {
+export default async function ProfilePage() {
   // Get current user
   const session = await getAuth();
   if (!session?.user?.id) {
@@ -15,13 +15,13 @@ export default async function UploadPage() {
   // Create data access layer for current user
   const dal = createDataAccess(session.user.id);
 
-  // Get user's settings for upload processing
-  const settings = await dal.getSettings();
+  // Get user details
+  const user = await dal.getUser();
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-semibold">Upload Gear Data</h1>
-      <UploadForm userSettings={settings} />
+      <h1 className="text-xl font-semibold">Profile</h1>
+      <ProfileForm user={user} />
     </div>
   );
 }

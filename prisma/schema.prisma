@@ -7,6 +7,7 @@
 generator client {
   provider = "prisma-client-js"
   output   = "./generated/client"
+  seed     = "npx tsx prisma/seed.ts"
 }
 
 datasource db {
@@ -78,6 +79,7 @@ enum HeroRarity {
   THREE_STAR
   FOUR_STAR
   FIVE_STAR
+  SIX_STAR
 }
 
 // Epic 7 Hero Classes
@@ -101,7 +103,7 @@ model StatTypes {
   createdAt    DateTime     @default(now())
 
   // Relationships
-  substats SubStats[]
+  substats GearSubStats[]
 
   @@map("stat_types")
 }
@@ -119,7 +121,7 @@ model GearSets {
 }
 
 // Individual substats for each gear
-model SubStats {
+model GearSubStats {
   id         Int      @id @default(autoincrement())
   gearId     Int
   statTypeId Int
@@ -127,13 +129,15 @@ model SubStats {
   rolls      Int // 0-5
   weight     Decimal  @db.Decimal(5, 2)
   isModified Boolean  @default(false) // Whether this substat was modified (reforged)
+  userId     String // User who owns this substat
   createdAt  DateTime @default(now())
 
   // Relationships
   gear     Gears     @relation(fields: [gearId], references: [id], onDelete: Cascade)
   statType StatTypes @relation(fields: [statTypeId], references: [id])
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@map("substats")
+  @@map("gear_substats")
 }
 
 model Gears {
@@ -167,18 +171,23 @@ model Gears {
   equippedBy       BigInt? // Hero ingameId if equipped
   ingameEquippedId String?
 
+  // User ownership
+  userId String // User who owns this gear
+
   // Metadata
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Relationships
-  hero     Heroes?    @relation(fields: [equippedBy], references: [ingameId])
-  substats SubStats[]
+  hero     Heroes?        @relation(fields: [equippedBy], references: [ingameId])
+  substats GearSubStats[]
+  user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([createdAt])
   @@index([rank])
   @@index([enhance])
   @@index([equipped])
+  @@index([userId])
   @@map("gears")
 }
 
@@ -210,12 +219,58 @@ model Heroes {
   ringId     Int? // References gear ingameId
   bootId     Int? // References gear ingameId
 
+  // User ownership
+  userId String // User who owns this hero
+
   // Metadata
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Relationships
   gears Gears[] // All gears equipped by this hero
+  user  User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId])
   @@map("heroes")
+}
+
+// Global settings for scoring and thresholds (per user)
+model Settings {
+  id                    Int      @id @default(autoincrement())
+  // fScore configuration
+  fScoreIncludeMainStat Boolean  @default(true)
+  fScoreSubstatWeights  Json? // { "Speed": 2.0, "Crit %": 1.5, ... }
+  fScoreMainStatWeights Json? // { "att": 0.0, "def": 0.0, "max_hp": 0.0, "att_rate": 0.5, ... }
+  // Threshold configuration per substat for badge coloring
+  substatThresholds     Json? // { "Speed": { "plus15": [4,8,12,18] }, "Crit %": { "plus15": [4,8,12,16] }, ... }
+  // User ownership
+  userId                String
+  // metadata
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  // Relationships
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId]) // One settings per user
+  @@index([userId])
+  @@map("settings")
+}
+
+// User authentication model
+model User {
+  id        String   @id @default(cuid())
+  name      String?
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  gears    Gears[]
+  heroes   Heroes[]
+  settings Settings?
+  substats GearSubStats[]
+
+  @@map("users")
 }

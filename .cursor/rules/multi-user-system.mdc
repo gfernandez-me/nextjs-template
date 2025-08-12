@@ -1,0 +1,336 @@
+# Multi-User System Implementation
+
+## Overview
+
+The Epic 7 Gear Optimizer now supports multiple users with complete data isolation. Each user has their own gear inventory, heroes, settings, and scoring configurations, ensuring privacy and data separation.
+
+## Key Changes Implemented
+
+### 1. Database Schema Updates
+
+#### User Ownership Fields Added
+
+```prisma
+model Gears {
+  // ... existing fields
+  userId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+}
+
+model Heroes {
+  // ... existing fields
+  userId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+}
+
+model GearSubStats {
+  // ... existing fields
+  userId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+}
+
+model Settings {
+  // ... existing fields
+  userId String @unique
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId]) // One settings per user
+  @@index([userId])
+}
+```
+
+#### User Model Relationships
+
+```prisma
+model User {
+  id        String   @id @default(cuid())
+  name      String?
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  gears    Gears[]
+  heroes   Heroes[]
+  settings Settings?
+  substats GearSubStats[]
+
+  @@map("users")
+}
+```
+
+### 2. Data Access Layer (DAL)
+
+#### Purpose
+Centralized data access that automatically scopes all queries to the authenticated user's data.
+
+#### Implementation
+
+```typescript
+// src/lib/data-access.ts
+export class DataAccessLayer {
+  constructor(private userId: string) {}
+
+  async getGearsPage(params: { page: number; perPage: number; orderBy?: Prisma.GearsOrderByWithRelationInput[] }): Promise<GearWithRelations[]> {
+    return db.gears.findMany({
+      where: { userId: this.userId }, // Automatic user scoping
+      skip: (page - 1) * params.perPage,
+      take: params.perPage,
+      orderBy: params.orderBy?.length ? params.orderBy : [{ createdAt: "desc" }],
+      include: { hero: true, substats: { include: { statType: true } } },
+    });
+  }
+
+  async getGearStats() {
+    const [total, equipped, epicPlus, maxEnhanced] = await Promise.all([
+      db.gears.count({ where: { userId: this.userId } }),
+      db.gears.count({ where: { userId: this.userId, equipped: true } }),
+      db.gears.count({ where: { userId: this.userId, OR: [{ rank: "Epic" }, { rank: "Heroic" }] } }),
+      db.gears.count({ where: { userId: this.userId, enhance: 15 } }),
+    ]);
+    return { total, equipped, epicPlus, maxEnhanced };
+  }
+
+  async getSettings() {
+    return db.settings.findUnique({
+      where: { userId: this.userId },
+    });
+  }
+
+  async createOrUpdateSettings(data: Omit<Prisma.SettingsCreateInput, "user">) {
+    await db.settings.upsert({
+      where: { userId: this.userId },
+      create: { ...data, userId: this.userId },
+      update: data,
+    });
+  }
+}
+```
+
+#### Usage Pattern
+
+```typescript
+// In server components
+const session = await getAuth();
+if (!session) redirect("/signin");
+
+const dal = createDataAccess(session.user.id);
+const gears = await dal.getGearsPage({ page: 1, perPage: 100 });
+const stats = await dal.getGearStats();
+```
+
+### 3. Route Protection
+
+#### Middleware Updates
+All routes now require authentication by default, with only `/signin` as a public route.
+
+```typescript
+// src/middleware.ts
+const publicRoutes = ["/signin"];
+
+export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  
+  if (publicRoutes.includes(pathname)) {
+    // Redirect authenticated users away from signin
+    if (isAuthenticated(request)) {
+      return NextResponse.redirect(new URL("/", request.url));
+    }
+    return NextResponse.next();
+  }
+  
+  // Protect all other routes
+  if (!isAuthenticated(request)) {
+    return NextResponse.redirect(new URL("/signin", request.url));
+  }
+  
+  return NextResponse.next();
+}
+```
+
+### 4. User-Specific Data Upload
+
+#### Upload Process
+- Each user uploads their own Fribbels data
+- All imported gears, heroes, and substats are automatically associated with the user's `userId`
+- Settings are user-specific and used for scoring calculations
+
+#### Implementation
+
+```typescript
+// src/app/api/upload/route.ts
+export async function POST(request: NextRequest) {
+  const session = await getAuth();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  // Process upload with user context
+  const userId = session.user.id;
+  
+  // Import heroes first, then gears with proper linking
+  for (const hero of heroes) {
+    await db.heroes.create({
+      data: {
+        ...hero,
+        userId: userId, // Associate with user
+      },
+    });
+  }
+  
+  // Create hero map for equippedBy linking
+  const heroMap = new Map(heroes.map(h => [h.ingameId, h.ingameId]));
+  
+  for (const gear of gears) {
+    await db.gears.create({
+      data: {
+        ...gear,
+        userId: userId, // Associate with user
+        equippedBy: heroMap.get(gear.equippedBy) || null,
+      },
+    });
+  }
+}
+```
+
+### 5. Settings Isolation
+
+#### User-Specific Configuration
+- Each user has their own scoring weights and thresholds
+- Settings are automatically created for new users
+- Scoring calculations use the user's personal configuration
+
+#### Settings Management
+
+```typescript
+// src/app/api/settings/route.ts
+export async function POST(request: NextRequest) {
+  const session = await getAuth();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const dal = createDataAccess(session.user.id);
+  await dal.createOrUpdateSettings(data);
+  
+  return NextResponse.json({ success: true });
+}
+```
+
+### 6. Data Migration
+
+#### Existing Data Handling
+- Admin user's existing data was migrated to include `userId`
+- All existing gears, heroes, and settings are now owned by the admin user
+- New users start with clean, empty inventories
+
+#### Migration Commands
+
+```bash
+# Reset database and apply new schema
+npm run db:migrate
+
+# Seed with admin user and migrate existing data
+npm run db:seed
+```
+
+### 7. Component Updates
+
+#### Server Components
+All main pages now use server components with authentication checks:
+
+```typescript
+// src/app/(main)/page.tsx
+export default async function HomePage() {
+  const session = await getAuth();
+  if (!session) redirect("/signin");
+
+  const dal = createDataAccess(session.user.id);
+  const gears = await dal.getGearsPage({ page: 1, perPage: 100 });
+  
+  return <GearTable gears={gears} />;
+}
+```
+
+#### Client Components
+Client components receive user-specific data as props:
+
+```typescript
+// src/components/settings-form.tsx
+interface SettingsFormProps {
+  initialSettings: Settings | null; // User's current settings
+}
+
+export function SettingsForm({ initialSettings }: SettingsFormProps) {
+  // Form uses user's existing configuration
+  // Changes are saved to user's settings
+}
+```
+
+## Benefits
+
+### Security
+- ✅ **Data Isolation**: Users can only access their own data
+- ✅ **Route Protection**: All routes require authentication
+- ✅ **User Scoping**: Database queries automatically filter by user
+
+### Scalability
+- ✅ **Multi-User Support**: System supports unlimited users
+- ✅ **Efficient Queries**: Indexed user relationships for performance
+- ✅ **Clean Architecture**: Centralized data access layer
+
+### User Experience
+- ✅ **Personal Settings**: Each user has their own scoring configuration
+- ✅ **Private Inventories**: Gear and hero data is completely private
+- ✅ **Seamless Onboarding**: New users get clean, personalized experience
+
+## Database Schema Changes
+
+### Tables Modified
+- `gears` - Added `userId` field with index
+- `heroes` - Added `userId` field with index  
+- `gear_sub_stats` - Added `userId` field with index
+- `settings` - Added `userId` field with unique constraint and index
+- `users` - New table with relationships
+
+### Indexes Added
+- `gears.userId` - For efficient user-scoped queries
+- `heroes.userId` - For efficient user-scoped queries
+- `gear_sub_stats.userId` - For efficient user-scoped queries
+- `settings.userId` - Unique constraint and index
+
+### Foreign Key Relationships
+- All user-owned tables cascade delete when user is removed
+- Proper referential integrity maintained
+- Efficient joins for user data retrieval
+
+## Build Status
+
+✅ **Build Successful**: All multi-user components compile without errors
+✅ **Type Safety**: Full TypeScript support with proper user scoping
+✅ **Data Isolation**: Complete separation of user data achieved
+✅ **Authentication**: All routes properly protected
+✅ **Database**: Schema updated with proper relationships
+✅ **Migration**: Existing data successfully migrated to admin user
+
+## Future Enhancements
+
+### Planned Features
+- User registration system
+- User profile customization
+- Data export/import per user
+- User preferences and themes
+- Social features (gear sharing, builds)
+
+### Performance Optimizations
+- Database query optimization for large inventories
+- Caching strategies for user settings
+- Pagination improvements for large datasets
+- Real-time updates for collaborative features
+description:
+globs:
+alwaysApply: false
+---

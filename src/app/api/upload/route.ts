@@ -1,430 +1,372 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getAuth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import {
-  GearType,
-  GearDisplayName,
-  GearRank,
-  MainStatType,
-  Prisma,
-} from "#prisma";
 
-// Fribbels gear data interface based on our schema analysis
-interface FribbelsGearItem {
-  id: number;
-  ingameId: number;
-  code: string;
-  name?: string;
-  type: string;
-  gear: string;
-  rank: string;
-  level: number;
-  enhance: number;
-  mainStatType: string;
-  mainStatValue: number;
-  mainStatBaseValue: number;
-  statMultiplier: number;
-  tierMultiplier: number;
-  storage: boolean;
-  ingameEquippedId?: string;
-  substats?: Array<{
-    type: string;
-    value: number;
-    rolls: number;
-  }>;
-  op?: Array<[string, number]>;
-}
-
-interface FribbelsData {
-  items: FribbelsGearItem[];
-  heroes?: unknown[];
-}
-
-// Mapping functions
-function mapGearType(fribbelsType: string): GearType {
-  const mapping: Record<string, GearType> = {
-    weapon: GearType.weapon,
-    armor: GearType.armor,
-    helm: GearType.helm,
-    helmet: GearType.helm,
-    neck: GearType.neck,
-    necklace: GearType.neck,
-    ring: GearType.ring,
-    boot: GearType.boot,
-    boots: GearType.boot,
-  };
-  return mapping[fribbelsType.toLowerCase()] || GearType.weapon;
-}
-
-function mapGearDisplayName(fribbelsGear: string): GearDisplayName {
-  const mapping: Record<string, GearDisplayName> = {
-    Weapon: GearDisplayName.Weapon,
-    Armor: GearDisplayName.Armor,
-    Helmet: GearDisplayName.Helmet,
-    Necklace: GearDisplayName.Necklace,
-    Ring: GearDisplayName.Ring,
-    Boots: GearDisplayName.Boots,
-  };
-  return mapping[fribbelsGear] || GearDisplayName.Weapon;
-}
-
-function mapGearRank(fribbelsRank: string): GearRank {
-  const mapping: Record<string, GearRank> = {
-    Common: GearRank.Common,
-    Uncommon: GearRank.Uncommon,
-    Rare: GearRank.Rare,
-    Epic: GearRank.Epic,
-    Heroic: GearRank.Heroic,
-  };
-  return mapping[fribbelsRank] || GearRank.Common;
-}
-
-function mapMainStatType(fribbelsStatType: string): MainStatType {
-  const mapping: Record<string, MainStatType> = {
-    att: MainStatType.att,
-    def: MainStatType.def,
-    max_hp: MainStatType.max_hp,
-    att_rate: MainStatType.att_rate,
-    def_rate: MainStatType.def_rate,
-    max_hp_rate: MainStatType.max_hp_rate,
-    cri: MainStatType.cri,
-    cri_dmg: MainStatType.cri_dmg,
-    speed: MainStatType.speed,
-    acc: MainStatType.acc,
-    res: MainStatType.res,
-  };
-  return mapping[fribbelsStatType] || MainStatType.att;
-}
-
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
-export const maxDuration = 60; // allow longer processing for large files
-// Note: body size limit for Server Actions is configured in next.config.ts (serverActions.bodySizeLimit)
-
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
-    if (!process.env.DATABASE_URL) {
-      return NextResponse.json(
-        { error: "Database not configured (missing DATABASE_URL)" },
-        { status: 500 }
-      );
+    // Get current user
+    const session = await getAuth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
+
     const formData = await request.formData();
     const file = formData.get("file") as File;
 
     if (!file) {
-      return NextResponse.json({ error: "No file provided" }, { status: 400 });
+      return NextResponse.json(
+        { message: "No file provided" },
+        { status: 400 }
+      );
     }
 
     if (!file.name.endsWith(".txt")) {
       return NextResponse.json(
-        { error: "Invalid file type. Please upload a .txt file" },
+        { message: "Only .txt files are supported" },
         { status: 400 }
       );
     }
 
-    const content = await file.text();
+    const fileContent = await file.text();
+    let data: { items?: unknown[]; heroes?: unknown[] };
 
-    // Parse the JSON content
-    let gearData: FribbelsData;
     try {
-      gearData = JSON.parse(content);
+      data = JSON.parse(fileContent);
     } catch {
       return NextResponse.json(
-        { error: "Invalid JSON format" },
+        { message: "Invalid JSON file" },
         { status: 400 }
       );
     }
 
-    if (!gearData.items || !Array.isArray(gearData.items)) {
+    if (!data.items || !Array.isArray(data.items)) {
       return NextResponse.json(
-        { error: "Invalid gear data format. Expected items array" },
+        { message: "Invalid file format. Expected 'items' array." },
         { status: 400 }
       );
     }
 
     let importedCount = 0;
-    let errorCount = 0;
     const errors: string[] = [];
 
-    // Full replace strategy: wipe existing data before import
-    // Delete order matters due to FK: Gears (FK to Heroes) first, then Heroes
-    await db.gears.deleteMany();
-    await db.heroes.deleteMany();
+    // STEP 1: Import heroes first if present
+    const heroMap: Map<string, bigint> = new Map(); // ingameId -> database id mapping
 
-    // Create heroes first (so equippedBy FKs are valid). Build a set of valid hero ids
-    const heroIdSet = new Set<bigint>();
-    if (
-      gearData.heroes &&
-      Array.isArray(gearData.heroes) &&
-      gearData.heroes.length > 0
-    ) {
-      const nameCount = new Map<string, number>();
-      const heroesMapped = gearData.heroes
-        .map((h: unknown) => {
-          const hero = h as {
-            ingameId?: number | string;
-            id?: number | string;
-            name?: string;
+    if (data.heroes && Array.isArray(data.heroes)) {
+      for (const hero of data.heroes) {
+        try {
+          const heroObj = hero as Record<string, unknown>;
+          const heroData = {
+            ingameId: BigInt(String(heroObj.id || heroObj.ingameId || 0)),
+            name: (heroObj.name as string) || "Unknown Hero",
+            element: mapHeroElement(heroObj.element as string),
+            rarity: mapHeroRarity(heroObj.rarity as string),
+            class: mapHeroClass(heroObj.class as string),
+            attack: typeof heroObj.attack === "number" ? heroObj.attack : null,
+            defense:
+              typeof heroObj.defense === "number" ? heroObj.defense : null,
+            health: typeof heroObj.health === "number" ? heroObj.health : null,
+            speed: typeof heroObj.speed === "number" ? heroObj.speed : null,
+            criticalHitChance:
+              typeof heroObj.criticalHitChance === "number"
+                ? heroObj.criticalHitChance
+                : null,
+            criticalHitDamage:
+              typeof heroObj.criticalHitDamage === "number"
+                ? heroObj.criticalHitDamage
+                : null,
+            effectiveness:
+              typeof heroObj.effectiveness === "number"
+                ? heroObj.effectiveness
+                : null,
+            effectResistance:
+              typeof heroObj.effectResistance === "number"
+                ? heroObj.effectResistance
+                : null,
+            weaponId:
+              typeof heroObj.weaponId === "number" ? heroObj.weaponId : null,
+            armorId:
+              typeof heroObj.armorId === "number" ? heroObj.armorId : null,
+            helmetId:
+              typeof heroObj.helmetId === "number" ? heroObj.helmetId : null,
+            necklaceId:
+              typeof heroObj.necklaceId === "number"
+                ? heroObj.necklaceId
+                : null,
+            ringId: typeof heroObj.ringId === "number" ? heroObj.ringId : null,
+            bootId: typeof heroObj.bootId === "number" ? heroObj.bootId : null,
+            userId: session.user.id,
           };
-          const rawId = hero?.ingameId ?? hero?.id;
-          if (rawId === undefined || rawId === null) return null;
-          const idBig = BigInt(rawId);
-          heroIdSet.add(idBig);
-          const baseName = hero?.name || "Unknown";
-          const current = nameCount.get(baseName) ?? 0;
-          nameCount.set(baseName, current + 1);
-          const finalName =
-            current === 0 ? baseName : `${baseName} ${current + 1}`;
-          return {
-            ingameId: idBig,
-            name: finalName,
-          } as { ingameId: bigint; name: string };
-        })
-        .filter(Boolean) as Array<{ ingameId: bigint; name: string }>;
 
-      const HERO_CHUNK = 1000;
-      for (let i = 0; i < heroesMapped.length; i += HERO_CHUNK) {
-        const chunk = heroesMapped.slice(i, i + HERO_CHUNK);
-        if (chunk.length > 0) {
-          await db.heroes.createMany({ data: chunk });
-        }
-      }
-    }
-
-    // Ensure required StatTypes exist and build a cache map
-    const statTypeDefs: Array<{
-      name: string;
-      category: "flat" | "percentage";
-    }> = [
-      { name: "Speed", category: "flat" },
-      { name: "Attack", category: "flat" },
-      { name: "Attack %", category: "percentage" },
-      { name: "Defense", category: "flat" },
-      { name: "Defense %", category: "percentage" },
-      { name: "Health", category: "flat" },
-      { name: "Health %", category: "percentage" },
-      { name: "Crit %", category: "percentage" },
-      { name: "Crit Dmg %", category: "percentage" },
-      { name: "Effectiveness %", category: "percentage" },
-      { name: "Effect Resist %", category: "percentage" },
-    ];
-
-    for (const def of statTypeDefs) {
-      await db.statTypes.upsert({
-        where: { statName: def.name },
-        create: {
-          statName: def.name,
-          statCategory: def.category,
-          weight: 1,
-          isMainStat: false,
-          isSubstat: true,
-        },
-        update: { statCategory: def.category },
-      });
-    }
-
-    const statTypeRows = await db.statTypes.findMany({
-      where: { statName: { in: statTypeDefs.map((d) => d.name) } },
-      select: { id: true, statName: true },
-    });
-    const statTypeNameToId = new Map<string, number>(
-      statTypeRows.map((r) => [r.statName, r.id])
-    );
-
-    // Validate and map all items to Prisma createMany payload (scalars only)
-    const filteredItems = gearData.items
-      // Only import Epic and Heroic
-      .filter((item) => item.rank === "Epic" || item.rank === "Heroic")
-      .filter((item: FribbelsGearItem) => {
-        const valid =
-          !!item.ingameId &&
-          !!item.type &&
-          !!item.gear &&
-          !!item.rank &&
-          item.level !== undefined &&
-          item.enhance !== undefined &&
-          !!item.mainStatType &&
-          item.mainStatValue !== undefined;
-        if (!valid) {
-          errorCount++;
+          const createdHero = await db.heroes.create({ data: heroData });
+          heroMap.set(createdHero.ingameId.toString(), createdHero.ingameId);
+        } catch (error) {
           errors.push(
-            `Item ${item.ingameId || "unknown"}: Missing required fields`
+            `Failed to import hero ${
+              (hero as Record<string, unknown>).id
+            }: ${error}`
           );
         }
-        return valid;
-      });
-
-    const mapped = filteredItems.map((item: FribbelsGearItem) => ({
-      ingameId: BigInt(item.ingameId),
-      code: item.code || "",
-      type: mapGearType(item.type),
-      gear: mapGearDisplayName(item.gear),
-      rank: mapGearRank(item.rank),
-      level: item.level,
-      enhance: item.enhance,
-      mainStatType: mapMainStatType(item.mainStatType),
-      mainStatValue: item.mainStatValue,
-      mainStatBaseValue: item.mainStatBaseValue || item.mainStatValue,
-      statMultiplier: item.statMultiplier || 1,
-      tierMultiplier: item.tierMultiplier || 1,
-      storage: item.storage !== false,
-      equipped: !item.storage,
-      equippedBy:
-        item.ingameEquippedId && item.ingameEquippedId !== "undefined"
-          ? (() => {
-              const hid = BigInt(parseInt(item.ingameEquippedId));
-              return heroIdSet.has(hid) ? hid : null;
-            })()
-          : null,
-      ingameEquippedId: item.ingameEquippedId,
-    }));
-
-    // Bulk insert in chunks to avoid oversized queries; skip duplicates by ingameId
-    const CHUNK_SIZE = 500;
-    for (let i = 0; i < mapped.length; i += CHUNK_SIZE) {
-      const chunk = mapped.slice(i, i + CHUNK_SIZE);
-      const result = await db.gears.createMany({
-        data: chunk,
-        skipDuplicates: true,
-      });
-      importedCount += result.count;
-
-      // Insert substats for this chunk
-      const sourceChunk = filteredItems.slice(i, i + CHUNK_SIZE);
-      const ingameIds = sourceChunk.map((it) => BigInt(it.ingameId));
-      const gearsInDb = await db.gears.findMany({
-        where: { ingameId: { in: ingameIds } },
-        select: { id: true, ingameId: true },
-      });
-      const ingameToId = new Map<string, number>(
-        gearsInDb.map((g) => [g.ingameId.toString(), g.id])
-      );
-
-      const substatInserts: Array<Prisma.SubStatsCreateManyInput> = [];
-      // Prepare in-memory scores per gear
-      const gearIdToFScore = new Map<number, number>();
-      const gearIdToScore = new Map<number, number>();
-
-      function mapSubstatType(
-        t: string
-      ): { statName: string; category: "flat" | "percentage" } | null {
-        switch (t) {
-          case "CriticalHitChancePercent":
-            return { statName: "Crit %", category: "percentage" };
-          case "CriticalHitDamagePercent":
-            return { statName: "Crit Dmg %", category: "percentage" };
-          case "AttackPercent":
-            return { statName: "Attack %", category: "percentage" };
-          case "DefensePercent":
-            return { statName: "Defense %", category: "percentage" };
-          case "HealthPercent":
-            return { statName: "Health %", category: "percentage" };
-          case "EffectivenessPercent":
-            return { statName: "Effectiveness %", category: "percentage" };
-          case "EffectResistancePercent":
-            return { statName: "Effect Resist %", category: "percentage" };
-          case "Speed":
-            return { statName: "Speed", category: "flat" };
-          case "Attack":
-            return { statName: "Attack", category: "flat" };
-          case "Defense":
-            return { statName: "Defense", category: "flat" };
-          case "Health":
-            return { statName: "Health", category: "flat" };
-          default:
-            return null;
-        }
       }
+    }
 
-      for (const src of sourceChunk) {
-        const gearId = ingameToId.get(BigInt(src.ingameId).toString());
-        if (!gearId) continue;
-        if (!src.substats || !Array.isArray(src.substats)) continue;
-        let fSum = 0;
-        let mySum = 0;
-        for (const s of src.substats) {
-          const mappedType = mapSubstatType(s.type);
-          if (!mappedType) continue;
-          const statTypeId = statTypeNameToId.get(mappedType.statName);
-          if (!statTypeId) continue;
-          substatInserts.push({
-            gearId,
-            statTypeId,
-            statValue: s.value,
-            rolls: s.rolls ?? 0,
-            weight: 1,
-            isModified: false,
-          });
-          // Accumulate scores
-          const weight = 1; // default; can be synced from StatTypes if desired at upload time
-          fSum += Number(s.value) * weight;
-          // Custom score weights
-          const customWeights: Record<string, number> = {
-            Speed: 2.0,
-            "Crit %": 1.5,
-            "Crit Dmg %": 1.3,
-            "Attack %": 1.2,
-            "Defense %": 0.8,
-            "Health %": 0.8,
-            "Effectiveness %": 0.7,
-            "Effect Resist %": 0.6,
-            Attack: 0.3,
-            Defense: 0.2,
-            Health: 0.2,
-          };
-          mySum += Number(s.value) * (customWeights[mappedType.statName] ?? 1);
+    // STEP 2: Process each gear item
+    for (const item of data.items) {
+      try {
+        const itemObj = item as Record<string, unknown>;
+        // Determine which hero this gear is equipped by
+        let equippedBy: bigint | null = null;
+        if (itemObj.equippedBy && itemObj.equippedBy !== "undefined") {
+          const heroIngameId = itemObj.equippedBy.toString();
+          if (heroMap.has(heroIngameId)) {
+            equippedBy = heroMap.get(heroIngameId)!;
+          }
         }
-        gearIdToFScore.set(gearId, Math.round(fSum * 100) / 100);
-        gearIdToScore.set(gearId, Math.round(mySum * 100) / 100);
-      }
 
-      if (substatInserts.length > 0) {
-        const SUB_CHUNK = 1000;
-        for (let j = 0; j < substatInserts.length; j += SUB_CHUNK) {
-          const sChunk = substatInserts.slice(j, j + SUB_CHUNK);
-          await db.subStats.createMany({ data: sChunk });
+        // Map Fribbels fields to our schema
+        const gearData = {
+          ingameId: BigInt(String(itemObj.id || itemObj.ingameId || 0)),
+          code: (itemObj.code as string) || "",
+          type: mapGearType(itemObj.type as string),
+          gear: mapGearDisplayName(itemObj.gear as string),
+          rank: mapGearRank(itemObj.rank as string),
+          level: typeof itemObj.level === "number" ? itemObj.level : 1,
+          enhance: typeof itemObj.enhance === "number" ? itemObj.enhance : 0,
+          mainStatType: mapMainStatType(itemObj.mainStatType as string),
+          mainStatValue: parseFloat(String(itemObj.mainStatValue)) || 0,
+          mainStatBaseValue: parseFloat(String(itemObj.mainStatBaseValue)) || 0,
+          statMultiplier: parseFloat(String(itemObj.statMultiplier)) || 1,
+          tierMultiplier: parseFloat(String(itemObj.tierMultiplier)) || 1,
+          storage: itemObj.storage !== false,
+          equipped: equippedBy !== null, // Set equipped based on whether we have a hero
+          equippedBy: equippedBy,
+          ingameEquippedId:
+            typeof itemObj.ingameEquippedId === "string"
+              ? itemObj.ingameEquippedId
+              : null,
+          fScore: null, // Will be calculated later
+          score: null, // Will be calculated later
+          userId: session.user.id,
+        };
+
+        // Create gear
+        const gear = await db.gears.create({ data: gearData });
+
+        // Process substats
+        if (itemObj.substats && Array.isArray(itemObj.substats)) {
+          for (const substat of itemObj.substats) {
+            const substatObj = substat as Record<string, unknown>;
+            const statTypeId = await getStatTypeId(substatObj.type as string);
+            if (statTypeId) {
+              const substatData = {
+                gearId: gear.id,
+                statTypeId: statTypeId,
+                statValue: parseFloat(String(substatObj.value)) || 0,
+                rolls:
+                  typeof substatObj.rolls === "number" ? substatObj.rolls : 1,
+                weight: 1.0, // Default weight
+                isModified: false,
+                userId: session.user.id,
+              };
+
+              await db.gearSubStats.create({ data: substatData });
+            }
+          }
         }
-      }
 
-      // Update scores in gears table for this chunk
-      const updates: Promise<unknown>[] = [];
-      for (const g of gearsInDb) {
-        const f = gearIdToFScore.get(g.id) ?? null;
-        const s = gearIdToScore.get(g.id) ?? null;
-        updates.push(
-          db.gears.update({
-            where: { id: g.id },
-            data: { fScore: f, score: s },
-          })
+        importedCount++;
+      } catch (error) {
+        errors.push(
+          `Failed to import item ${
+            (item as Record<string, unknown>).id
+          }: ${error}`
         );
       }
-      if (updates.length) await Promise.all(updates);
     }
 
-    const response = {
-      success: true,
+    return NextResponse.json({
+      message: "Upload successful",
       count: importedCount,
-      errors: errorCount,
-      message: `Successfully imported ${importedCount} gear items${
-        errorCount > 0 ? ` with ${errorCount} errors` : ""
-      }`,
-    };
-
-    if (errors.length > 0 && errors.length <= 10) {
-      response.message += `. First few errors: ${errors
-        .slice(0, 5)
-        .join(", ")}`;
-    }
-
-    return NextResponse.json(response);
+      errors: errors.length > 0 ? errors : undefined,
+    });
   } catch (error) {
     console.error("Upload error:", error);
     return NextResponse.json(
-      {
-        error: "Failed to process upload",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
+      { message: "Internal server error" },
       { status: 500 }
     );
+  }
+}
+
+// Helper functions for mapping Fribbels data to our schema
+function mapGearType(
+  type: string
+): "weapon" | "armor" | "helm" | "neck" | "ring" | "boot" {
+  const typeMap: Record<
+    string,
+    "weapon" | "armor" | "helm" | "neck" | "ring" | "boot"
+  > = {
+    weapon: "weapon",
+    armor: "armor",
+    helm: "helm",
+    neck: "neck",
+    ring: "ring",
+    boot: "boot",
+  };
+  return typeMap[type.toLowerCase()] || "weapon";
+}
+
+function mapGearDisplayName(
+  gear: string
+): "Weapon" | "Armor" | "Helmet" | "Necklace" | "Ring" | "Boots" {
+  const gearMap: Record<
+    string,
+    "Weapon" | "Armor" | "Helmet" | "Necklace" | "Ring" | "Boots"
+  > = {
+    Weapon: "Weapon",
+    Armor: "Armor",
+    Helmet: "Helmet",
+    Necklace: "Necklace",
+    Ring: "Ring",
+    Boots: "Boots",
+  };
+  return gearMap[gear] || "Weapon";
+}
+
+function mapGearRank(
+  rank: string
+): "Common" | "Uncommon" | "Rare" | "Epic" | "Heroic" {
+  const rankMap: Record<
+    string,
+    "Common" | "Uncommon" | "Rare" | "Epic" | "Heroic"
+  > = {
+    Common: "Common",
+    Uncommon: "Uncommon",
+    Rare: "Rare",
+    Epic: "Epic",
+    Heroic: "Heroic",
+  };
+  return rankMap[rank] || "Common";
+}
+
+function mapMainStatType(
+  statType: string
+):
+  | "att"
+  | "def"
+  | "max_hp"
+  | "att_rate"
+  | "def_rate"
+  | "max_hp_rate"
+  | "cri"
+  | "cri_dmg"
+  | "speed"
+  | "acc"
+  | "res" {
+  const statMap: Record<
+    string,
+    | "att"
+    | "def"
+    | "max_hp"
+    | "att_rate"
+    | "def_rate"
+    | "max_hp_rate"
+    | "cri"
+    | "cri_dmg"
+    | "speed"
+    | "acc"
+    | "res"
+  > = {
+    att: "att",
+    def: "def",
+    max_hp: "max_hp",
+    att_rate: "att_rate",
+    def_rate: "def_rate",
+    max_hp_rate: "max_hp_rate",
+    cri: "cri",
+    cri_dmg: "cri_dmg",
+    speed: "speed",
+    acc: "acc",
+    res: "res",
+  };
+  return statMap[statType] || "att";
+}
+
+function mapHeroElement(
+  element: string
+): "Fire" | "Ice" | "Earth" | "Light" | "Dark" | null {
+  const elementMap: Record<
+    string,
+    "Fire" | "Ice" | "Earth" | "Light" | "Dark"
+  > = {
+    Fire: "Fire",
+    Ice: "Ice",
+    Earth: "Earth",
+    Light: "Light",
+    Dark: "Dark",
+  };
+  return elementMap[element] || null;
+}
+
+function mapHeroRarity(
+  rarity: string
+): "THREE_STAR" | "FOUR_STAR" | "FIVE_STAR" | null {
+  const rarityMap: Record<string, "THREE_STAR" | "FOUR_STAR" | "FIVE_STAR"> = {
+    "3": "THREE_STAR",
+    "4": "FOUR_STAR",
+    "5": "FIVE_STAR",
+    THREE_STAR: "THREE_STAR",
+    FOUR_STAR: "FOUR_STAR",
+    FIVE_STAR: "FIVE_STAR",
+  };
+  return rarityMap[rarity] || null;
+}
+
+function mapHeroClass(
+  heroClass: string
+): "Warrior" | "Knight" | "Ranger" | "Mage" | "SoulWeaver" | "Thief" | null {
+  const classMap: Record<
+    string,
+    "Warrior" | "Knight" | "Ranger" | "Mage" | "SoulWeaver" | "Thief"
+  > = {
+    Warrior: "Warrior",
+    Knight: "Knight",
+    Ranger: "Ranger",
+    Mage: "Mage",
+    SoulWeaver: "SoulWeaver",
+    Thief: "Thief",
+  };
+  return classMap[heroClass] || null;
+}
+
+async function getStatTypeId(statName: string): Promise<number | null> {
+  try {
+    // Map Fribbels stat names to our database stat names
+    const statNameMap: Record<string, string> = {
+      CriticalHitChancePercent: "Crit %",
+      CriticalHitDamagePercent: "Crit Dmg %",
+      AttackPercent: "Attack %",
+      DefensePercent: "Defense %",
+      HealthPercent: "Health %",
+      EffectivenessPercent: "Effectiveness %",
+      EffectResistancePercent: "Effect Resist %",
+      Speed: "Speed",
+      Attack: "Attack",
+      Defense: "Defense",
+      Health: "Health",
+    };
+
+    const mappedName = statNameMap[statName] || statName;
+
+    // Find the stat type in the database
+    const statType = await db.statTypes.findFirst({
+      where: { statName: mappedName },
+      select: { id: true },
+    });
+
+    return statType?.id || null;
+  } catch (error) {
+    console.error(`Error finding stat type for ${statName}:`, error);
+    return null;
   }
 }

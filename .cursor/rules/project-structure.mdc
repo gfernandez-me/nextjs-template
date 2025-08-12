@@ -48,6 +48,7 @@
 │   └── rules/             # Business rules and documentation
 ├── prisma/                # Database schema and migrations
 │   ├── schema.prisma      # Prisma schema definition
+│   ├── seed.ts            # Database seeding script
 │   └── generated/         # Generated Prisma client (gitignored)
 │       └── client/        # Prisma client files
 ├── src/                   # Application source code
@@ -55,29 +56,44 @@
 │   │   ├── (main)/             # Route group with shared layout
 │   │   │   ├── layout.tsx      # Shared layout with navigation
 │   │   │   ├── page.tsx        # Home page (gear table)
-│   │   │   ├── statistics/
-│   │   │   │   └── page.tsx    # Statistics dashboard
-│   │   │   └── upload/
-│   │   │       └── page.tsx    # Upload page
-│   │   ├── api/
-│   │   │   └── upload/
-│   │   │       └── route.ts    # Upload API route
-│   │   ├── lib/
-│   │   │   └── gear.ts         # Centralized server-side data methods
+│   │   │   ├── profile/        # User profile page
+│   │   │   │   └── page.tsx    # Profile management
+│   │   │   ├── settings/       # App settings page
+│   │   │   │   └── page.tsx    # Scoring configuration
+│   │   │   ├── statistics/     # Statistics dashboard
+│   │   │   │   └── page.tsx    # Gear statistics
+│   │   │   └── upload/         # Upload page
+│   │   │       └── page.tsx    # Gear upload
+│   │   ├── api/                # API routes
+│   │   │   ├── auth/           # Authentication endpoints
+│   │   │   │   ├── signin/     # User sign in
+│   │   │   │   ├── signout/    # User sign out
+│   │   │   │   ├── me/         # Current user info
+│   │   │   │   └── change-password/ # Password change
+│   │   │   ├── settings/       # Settings management
+│   │   │   │   └── recalculate/ # Score recalculation
+│   │   │   └── upload/         # File upload processing
+│   │   ├── signin/             # Sign in page
+│   │   │   └── page.tsx        # Authentication form
 │   │   ├── not-found.tsx       # 404 page
 │   │   └── globals.css         # Global styles
 │   ├── components/             # Shared/generic components
-│   │   ├── control-bar.tsx     # Filters bar (client)
-│   │   ├── statistics-charts.tsx # Charts (client)
-│   │   ├── gear-table.tsx      # Re-export for legacy compatibility
-│   │   ├── GearTable.tsx       # Legacy PascalCase (to be migrated)
+│   │   ├── navigation.tsx      # Main navigation bar
+│   │   ├── profile-form.tsx    # User profile management
+│   │   ├── settings-form.tsx   # Settings configuration
+│   │   ├── upload-form.tsx     # File upload form
+│   │   ├── gear-table.tsx      # Gear inventory table
+│   │   ├── statistics-content.tsx # Statistics display
 │   │   ├── icons.tsx           # Icon helpers
 │   │   └── ui/                 # shadcn/ui primitives
-│   └── lib/                    # Utilities
-│       ├── db.ts               # Prisma db singleton
-│       ├── decimal.ts          # Decimal converters
-│       ├── stats.ts            # Stat formatting helpers
-│       └── utils.ts            # Misc utilities
+│   ├── hooks/                  # React hooks
+│   │   └── useAuth.ts          # Authentication state management
+│   ├── lib/                    # Utilities and configuration
+│   │   ├── auth.ts             # Authentication functions
+│   │   ├── data-access.ts      # Data Access Layer (DAL)
+│   │   ├── db.ts               # Prisma database singleton
+│   │   └── utils.ts            # shadcn/ui utilities
+│   └── middleware.ts           # Route protection middleware
 
 ├── public/                # Static assets
 ├── package.json           # Node.js dependencies and scripts
@@ -91,12 +107,13 @@
 
 ### Database Schema Architecture
 
-- **Gears Table**: Core gear items with enums and relationships
-- **Heroes Table**: Epic 7 heroes with equipment slot references
-- **SubStats Table**: Individual substat records with weights
-- **StatTypes Table**: Reference table for stat definitions
-- **GearSets Table**: Reference table for set effects
-- **Relationships**: Proper foreign key relationships between all tables
+- **Users Table**: User accounts with authentication and relationships
+- **Gears Table**: Core gear items with user ownership and enums
+- **Heroes Table**: Epic 7 heroes with user ownership and equipment slots
+- **GearSubStats Table**: Individual substat records with user ownership and weights
+- **StatTypes Table**: Shared reference table for stat definitions
+- **Settings Table**: User-specific scoring configuration and thresholds
+- **Relationships**: Proper foreign key relationships with user-based data isolation
 
 ### Enum System
 
@@ -109,7 +126,43 @@
 - **HeroRarity**: THREE_STAR, FOUR_STAR, FIVE_STAR
 - **HeroClass**: Warrior, Knight, Ranger, Mage, SoulWeaver, Thief
 
-## 3. Development Environment
+### Multi-User Architecture
+
+The application implements a complete multi-user system with data isolation:
+
+- **User Authentication**: JWT-based authentication with HTTP-only cookies
+- **Data Access Layer (DAL)**: Centralized data access with automatic user scoping
+- **Route Protection**: Middleware-based authentication for all protected routes
+- **User Ownership**: All user data (gears, heroes, settings) includes `userId` field
+- **Data Isolation**: Users can only access their own data through database constraints
+
+## 3. Authentication System
+
+### Authentication Architecture
+
+- **JWT Tokens**: JSON Web Tokens for session management
+- **HTTP-Only Cookies**: Secure token storage with automatic expiration
+- **bcrypt Hashing**: Password hashing with 12 rounds of salt
+- **Route Protection**: Middleware-based authentication for all protected routes
+- **User Sessions**: 7-day token expiration with automatic cleanup
+
+### Authentication Flow
+
+1. **Sign In**: User provides email/password, receives JWT token
+2. **Token Storage**: Token stored in HTTP-only cookie
+3. **Route Access**: Middleware validates token for protected routes
+4. **API Calls**: All API endpoints require valid authentication
+5. **Sign Out**: Token cleared from cookie
+
+### Security Features
+
+- **Password Hashing**: bcrypt with 12 rounds of salt
+- **Token Expiration**: Automatic token expiration and cleanup
+- **Route Protection**: All routes protected by default
+- **Data Isolation**: Complete user data separation
+- **Input Validation**: Comprehensive input sanitization
+
+## 4. Development Environment
 
 ### DevContainer Configuration
 

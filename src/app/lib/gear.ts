@@ -38,75 +38,7 @@ export async function getGearsPage(params: {
 
   const total = await db.gears.count({ where });
 
-  // Score-based sorts: compute in memory then paginate
-  if (sortBy === "fscore" || sortBy === "score") {
-    const rowsAll = await db.gears.findMany({
-      where,
-      select: {
-        id: true,
-        gear: true,
-        rank: true,
-        level: true,
-        enhance: true,
-        mainStatType: true,
-        mainStatValue: true,
-        equipped: true,
-        fScore: true,
-        score: true,
-        hero: { select: { name: true, ingameId: true } },
-        substats: {
-          select: {
-            statValue: true,
-            statType: {
-              select: { statName: true, statCategory: true, weight: true },
-            },
-          },
-        },
-      },
-    });
-    const rowsWithScore = convertDecimals(rowsAll).map((r) => {
-      const f =
-        typeof r.fScore === "number"
-          ? r.fScore
-          : r.substats.reduce((acc, s) => {
-              const w =
-                typeof s.statType.weight === "number" ? s.statType.weight : 1;
-              return acc + Number(s.statValue) * w;
-            }, 0);
-      const customWeights: Record<string, number> = {
-        Speed: 2.0,
-        "Crit %": 1.5,
-        "Crit Dmg %": 1.3,
-        "Attack %": 1.2,
-        "Defense %": 0.8,
-        "Health %": 0.8,
-        "Effectiveness %": 0.7,
-        "Effect Resist %": 0.6,
-        Attack: 0.3,
-        Defense: 0.2,
-        Health: 0.2,
-      };
-      const my =
-        typeof r.score === "number"
-          ? r.score
-          : r.substats.reduce((acc, s) => {
-              const w = customWeights[s.statType.statName] ?? 1;
-              return acc + Number(s.statValue) * w;
-            }, 0);
-      return {
-        r,
-        fscore: Math.round(f * 100) / 100,
-        score: Math.round(my * 100) / 100,
-      };
-    });
-    const dir = sortDir === "asc" ? 1 : -1;
-    rowsWithScore.sort((a, b) => {
-      const key = sortBy as "fscore" | "score";
-      return (a[key] - b[key]) * dir;
-    });
-    const sliced = rowsWithScore.slice(skip, skip + perPage).map((x) => x.r);
-    return { rows: sliced, total };
-  }
+  // Score-based sorts now handled by DB columns
 
   // Column-based sorts via Prisma
   const dirFinal: "asc" | "desc" = sortDir === "asc" ? "asc" : "desc";
@@ -117,6 +49,8 @@ export async function getGearsPage(params: {
     enhance: { enhance: dirFinal },
     mainStatType: { mainStatType: dirFinal },
     mainStatValue: { mainStatValue: dirFinal },
+    fScore: { fScore: dirFinal },
+    score: { score: dirFinal },
     rank: { rank: dirFinal },
     createdAt: { createdAt: dirFinal },
     heroName: { hero: { name: dirFinal } },
@@ -185,4 +119,8 @@ export async function getAggregates(where?: Prisma.GearsWhereInput) {
       value: m._count._all,
     })),
   };
+}
+
+export async function getSettings() {
+  return db.settings.findFirst();
 }

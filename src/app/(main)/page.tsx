@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { getGearsPage, getGearStats } from "@/app/lib/gear";
+import { getAuth } from "@/lib/auth";
+import { createDataAccess } from "@/lib/data-access";
 import { GearTable } from "@/components/gear-table";
 import ControlBar from "@/components/control-bar";
 import {
@@ -9,25 +10,38 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home({
   searchParams,
 }: {
-  searchParams?: Promise<Record<string, string | string[]>>;
+  searchParams?: Promise<unknown>;
 }) {
-  const resolved = (await searchParams) ?? {};
+  // Get current user
+  const session = await getAuth();
+  if (!session?.user?.id) {
+    redirect("/signin");
+  }
+
+  // Create data access layer for current user
+  const dal = createDataAccess(session.user.id);
+
+  const resolvedUnknown = (await searchParams) ?? {};
+  const resolved = resolvedUnknown as Record<string, string | string[]>;
   const pageParam = Array.isArray(resolved?.page)
     ? resolved?.page[0]
     : (resolved?.page as string | undefined);
   const page = Math.max(1, parseInt(pageParam ?? "1", 10) || 1);
   const perPage = 50;
   const where: Record<string, unknown> = {};
+
   if (resolved?.rank) {
     const ranks = String(resolved.rank).split("|").filter(Boolean);
     if (ranks.length) where.rank = { in: ranks };
   }
+
   if (resolved?.type) {
     const typeRaw = Array.isArray(resolved.type)
       ? resolved.type[0]
@@ -52,6 +66,7 @@ export default async function Home({
       where.gear = map[typeRaw.toLowerCase()];
     }
   }
+
   if (resolved?.enhance !== undefined) {
     const enh = parseInt(String(resolved.enhance), 10);
     if (!Number.isNaN(enh)) where.enhance = enh;
@@ -61,7 +76,6 @@ export default async function Home({
   const subsRaw = String(resolved?.subs ?? "");
   const subs = subsRaw.split("|").filter(Boolean);
   if (subs.length) {
-    // Narrow type via explicit inline type
     where.substats = {
       some: {
         statType: { statName: { in: subs } },
@@ -92,9 +106,10 @@ export default async function Home({
   ) as "asc" | "desc";
 
   const [{ rows: allGears, total }, stats] = await Promise.all([
-    getGearsPage({ page, perPage, where, sortBy, sortDir }),
-    getGearStats(),
+    dal.getGearsPage({ page, perPage, where, sortBy, sortDir }),
+    dal.getGearStats(),
   ]);
+
   const totalPages = Math.max(1, Math.ceil(total / perPage));
 
   return (

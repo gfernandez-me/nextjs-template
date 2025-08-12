@@ -1,0 +1,189 @@
+# Authentication Implementation
+
+## Overview
+
+Custom JWT-based authentication system implemented for the Epic 7 Gear Optimizer, providing secure user management with session-based authentication.
+
+## Implementation Details
+
+### 1. User Model (Prisma Schema)
+
+```prisma
+model User {
+  id        String   @id @default(cuid())
+  name      String?
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+```
+
+### 2. Authentication System
+
+- **Type**: Custom JWT-based authentication
+- **Strategy**: HTTP-only cookies for token storage
+- **Security**: bcrypt password hashing (12 rounds)
+- **Session**: 7-day token expiration
+- **Protection**: Route middleware for protected pages
+
+### 3. Key Files
+
+- `src/lib/auth.ts` - Core authentication functions
+- `src/hooks/useAuth.ts` - Client-side auth hook
+- `src/middleware.ts` - Route protection middleware
+- `src/app/api/auth/signin/route.ts` - Sign in endpoint
+- `src/app/api/auth/signout/route.ts` - Sign out endpoint
+- `src/app/api/auth/me/route.ts` - User info endpoint
+- `src/app/api/auth/change-password/route.ts` - Password change endpoint
+- `src/app/(main)/profile/page.tsx` - User profile page
+- `src/app/(main)/signin/page.tsx` - Sign in page
+- `src/components/navigation.tsx` - Updated with auth state
+
+### 4. Database Setup
+
+#### Required Commands
+
+```bash
+# Generate Prisma client
+npm run db:generate
+
+# Run migrations (creates tables)
+npm run db:migrate
+
+# Seed database with admin user and default settings
+npm run db:seed
+```
+
+#### What Gets Created
+
+- **Admin User**: `admin@epic7optimizer.com` / `admin1234`
+- **Default Settings**: Scoring weights, thresholds, fScore configuration
+- **Database Tables**: Users, Gears, Heroes, SubStats, StatTypes, GearSets, Settings
+
+### 5. Default Admin User
+
+- **Email**: admin@epic7optimizer.com
+- **Password**: admin1234
+- **ID**: admin-user
+- **Created**: Via `npm run db:seed` command
+
+### 6. Security Features
+
+- Password hashing with bcrypt (12 rounds)
+- JWT token validation
+- HTTP-only cookies for token storage
+- Route protection middleware
+- Secure password change with current password verification
+
+### 7. User Experience
+
+- Profile page showing user information
+- Password change functionality
+- Sign in/out from navigation
+- Responsive design with shadcn/ui components
+- Loading states and error handling
+
+### 8. API Endpoints
+
+- `POST /api/auth/signin` - User sign in
+- `POST /api/auth/signout` - User sign out
+- `GET /api/auth/me` - Get current user info
+- `POST /api/auth/change-password` - Change user password
+
+### 9. Dependencies Added
+
+- `jsonwebtoken` - JWT token handling
+- `@types/jsonwebtoken` - TypeScript types
+- `bcryptjs` - Password hashing
+- `@types/bcryptjs` - TypeScript types
+- `tsx` - TypeScript execution for seeding
+
+### 10. Route Protection
+
+**Protected Routes** (require authentication):
+
+- `/profile` - User profile
+- `/settings` - App settings
+- `/upload` - Gear upload
+
+**Public Routes**:
+
+- `/` - Home page
+- `/signin` - Sign in page
+- `/statistics` - Gear statistics
+
+### 11. Client-Side Authentication
+
+- Custom `useAuth` hook for state management
+- Automatic token refresh on page load
+- Loading states during authentication
+- Automatic redirects based on auth status
+
+## Usage
+
+1. **Setup Database**: Run `npm run db:seed` after migrations
+2. **Sign In**: Navigate to `/signin` or click "Sign In" button
+3. **Profile**: Access via navigation or `/profile` route
+4. **Password Change**: Use form in profile page
+5. **Sign Out**: Click "Sign Out" button in navigation
+
+## Database Seeding
+
+The system includes a comprehensive seeder that creates:
+
+- Default admin user with secure password
+- Application settings with scoring weights
+- Threshold values for gear quality badges
+- fScore configuration for optimization
+
+**Seed Command**: `npm run db:seed`
+
+## Environment Variables
+
+Add to your `.env` file:
+
+```
+JWT_SECRET=your-secure-secret-key-here
+DATABASE_URL=postgresql://username:password@localhost:5432/database_name
+```
+
+## Troubleshooting
+
+### Common Issues
+
+#### Admin Login Not Working
+
+If you can't sign in with the default admin account:
+
+1. **Check Database Seeding**: Ensure `npm run db:seed` was run successfully
+2. **Verify User Exists**: Check that admin user exists in the database
+3. **Password Format**: Use exactly `admin@epic7optimizer.com` / `admin1234`
+4. **Whitespace Issues**: The system now trims input to prevent whitespace problems
+5. **Password Reset**: If issues persist, manually reset via Prisma Studio
+
+#### Password Hash Issues
+
+The system uses bcrypt with 12 rounds for password hashing. If authentication fails:
+
+- Verify the password hash in the database is valid
+- Check that bcryptjs is properly installed
+- Ensure the password comparison is working correctly
+
+### Debug Steps
+
+1. **Check Server Logs**: Look for authentication errors in console
+2. **Verify Database**: Use Prisma Studio to check user table
+3. **Test Password Hash**: Manually verify bcrypt comparison
+4. **Check Environment**: Ensure JWT_SECRET is set correctly
+
+## Build Status
+
+✅ **Build Successful**: All authentication components compile without errors
+✅ **Type Safety**: Full TypeScript support with proper interfaces
+✅ **Route Protection**: Middleware properly protects authenticated routes
+✅ **API Endpoints**: All auth endpoints working correctly
+✅ **Database Seeding**: Admin user and settings created successfully
+✅ **Authentication Fixed**: Password hashing and comparison working correctly

@@ -142,78 +142,74 @@ export function GearTable({ rows }: { rows: GearWithRelations[] }) {
     return label.replace(/\s*%$/, "");
   }
 
-  function getGearAbbrev(type: string): string {
-    switch (type) {
-      case "Weapon":
-        return "WPN";
-      case "Helmet":
-        return "HELM";
-      case "Armor":
-        return "ARM";
-      case "Necklace":
-        return "NECK";
-      case "Ring":
-        return "RING";
-      case "Boots":
-        return "BOOT";
-      default:
-        return type.slice(0, 4).toUpperCase();
-    }
-  }
+  const [thresholds, setThresholds] = React.useState<Record<string, number[]>>(
+    {}
+  );
 
-  function getSpeedTierBadge(
-    value: number,
-    enhance: number
-  ): {
-    label: string;
-    className: string;
-    icon?: "low" | "high";
-  } | null {
-    // Only rate +15 and +0 explicitly; others return null (neutral)
-    if (enhance === 15) {
+  React.useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/settings", { cache: "no-store" });
+        if (!res.ok) return;
+        const data = (await res.json()) as {
+          substatThresholds?: Record<string, { plus15?: number[] }>;
+        } | null;
+        const t: Record<string, number[]> = {};
+        const raw = data?.substatThresholds ?? {};
+        for (const [k, v] of Object.entries(raw)) {
+          const arr = Array.isArray(v?.plus15) ? (v?.plus15 as number[]) : [];
+          if (arr.length) t[k] = arr;
+        }
+        // Fallbacks
+        if (!t["Speed"]) t["Speed"] = [4, 8, 12, 18];
+        if (!t["Crit %"]) t["Crit %"] = [4, 8, 12, 16];
+        if (!t["Crit Dmg %"]) t["Crit Dmg %"] = [4, 8, 12, 20];
+        if (!t["Attack %"]) t["Attack %"] = [4, 8, 12, 16];
+        if (!t["Defense %"]) t["Defense %"] = [4, 8, 12, 16];
+        if (!t["Health %"]) t["Health %"] = [4, 8, 12, 16];
+        if (!t["Effectiveness %"]) t["Effectiveness %"] = [4, 8, 12, 16];
+        if (!t["Effect Resist %"]) t["Effect Resist %"] = [4, 8, 12, 16];
+        if (!t["Attack"]) t["Attack"] = [20, 40, 60, 90];
+        if (!t["Defense"]) t["Defense"] = [10, 20, 30, 45];
+        if (!t["Health"]) t["Health"] = [50, 100, 150, 220];
+        setThresholds(t);
+      } catch {
+        // ignore
+      }
+    })();
+  }, []);
+
+  const getStatBadge = React.useCallback(
+    (
+      name: string,
+      value: number,
+      enhance: number
+    ): { label: string; className: string; icon?: "low" | "high" } | null => {
+      const th = thresholds[name];
+      if (!th || enhance !== 15) return null;
+      const [t1, t2, t3, t4] = th;
       if (value <= 0)
         return { label: "0", className: "bg-gray-400 text-white" };
-      if (value >= 1 && value <= 4)
+      if (value <= t1)
         return {
           label: String(value),
           className: "bg-red-500 text-white",
           icon: "low",
         };
-      if (value >= 5 && value <= 8)
+      if (value <= t2)
         return { label: String(value), className: "bg-amber-500 text-black" };
-      if (value >= 9 && value <= 12)
+      if (value <= t3)
         return { label: String(value), className: "bg-sky-500 text-white" };
-      if (value >= 13 && value <= 18)
-        return { label: String(value), className: "bg-violet-600 text-white" };
-      if (value > 18)
-        return {
-          label: String(value),
-          className: "bg-yellow-500 text-black",
-          icon: "high",
-        };
-      return { label: String(value), className: "bg-gray-400 text-white" };
-    }
-    if (enhance === 0) {
-      if (value <= 1)
-        return {
-          label: String(value),
-          className: "bg-red-500 text-white",
-          icon: "low",
-        };
-      if (value <= 3)
-        return { label: String(value), className: "bg-amber-500 text-black" };
-      if (value <= 5)
-        return { label: String(value), className: "bg-sky-500 text-white" };
-      if (value <= 8)
+      if (value <= t4)
         return { label: String(value), className: "bg-violet-600 text-white" };
       return {
         label: String(value),
         className: "bg-yellow-500 text-black",
         icon: "high",
       };
-    }
-    return null;
-  }
+    },
+    [thresholds]
+  );
 
   const columns = React.useMemo(
     () =>
@@ -224,14 +220,12 @@ export function GearTable({ rows }: { rows: GearWithRelations[] }) {
           cell: ({ row }) => {
             const iconSymbol = getGearIcon(row.original.gear);
             const rankClass = getRankColor(String(row.original.rank));
-            const abbrev = getGearAbbrev(row.original.gear);
+            const displayName = row.original.gear;
             return (
               <div className="flex items-center gap-2">
                 <span className="text-lg leading-none">{iconSymbol}</span>
-                {/* Keep color indicator without duplicating text */}
-                <span className={`text-xs font-semibold ${rankClass}`}>●</span>
-                <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold bg-foreground text-background">
-                  {abbrev}
+                <span className={`text-xs font-semibold ${rankClass}`}>
+                  {displayName}
                 </span>
               </div>
             );
@@ -240,50 +234,32 @@ export function GearTable({ rows }: { rows: GearWithRelations[] }) {
           enableColumnFilter: false,
         },
         {
-          id: "fscore",
+          id: "fScore",
           header: () => <span>F Score</span>,
-          cell: ({ row }) => {
-            const r = row.original as GearRow & { fScore?: number | null };
-            const val =
-              typeof r.fScore === "number"
-                ? r.fScore
-                : computeFribbelsLikeScore(r);
-            return <span className="font-mono text-xs">{val}</span>;
-          },
+          accessorFn: (row: GearRow) =>
+            typeof (row as GearRow & { fScore?: number | null }).fScore ===
+            "number"
+              ? (row as GearRow & { fScore?: number | null }).fScore
+              : computeFribbelsLikeScore(row),
+          cell: ({ getValue }) => (
+            <span className="font-mono text-xs">{getValue<number>()}</span>
+          ),
           enableSorting: true,
-          sortingFn: (a, b) => {
-            const ra = a.original as GearRow & { fScore?: number | null };
-            const rb = b.original as GearRow & { fScore?: number | null };
-            const va =
-              typeof ra.fScore === "number"
-                ? ra.fScore
-                : computeFribbelsLikeScore(ra);
-            const vb =
-              typeof rb.fScore === "number"
-                ? rb.fScore
-                : computeFribbelsLikeScore(rb);
-            return va - vb;
-          },
+          sortingFn: "basic",
         },
         {
           id: "score",
           header: () => <span>Score</span>,
-          cell: ({ row }) => {
-            const r = row.original as GearRow & { score?: number | null };
-            const val =
-              typeof r.score === "number" ? r.score : computeCustomScore(r);
-            return <span className="font-mono text-xs">{val}</span>;
-          },
+          accessorFn: (row: GearRow) =>
+            typeof (row as GearRow & { score?: number | null }).score ===
+            "number"
+              ? (row as GearRow & { score?: number | null }).score
+              : computeCustomScore(row),
+          cell: ({ getValue }) => (
+            <span className="font-mono text-xs">{getValue<number>()}</span>
+          ),
           enableSorting: true,
-          sortingFn: (a, b) => {
-            const ra = a.original as GearRow & { score?: number | null };
-            const rb = b.original as GearRow & { score?: number | null };
-            const va =
-              typeof ra.score === "number" ? ra.score : computeCustomScore(ra);
-            const vb =
-              typeof rb.score === "number" ? rb.score : computeCustomScore(rb);
-            return va - vb;
-          },
+          sortingFn: "basic",
         },
         {
           accessorKey: "level",
@@ -325,26 +301,25 @@ export function GearTable({ rows }: { rows: GearWithRelations[] }) {
             cell: ({ row }: { row: { original: GearRow } }) => {
               const s = row.original.substats[idx];
               if (!s) return <span className="text-muted-foreground">-</span>;
-              const isSpeed = s.statType.statName === "Speed";
-              const speedBadge = isSpeed
-                ? getSpeedTierBadge(Number(s.statValue), row.original.enhance)
-                : null;
+              const badge = getStatBadge(
+                s.statType.statName,
+                Number(s.statValue),
+                row.original.enhance
+              );
               return (
                 <div className="flex items-center gap-2 text-[11px] leading-4">
                   <span className="text-muted-foreground">
                     {stripPercent(abbreviateSubstatLabel(s.statType.statName))}
                   </span>
-                  {isSpeed && speedBadge ? (
+                  {badge ? (
                     <span
-                      className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] ${speedBadge.className}`}
+                      className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] ${badge.className}`}
                     >
-                      {speedBadge.icon === "low" && (
+                      {badge.icon === "low" && (
                         <AlertTriangle className="h-3 w-3" />
                       )}
-                      {speedBadge.icon === "high" && (
-                        <Trophy className="h-3 w-3" />
-                      )}
-                      {speedBadge.label}
+                      {badge.icon === "high" && <Trophy className="h-3 w-3" />}
+                      {badge.label}
                     </span>
                   ) : (
                     <span className="font-mono tabular-nums">
@@ -369,33 +344,10 @@ export function GearTable({ rows }: { rows: GearWithRelations[] }) {
           cell: ({ row }) => {
             const hero = row.original.hero;
             if (!hero?.name) return <span className="text-xs" />;
-            const slug = hero.name
-              .toLowerCase()
-              .replace(/[^a-z0-9]+/g, "-")
-              .replace(/-+/, "-")
-              .replace(/(^-|-$)/g, "");
-            const icon = `/images/heroes/portraits/${slug}.png`;
             return (
-              <div className="flex items-center gap-2">
-                <div className="relative">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={icon}
-                    alt={hero.name}
-                    width={24}
-                    height={24}
-                    className="rounded-full object-cover"
-                    onError={(e) => {
-                      const t = e.currentTarget as HTMLImageElement;
-                      t.onerror = null;
-                      t.src = "/images/gears/unknown.svg";
-                    }}
-                  />
-                </div>
-                <span className="text-xs font-medium truncate max-w-[160px]">
-                  {hero.name}
-                </span>
-              </div>
+              <span className="text-xs font-medium truncate max-w-[160px]">
+                {hero.name}
+              </span>
             );
           },
           enableSorting: true,
@@ -412,7 +364,7 @@ export function GearTable({ rows }: { rows: GearWithRelations[] }) {
           },
         },
       ] as ColumnDef<GearRow>[],
-    []
+    [getStatBadge]
   );
 
   const table = useReactTable({
@@ -443,7 +395,7 @@ export function GearTable({ rows }: { rows: GearWithRelations[] }) {
           gear: "type",
           heroName: "equipped",
           score: "score",
-          fscore: "fscore",
+          fScore: "fScore",
         };
         const id = reverseMap[sort] ?? sort;
         setSorting([{ id, desc: dir !== "asc" }]);
@@ -466,7 +418,7 @@ export function GearTable({ rows }: { rows: GearWithRelations[] }) {
       level: "level",
       enhance: "enhance",
       mainStatValue: "mainStatValue",
-      fscore: "fscore",
+      fScore: "fScore",
       score: "score",
       equipped: "heroName",
     };
