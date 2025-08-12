@@ -95,17 +95,17 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
           ...(initialSettings.fScoreMainStatWeights as Record<string, number>),
         });
       if (initialSettings.substatThresholds) {
-        const merged: Record<string, { plus15: number[] }> = {
-          ...thresholds,
-        };
+        const next: Record<string, { plus15: number[] }> = { ...thresholds };
         for (const [k, v] of Object.entries(
           initialSettings.substatThresholds
         )) {
           if (v?.plus15 && Array.isArray(v.plus15) && v.plus15.length === 4) {
-            merged[k] = { plus15: v.plus15 as number[] };
+            next[k] = { plus15: v.plus15 as number[] };
           }
         }
-        setThresholds(merged);
+        setThresholds((prev) =>
+          JSON.stringify(next) === JSON.stringify(prev) ? prev : next
+        );
       }
     }
     setLoading(false);

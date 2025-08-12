@@ -11,7 +11,9 @@ interface UseAuthReturn {
   refreshUser: () => Promise<void>;
 }
 
-export function useAuth(): UseAuthReturn {
+export function useAuth(options?: {
+  suppressInitialFetch?: boolean;
+}): UseAuthReturn {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -66,8 +68,12 @@ export function useAuth(): UseAuthReturn {
   }, []);
 
   useEffect(() => {
+    if (options?.suppressInitialFetch) {
+      setLoading(false);
+      return;
+    }
     refreshUser();
-  }, [refreshUser]);
+  }, [refreshUser, options?.suppressInitialFetch]);
 
   return {
     user,

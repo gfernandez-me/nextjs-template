@@ -20,9 +20,16 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(signInUrl);
   }
 
-  // If user is signed in and tries to access sign in page, redirect to home
-  if (pathname === "/signin" && token) {
-    return NextResponse.redirect(new URL("/", request.url));
+  // If visiting the sign-in page and a token exists (possibly stale), clear it to avoid loops
+  if (pathname.startsWith("/signin") && token) {
+    const res = NextResponse.next();
+    res.cookies.set("auth-token", "", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 0,
+    });
+    return res;
   }
 
   return NextResponse.next();

@@ -28,7 +28,59 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     const fileContent = await file.text();
-    let data: { items?: unknown[]; heroes?: unknown[] };
+    // Strongly typed Fribbels export (subset)
+    interface FribbelsSubstat {
+      type: string;
+      value: number | string;
+      rolls?: number;
+    }
+    interface FribbelsItem {
+      id: number | string;
+      ingameId?: number | string;
+      type: string; // "ring", "weapon", etc.
+      gear: string; // "Ring", "Weapon", etc.
+      rank: string; // "Epic", etc.
+      level?: number;
+      enhance?: number;
+      mainStatType: string; // e.g. "att_rate"
+      mainStatValue: number | string;
+      mainStatBaseValue?: number | string;
+      statMultiplier?: number | string;
+      tierMultiplier?: number | string;
+      storage?: boolean;
+      code?: string;
+      substats?: FribbelsSubstat[];
+      equippedBy?: number | string | null;
+      ingameEquippedId?: number | string | null;
+    }
+    interface FribbelsHero {
+      id?: number | string;
+      ingameId?: number | string;
+      name?: string;
+      element?: string;
+      rarity?: string | number;
+      class?: string;
+      attack?: number;
+      defense?: number;
+      health?: number;
+      speed?: number;
+      criticalHitChance?: number;
+      criticalHitDamage?: number;
+      effectiveness?: number;
+      effectResistance?: number;
+      weaponId?: number;
+      armorId?: number;
+      helmetId?: number;
+      necklaceId?: number;
+      ringId?: number;
+      bootId?: number;
+    }
+    interface FribbelsExport {
+      items: FribbelsItem[];
+      heroes?: FribbelsHero[];
+    }
+
+    let data: FribbelsExport;
 
     try {
       data = JSON.parse(fileContent);
@@ -39,7 +91,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    if (!data.items || !Array.isArray(data.items)) {
+    if (!data || !data.items || !Array.isArray(data.items)) {
       return NextResponse.json(
         { message: "Invalid file format. Expected 'items' array." },
         { status: 400 }
@@ -113,11 +165,20 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // STEP 2: Process each gear item
     for (const item of data.items) {
       try {
-        const itemObj = item as Record<string, unknown>;
-        // Determine which hero this gear is equipped by
+        const itemObj = item as unknown as Record<string, unknown>;
+        // Determine which hero this gear is equipped by (support multiple fields)
         let equippedBy: bigint | null = null;
-        if (itemObj.equippedBy && itemObj.equippedBy !== "undefined") {
-          const heroIngameId = itemObj.equippedBy.toString();
+        const rawEquipped =
+          (itemObj.equippedBy as unknown) ??
+          (itemObj.ingameEquippedId as unknown);
+        if (
+          rawEquipped !== undefined &&
+          rawEquipped !== null &&
+          String(rawEquipped) !== "undefined" &&
+          String(rawEquipped) !== "null" &&
+          String(rawEquipped) !== "0"
+        ) {
+          const heroIngameId = String(rawEquipped);
           if (heroMap.has(heroIngameId)) {
             equippedBy = heroMap.get(heroIngameId)!;
           }
@@ -153,9 +214,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         const gear = await db.gears.create({ data: gearData });
 
         // Process substats
-        if (itemObj.substats && Array.isArray(itemObj.substats)) {
-          for (const substat of itemObj.substats) {
-            const substatObj = substat as Record<string, unknown>;
+        if (
+          (item as FribbelsItem).substats &&
+          Array.isArray((item as FribbelsItem).substats)
+        ) {
+          for (const substat of (item as FribbelsItem).substats!) {
+            const substatObj = substat as unknown as Record<string, unknown>;
             const statTypeId = await getStatTypeId(substatObj.type as string);
             if (statTypeId) {
               const substatData = {
@@ -176,10 +240,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
         importedCount++;
       } catch (error) {
+        const badId =
+          (item as unknown as { id?: unknown; ingameId?: unknown })?.id ??
+          (item as unknown as { id?: unknown; ingameId?: unknown })?.ingameId;
         errors.push(
-          `Failed to import item ${
-            (item as Record<string, unknown>).id
-          }: ${error}`
+          `Failed to import item ${String(badId ?? "unknown")}: ${error}`
         );
       }
     }

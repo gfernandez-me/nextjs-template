@@ -26,7 +26,20 @@ async function main() {
       console.log(`   Email: ${adminUser.email}`);
       console.log(`   Password: admin1234`);
     } else {
-      console.log("✅ Admin user already exists, skipping...");
+      // Ensure known dev password is valid; if not, reset it for local convenience
+      const valid = await bcrypt.compare("admin1234", adminUser.password);
+      if (!valid) {
+        const resetHash = await bcrypt.hash("admin1234", 12);
+        await prisma.user.update({
+          where: { id: adminUser.id },
+          data: { password: resetHash },
+        });
+        console.log("♻️  Admin password reset to default for development.");
+        console.log(`   Email: ${adminUser.email}`);
+        console.log(`   Password: admin1234`);
+      } else {
+        console.log("✅ Admin user already exists, skipping...");
+      }
     }
 
     // Create default settings for admin user if they don't exist
@@ -174,6 +187,103 @@ async function main() {
       });
     }
     console.log("✅ Stat types created/updated!");
+    // Create default gear sets if they don't exist
+    const gearSets = [
+      {
+        setName: "SpeedSet",
+        piecesRequired: 4,
+        effectDescription: "+25% Speed",
+      },
+      {
+        setName: "AttackSet",
+        piecesRequired: 4,
+        effectDescription: "+35% Attack",
+      },
+      {
+        setName: "HealthSet",
+        piecesRequired: 2,
+        effectDescription: "+15% Health",
+      },
+      {
+        setName: "DefenseSet",
+        piecesRequired: 2,
+        effectDescription: "+15% Defense",
+      },
+      {
+        setName: "CriticalSet",
+        piecesRequired: 2,
+        effectDescription: "+12% Crit Chance",
+      },
+      {
+        setName: "HitSet",
+        piecesRequired: 2,
+        effectDescription: "+20% Effectiveness",
+      },
+      {
+        setName: "DestructionSet",
+        piecesRequired: 4,
+        effectDescription: "+40% Crit Damage",
+      },
+      {
+        setName: "LifestealSet",
+        piecesRequired: 4,
+        effectDescription: "Heal 20% of damage dealt",
+      },
+      {
+        setName: "CounterSet",
+        piecesRequired: 4,
+        effectDescription: "20% chance to counterattack",
+      },
+      {
+        setName: "ImmunitySet",
+        piecesRequired: 2,
+        effectDescription: "Grants Immunity for 1 turn",
+      },
+      {
+        setName: "ResistSet",
+        piecesRequired: 2,
+        effectDescription: "+20% Effect Resistance",
+      },
+      {
+        setName: "TorrentSet",
+        piecesRequired: 2,
+        effectDescription: "+10% Atk, -10% HP",
+      },
+      {
+        setName: "InjurySet",
+        piecesRequired: 4,
+        effectDescription: "Reduces enemy max HP",
+      },
+      {
+        setName: "PenetrationSet",
+        piecesRequired: 2,
+        effectDescription: "Ignores 15% Defense",
+      },
+      {
+        setName: "UnitySet",
+        piecesRequired: 2,
+        effectDescription: "+4% Ally Dual Attack Chance",
+      },
+      {
+        setName: "RageSet",
+        piecesRequired: 4,
+        effectDescription: "+30% Crit Dmg vs debuffed targets",
+      },
+      {
+        setName: "ProtectionSet",
+        piecesRequired: 2,
+        effectDescription: "+15% Barrier strength",
+      },
+    ];
+
+    for (const set of gearSets) {
+      await prisma.gearSets.upsert({
+        where: { setName: set.setName },
+        create: { ...set, isActive: true },
+        update: { ...set, isActive: true },
+      });
+    }
+    console.log("✅ Gear sets created/updated!");
 
     console.log("🎉 Database seeding completed successfully!");
   } catch (error) {

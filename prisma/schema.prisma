@@ -103,7 +103,12 @@ model StatTypes {
   createdAt    DateTime     @default(now())
 
   // Relationships
-  substats GearSubStats[]
+  substats         GearSubStats[]
+  // Back-relations to gear priorities ordered substats
+  gearPrioritySub1 GearPriorities[] @relation("PrioritySub1")
+  gearPrioritySub2 GearPriorities[] @relation("PrioritySub2")
+  gearPrioritySub3 GearPriorities[] @relation("PrioritySub3")
+  gearPrioritySub4 GearPriorities[] @relation("PrioritySub4")
 
   @@map("stat_types")
 }
@@ -116,6 +121,9 @@ model GearSets {
   effectDescription String // +25% Speed, +35% Attack, etc.
   isActive          Boolean  @default(true)
   createdAt         DateTime @default(now())
+
+  // Back-relations
+  gearPriorities GearPriorities[]
 
   @@map("gear_sets")
 }
@@ -227,11 +235,72 @@ model Heroes {
   updatedAt DateTime @updatedAt
 
   // Relationships
-  gears Gears[] // All gears equipped by this hero
-  user  User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gears             Gears[] // All gears equipped by this hero
+  user              User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gearPriorities    GearPriorities[]
+  gearPriorityLinks GearPriorityHeroes[]
 
   @@index([userId])
   @@map("heroes")
+}
+
+// User defined gear chasing / priority profiles
+model GearPriorities {
+  id     Int    @id @default(autoincrement())
+  // Ownership
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Friendly name, often a hero name or generic label
+  name String
+
+  // Desired set and main stat
+  gearType     GearType?
+  gearSetId    Int?
+  gearSet      GearSets?     @relation(fields: [gearSetId], references: [id])
+  mainStatType MainStatType?
+
+  // Priority substats (ordered). Nullable to allow fewer than four.
+  prioritySub1Id Int?
+  prioritySub1   StatTypes? @relation("PrioritySub1", fields: [prioritySub1Id], references: [id])
+  prioritySub2Id Int?
+  prioritySub2   StatTypes? @relation("PrioritySub2", fields: [prioritySub2Id], references: [id])
+  prioritySub3Id Int?
+  prioritySub3   StatTypes? @relation("PrioritySub3", fields: [prioritySub3Id], references: [id])
+  prioritySub4Id Int?
+  prioritySub4   StatTypes? @relation("PrioritySub4", fields: [prioritySub4Id], references: [id])
+
+  // Optional hero association
+  heroIngameId BigInt?
+  targetHero   Heroes? @relation(fields: [heroIngameId], references: [ingameId])
+  heroName     String?
+
+  // State
+  isActive  Boolean              @default(true)
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+  heroes    GearPriorityHeroes[]
+
+  @@unique([userId, name])
+  @@index([userId])
+  @@index([gearType])
+  @@index([gearSetId])
+  @@index([heroIngameId])
+  @@map("gear_priorities")
+}
+
+// Join table: many heroes can be linked to one gear priority
+model GearPriorityHeroes {
+  id             Int    @id @default(autoincrement())
+  gearPriorityId Int
+  heroIngameId   BigInt
+
+  gearPriority GearPriorities @relation(fields: [gearPriorityId], references: [id], onDelete: Cascade)
+  hero         Heroes         @relation(fields: [heroIngameId], references: [ingameId], onDelete: Cascade)
+
+  @@unique([gearPriorityId, heroIngameId])
+  @@index([heroIngameId])
+  @@map("gear_priority_heroes")
 }
 
 // Global settings for scoring and thresholds (per user)
@@ -267,10 +336,11 @@ model User {
   updatedAt DateTime @updatedAt
 
   // Relationships
-  gears    Gears[]
-  heroes   Heroes[]
-  settings Settings?
-  substats GearSubStats[]
+  gears          Gears[]
+  heroes         Heroes[]
+  settings       Settings?
+  substats       GearSubStats[]
+  gearPriorities GearPriorities[]
 
   @@map("users")
 }

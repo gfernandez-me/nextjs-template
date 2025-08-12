@@ -1,5 +1,6 @@
 import { db } from "./db";
 import type { Prisma } from "#prisma";
+import type { MainStatType, GearType } from "#prisma";
 
 export type GearWithRelations = Prisma.GearsGetPayload<{
   include: {
@@ -87,6 +88,110 @@ export class DataAccessLayer {
     return { rows: convertDecimals(rows), total };
   }
 
+  // Gear Priorities
+  async listGearPriorities() {
+    const rows = await db.gearPriorities.findMany({
+      where: { userId: this.userId },
+      orderBy: { createdAt: "desc" },
+      include: {
+        gearSet: true,
+        prioritySub1: true,
+        prioritySub2: true,
+        prioritySub3: true,
+        prioritySub4: true,
+        targetHero: true,
+        heroes: { include: { hero: true } },
+      },
+    });
+    return convertDecimals(rows);
+  }
+
+  async createGearPriority(data: {
+    name: string;
+    gearType?: GearType | null;
+    gearSetId?: number | null;
+    mainStatType?: MainStatType | null;
+    prioritySub1Id?: number | null;
+    prioritySub2Id?: number | null;
+    prioritySub3Id?: number | null;
+    prioritySub4Id?: number | null;
+    heroIngameId?: bigint | null;
+    heroName?: string | null;
+    isActive?: boolean;
+  }) {
+    const created = await db.gearPriorities.create({
+      data: { ...data, userId: this.userId },
+    });
+    return convertDecimals(created);
+  }
+
+  async updateGearPriority(
+    id: number,
+    data: Partial<{
+      name: string;
+      gearType: "weapon" | "armor" | "helm" | "neck" | "ring" | "boot" | null;
+      gearSetId?: number | null;
+      mainStatType: MainStatType | null;
+      prioritySub1Id: number | null;
+      prioritySub2Id: number | null;
+      prioritySub3Id: number | null;
+      prioritySub4Id: number | null;
+      heroIngameId: bigint | null;
+      heroName: string | null;
+      isActive: boolean;
+    }>
+  ) {
+    // Narrow update payload to match Prisma client expectations
+    const updateData: Prisma.GearPrioritiesUpdateInput = {};
+    if (data.name !== undefined) updateData.name = data.name;
+    if (data.gearType !== undefined)
+      updateData.gearType = data.gearType as GearType | null;
+    if (data.gearSetId !== undefined)
+      updateData.gearSet =
+        data.gearSetId === null
+          ? { disconnect: true }
+          : { connect: { id: data.gearSetId } };
+    if (data.mainStatType !== undefined)
+      updateData.mainStatType = data.mainStatType as MainStatType | null;
+    if (data.prioritySub1Id !== undefined)
+      updateData.prioritySub1 =
+        data.prioritySub1Id === null
+          ? { disconnect: true }
+          : { connect: { id: data.prioritySub1Id } };
+    if (data.prioritySub2Id !== undefined)
+      updateData.prioritySub2 =
+        data.prioritySub2Id === null
+          ? { disconnect: true }
+          : { connect: { id: data.prioritySub2Id } };
+    if (data.prioritySub3Id !== undefined)
+      updateData.prioritySub3 =
+        data.prioritySub3Id === null
+          ? { disconnect: true }
+          : { connect: { id: data.prioritySub3Id } };
+    if (data.prioritySub4Id !== undefined)
+      updateData.prioritySub4 =
+        data.prioritySub4Id === null
+          ? { disconnect: true }
+          : { connect: { id: data.prioritySub4Id } };
+    if (data.heroIngameId !== undefined)
+      updateData.targetHero =
+        data.heroIngameId === null
+          ? { disconnect: true }
+          : { connect: { ingameId: data.heroIngameId } };
+    if (data.heroName !== undefined) updateData.heroName = data.heroName;
+    if (data.isActive !== undefined) updateData.isActive = data.isActive;
+
+    const updated = await db.gearPriorities.update({
+      where: { id },
+      data: updateData,
+    });
+    return convertDecimals(updated);
+  }
+
+  async deleteGearPriority(id: number) {
+    await db.gearPriorities.delete({ where: { id } });
+    return true;
+  }
   async getGearStats() {
     const [total, equipped, epicPlus, maxEnhanced] = await Promise.all([
       db.gears.count({ where: { userId: this.userId } }),

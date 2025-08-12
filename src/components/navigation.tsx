@@ -6,11 +6,17 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 
 const routes = [
-  { href: "/", label: "Home", description: "View all gear data" },
+  { href: "/gears", label: "Gears", description: "View all gear data" },
+  { href: "/heroes", label: "Heroes", description: "View heroes" },
   {
     href: "/upload",
     label: "Upload",
     description: "Upload gear data from Fribbels optimizer",
+  },
+  {
+    href: "/gear-priorities",
+    label: "Gear Priorities",
+    description: "Configure set, main stat, and substat priorities",
   },
   {
     href: "/settings",
@@ -26,7 +32,9 @@ const routes = [
 
 export function Navigation() {
   const pathname = usePathname();
-  const { user, signOut, loading } = useAuth();
+  const { user, signOut, loading } = useAuth({
+    suppressInitialFetch: pathname === "/signin",
+  });
 
   if (loading) {
     return (

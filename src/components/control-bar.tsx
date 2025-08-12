@@ -40,6 +40,7 @@ type ControlState = {
   ranks: Set<"Epic" | "Heroic">;
   onlyMaxed: boolean;
   main?: string;
+  priorityId?: string;
 };
 
 export default function ControlBar() {
@@ -179,6 +180,26 @@ export default function ControlBar() {
               ))}
             </SelectContent>
           </Select>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Label className="text-xs">Priority</Label>
+          <select
+            className="h-8 border rounded px-2 text-xs"
+            value={sp.get("priorityId") ?? ""}
+            onChange={(e) => {
+              const params = new URLSearchParams(sp.toString());
+              const v = e.target.value;
+              if (v) params.set("priorityId", v);
+              else params.delete("priorityId");
+              router.replace(`${pathname}?${params.toString()}`, {
+                scroll: false,
+              });
+            }}
+          >
+            <option value="">Any</option>
+            {/* Priority options can be injected by SSR in the future; default empty */}
+          </select>
         </div>
       </div>
 

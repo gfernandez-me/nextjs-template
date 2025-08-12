@@ -79,8 +79,15 @@ export function ProfileForm({ user }: ProfileFormProps) {
     }
   };
 
+  const createdAtDate = user.createdAt ? new Date(user.createdAt) : null;
+  const createdAtLabel =
+    createdAtDate && !isNaN(createdAtDate.getTime())
+      ? createdAtDate.toLocaleDateString()
+      : "Not available";
+
   return (
     <div className="space-y-6">
+      <h1 className="text-xl font-semibold">{user.name ?? user.email}</h1>
       <Card>
         <CardHeader>
           <CardTitle>User Information</CardTitle>
@@ -97,11 +104,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
           </div>
           <div>
             <Label htmlFor="createdAt">Member Since</Label>
-            <Input
-              id="createdAt"
-              value={new Date(user.createdAt).toLocaleDateString()}
-              disabled
-            />
+            <Input id="createdAt" value={createdAtLabel} disabled />
           </div>
         </CardContent>
       </Card>

@@ -19,7 +19,7 @@ export default function SignInPage() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const { signIn } = useAuth();
+  const { signIn } = useAuth({ suppressInitialFetch: true });
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {

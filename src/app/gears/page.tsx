@@ -17,12 +17,11 @@ import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
-export default async function Home({
+export default async function GearsPage({
   searchParams,
 }: {
   searchParams?: Promise<unknown>;
 }) {
-  // Get current user
   const session = await getAuth();
   if (!session?.user?.id) {
     redirect("/signin");
@@ -72,7 +71,6 @@ export default async function Home({
     if (!Number.isNaN(enh)) where.enhance = enh;
   }
 
-  // Substats filter: expect subs query as "A|B|C|D" matching statType.statName labels
   const subsRaw = String(resolved?.subs ?? "");
   const subs = subsRaw.split("|").filter(Boolean);
   if (subs.length) {
@@ -87,55 +85,6 @@ export default async function Home({
     };
   }
 
-  // Priority filter: ?priorityId=<id>
-  const priorityId = String(resolved?.priorityId ?? "").trim();
-  if (priorityId) {
-    // Map priority to constraints (set/type/main)
-    try {
-      const idNum = parseInt(priorityId, 10);
-      if (!Number.isNaN(idNum)) {
-        // fetch priority data minimal
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_BASE_URL ?? ""}/api/gear-priorities`,
-          { cache: "no-store" }
-        );
-        if (res.ok) {
-          const data = (await res.json()) as {
-            rows: Array<{
-              id: number;
-              gearType?: string | null;
-              gearSet?: { setName?: string };
-              mainStatType?: string | null;
-            }>;
-          };
-          const p = data.rows?.find((r) => Number(r.id) === idNum);
-          if (p) {
-            const typeMap: Record<string, string> = {
-              weapon: "Weapon",
-              helm: "Helmet",
-              armor: "Armor",
-              neck: "Necklace",
-              ring: "Ring",
-              boot: "Boots",
-            };
-            if (p.gearType && typeMap[p.gearType]) {
-              where.gear = typeMap[p.gearType];
-            }
-            if (p.gearSet?.setName) {
-              where.set = p.gearSet.setName as string;
-            }
-            if (p.mainStatType) {
-              where.mainStatType = p.mainStatType as string;
-            }
-          }
-        }
-      }
-    } catch {
-      // ignore
-    }
-  }
-
-  // Backend hero name filter (case-insensitive contains) via search param `hero`
   const heroParam = String(resolved?.hero ?? "").trim();
   if (heroParam) {
     where.hero = {
@@ -147,7 +96,6 @@ export default async function Home({
     };
   }
 
-  // Sorting from URL: ?sort=column&dir=asc|desc
   const sortBy = String(resolved?.sort ?? "createdAt");
   const sortDir = (
     String(resolved?.dir ?? "desc").toLowerCase() === "asc" ? "asc" : "desc"
@@ -201,14 +149,14 @@ export default async function Home({
         </span>
         <div className="flex gap-2">
           <Link
-            href={`/?page=${Math.max(1, page - 1)}`}
+            href={`/gears?page=${Math.max(1, page - 1)}`}
             className="px-2 py-1 border rounded hover:bg-muted"
             aria-disabled={page <= 1}
           >
             Prev
           </Link>
           <Link
-            href={`/?page=${Math.min(totalPages, page + 1)}`}
+            href={`/gears?page=${Math.min(totalPages, page + 1)}`}
             className="px-2 py-1 border rounded hover:bg-muted"
             aria-disabled={page >= totalPages}
           >

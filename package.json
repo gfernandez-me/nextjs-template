@@ -14,7 +14,10 @@
     "postinstall": "npm run setup:env && prisma generate",
     "studio": "prisma studio",
     "db:generate": "prisma generate",
-    "db:migrate": "prisma migrate dev --name init --create-only=false",
+    "db:migrate:new": "prisma migrate dev --create-only=false",
+    "db:migrate:dev": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:reset": "prisma migrate reset",
     "db:seed": "npx tsx prisma/seed.ts"
   },
   "dependencies": {

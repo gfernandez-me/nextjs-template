@@ -11,6 +11,24 @@ export async function GET(request: NextRequest) {
       100,
       Math.max(1, Number(searchParams.get("limit") || 50))
     );
+    const full = searchParams.get("full") === "1";
+
+    if (full) {
+      const heroes = await db.heroes.findMany({
+        where: q
+          ? {
+              name: {
+                contains: q,
+                mode: "insensitive",
+              },
+            }
+          : undefined,
+        select: { name: true, ingameId: true },
+        orderBy: { name: "asc" },
+        take: limit,
+      });
+      return NextResponse.json({ heroes });
+    }
 
     const heroes = await db.heroes.findMany({
       where: q
