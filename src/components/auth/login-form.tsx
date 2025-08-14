@@ -57,7 +57,6 @@ export function LoginForm({
       },
       {
         onRequest: () => {
-          4;
           setLoading(true);
         },
         onSuccess: () => {
