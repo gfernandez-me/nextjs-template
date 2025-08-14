@@ -1,0 +1,172 @@
+# Epic 7 Stat Rules and Restrictions
+
+## Overview
+
+This document defines the exact behavior of each stat type in Epic 7, including:
+
+- Which gear types can have each stat as main stat
+- Which gear types can have each stat as substat
+- Whether stats are always flat or percentage
+- Fixed vs variable main stats per gear type
+
+## 1. Fixed Main Stats (Left Side Gear)
+
+These gear types have **fixed, unchangeable** main stats:
+
+| Gear Type  | Fixed Main Stat | Stat Type | Category | Icon |
+| ---------- | --------------- | --------- | -------- | ---- |
+| **Weapon** | Flat Attack     | `att`     | FLAT     | ⚔️   |
+| **Helm**   | Flat Health     | `max_hp`  | FLAT     | 🪖   |
+| **Armor**  | Flat Defense    | `def`     | FLAT     | 🛡️   |
+
+**Rules:**
+
+- These stats **CANNOT** be changed
+- These stats **CANNOT** appear as substats on the same gear
+- These stats **CAN** appear as substats on other gear types
+
+## 2. Variable Main Stats (Right Side Gear)
+
+These gear types can have **different** main stats:
+
+| Gear Type    | Possible Main Stats                                                             | Icon |
+| ------------ | ------------------------------------------------------------------------------- | ---- |
+| **Necklace** | `att`, `def`, `max_hp`, `att_rate`, `def_rate`, `max_hp_rate`, `cri`, `cri_dmg` | 📿   |
+| **Ring**     | `att`, `def`, `max_hp`, `att_rate`, `def_rate`, `max_hp_rate`, `acc`, `res`     | 💍   |
+| **Boots**    | `att`, `def`, `max_hp`, `att_rate`, `def_rate`, `max_hp_rate`, `speed`          | 🥾   |
+
+## 3. Stat Type Definitions
+
+### Flat Stats (Always FLAT category)
+
+| Stat Name   | Stat Type | Can Be Main Stat                           | Can Be Substat | Gear Restrictions                     |
+| ----------- | --------- | ------------------------------------------ | -------------- | ------------------------------------- |
+| **Speed**   | `speed`   | ✅ Boots only                              | ✅ Any gear    | Main: Boots only                      |
+| **Attack**  | `att`     | ✅ Necklace, Ring, Boots + Fixed on Weapon | ✅ Any gear    | Main: Variable gear + Fixed on Weapon |
+| **Defense** | `def`     | ✅ Necklace only + Fixed on Armor          | ✅ Any gear    | Main: Necklace only + Fixed on Armor  |
+| **Health**  | `max_hp`  | ✅ Necklace, Ring, Boots + Fixed on Helm   | ✅ Any gear    | Main: Variable gear + Fixed on Helm   |
+
+### Percentage Stats (Always PERCENTAGE category)
+
+| Stat Name           | Stat Type     | Can Be Main Stat         | Can Be Substat | Gear Restrictions        |
+| ------------------- | ------------- | ------------------------ | -------------- | ------------------------ |
+| **Attack %**        | `att_rate`    | ✅ Necklace, Ring, Boots | ✅ Any gear    | Main: Variable gear only |
+| **Defense %**       | `def_rate`    | ✅ Necklace, Ring, Boots | ✅ Any gear    | Main: Variable gear only |
+| **Health %**        | `max_hp_rate` | ✅ Necklace, Ring, Boots | ✅ Any gear    | Main: Variable gear only |
+| **Crit %**          | `cri`         | ✅ Necklace only         | ✅ Any gear    | Main: Necklace only      |
+| **Crit Dmg %**      | `cri_dmg`     | ✅ Necklace only         | ✅ Any gear    | Main: Necklace only      |
+| **Effectiveness %** | `acc`         | ✅ Ring only             | ✅ Any gear    | Main: Ring only          |
+| **Effect Resist %** | `res`         | ✅ Ring only             | ✅ Any gear    | Main: Ring only          |
+
+## 4. Database Schema Requirements
+
+The current `StatTypes` table with `isMainStat` and `isSubstat` boolean fields is **insufficient** because:
+
+1. **Gear-specific restrictions** cannot be captured
+2. **Fixed vs variable** main stats are not distinguished
+3. **Stat categories** are already defined by the enum
+
+### Current Schema Implementation
+
+```prisma
+model StatTypes {
+  id           Int          @id @default(autoincrement())
+  statName     String       @unique
+  statCategory StatCategory // FLAT or PERCENTAGE
+  weight       Decimal      @db.Decimal(5, 2)
+
+  // Gear-specific restrictions - implemented as arrays
+  allowedMainStatFor GearType[] // Array of gear types that can have this as main stat
+  allowedSubstatFor  GearType[] // Array of gear types that can have this as substat
+
+  // Relationships
+  GearSubStats     GearSubStats[]
+  GearPrioritySub1 GearPriorities[] @relation("PrioritySub1")
+  GearPrioritySub2 GearPriorities[] @relation("PrioritySub2")
+  GearPrioritySub3 GearPriorities[] @relation("PrioritySub3")
+  GearPrioritySub4 GearPriorities[] @relation("PrioritySub4")
+}
+```
+
+## 5. Seed Data Rules
+
+When seeding stat types:
+
+1. **Always use correct StatCategory** (FLAT/PERCENTAGE)
+2. **Define gear restrictions** for each stat
+3. **Set appropriate weights** for optimization
+4. **Ensure consistency** with Epic 7 game rules
+
+## 6. Validation Rules
+
+### Main Stat Validation
+
+- **Weapon**: Must be `att` (flat attack)
+- **Helm**: Must be `max_hp` (flat health)
+- **Armor**: Must be `def` (flat defense)
+- **Necklace**: Must be one of allowed necklace main stats
+- **Ring**: Must be one of allowed ring main stats
+- **Boots**: Must be one of allowed boot main stats
+
+### Substat Validation
+
+- **Any gear type** can have any stat as substat
+- **Exception**: Cannot have main stat as substat on same gear
+- **Categories**: Must match stat type (FLAT/PERCENTAGE)
+
+## 7. Examples
+
+### Valid Gear Combinations
+
+```typescript
+// Valid Weapon
+{
+  type: GearType.WEAPON,
+  mainStatType: MainStatType.ATT,        // Fixed flat attack
+  substats: [
+    { statType: "speed", value: 4 },     // Speed substat (flat)
+    { statType: "att_rate", value: 8 },  // Attack % substat (percentage)
+  ]
+}
+
+// Valid Boots
+{
+  type: GearType.BOOTS,
+  mainStatType: MainStatType.SPEED,      // Speed main stat (flat)
+  substats: [
+    { statType: "att", value: 20 },      // Attack substat (flat)
+    { statType: "cri", value: 4 },       // Crit % substat (percentage)
+  ]
+}
+```
+
+### Invalid Combinations
+
+```typescript
+// Invalid Weapon - wrong main stat
+{
+  type: GearType.WEAPON,
+  mainStatType: MainStatType.SPEED,      // ❌ Weapons must have ATT
+}
+
+// Invalid Helm - wrong main stat
+{
+  type: GearType.HELM,
+  mainStatType: MainStatType.ATT,        // ❌ Helms must have MAX_HP
+}
+
+// Invalid - main stat as substat on same gear
+{
+  type: GearType.BOOTS,
+  mainStatType: MainStatType.SPEED,
+  substats: [
+    { statType: "speed", value: 4 },     // ❌ Cannot have speed as substat on speed boots
+  ]
+}
+```
+
+description:
+globs:
+alwaysApply: false
+
+---

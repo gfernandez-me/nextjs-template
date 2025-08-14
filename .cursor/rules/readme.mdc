@@ -1,0 +1,108 @@
+# Epic 7 Gear Optimizer - Cursor Rules & Context
+
+## Overview
+
+This folder contains all the rules, context, and documentation for the Epic 7 Gear Optimizer project. The goal is to centralize information and prevent common mistakes.
+
+## 📁 File Structure
+
+### Core Rules
+
+- **`business-rules.mdc`** - Epic 7 game mechanics and business logic
+- **`stat-rules.mdc`** - Comprehensive stat behavior and restrictions
+- **`prisma-best-practices.mdc`** - Database and Prisma usage rules
+
+### Implementation Guides
+
+- **`project-structure.mdc`** - Application architecture and project organization
+- **`nextjs-implementation.mdc`** - Next.js 15 + App Router patterns
+- **`auth-implementation.mdc`** - Better Auth integration
+
+### Feature Documentation
+
+- **`fribbels-integration.mdc`** - Fribbels Optimizer data format and integration
+- **`scoring-settings.mdc`** - Gear optimization algorithms and scoring
+
+## 🎯 Key Principles
+
+### 1. Always Use Prisma Generated Types
+
+```typescript
+// ❌ WRONG
+statCategory: "FLAT" as const;
+
+// ✅ CORRECT
+statCategory: StatCategory.FLAT;
+```
+
+### 2. Follow Epic 7 Game Rules
+
+- **Weapons**: Fixed flat attack main stat
+- **Helms**: Fixed flat health main stat
+- **Armor**: Fixed flat defense main stat
+- **Right-side gear**: Variable main stats with restrictions
+
+### 3. Use Better Auth for Authentication
+
+- No bcrypt passwords
+- Session-based authentication
+- Modern auth flow
+
+### 4. Clean Architecture
+
+- **Dashboard-First**: All user functionality in `(dashboard)` folder
+- **Direct Database Access**: Pages → DAL → Database (no unnecessary API routes)
+- **Utility-First**: Common operations in focused utility files
+
+## 🔧 Quick Reference
+
+### Stat Categories
+
+- **FLAT**: Speed, Attack, Defense, Health
+- **PERCENTAGE**: Attack%, Defense%, Health%, Crit%, Crit Dmg%, Effectiveness%, Effect Resist%
+
+### Gear Types
+
+- **Left Side**: Weapon (⚔️), Helm (🪖), Armor (🛡️) - Fixed main stats
+- **Right Side**: Necklace (📿), Ring (💍), Boots (🥾) - Variable main stats
+
+### Database Schema
+
+- **Users**: Better Auth integration
+- **Gears**: Epic 7 gear items with stats
+- **StatTypes**: Reference data with gear-specific restrictions (allowedMainStatFor, allowedSubstatFor)
+- **Settings**: User-specific optimization preferences
+
+## 🚨 Common Mistakes to Avoid
+
+1. **Using string literals instead of Prisma enums**
+2. **Forgetting gear-type-specific stat restrictions**
+3. **Mixing old auth patterns with Better Auth**
+4. **Using deprecated database fields**
+5. **Creating unnecessary API routes for simple CRUD operations**
+
+## 📚 Reading Order
+
+1. **Start with**: `business-rules.mdc` for game mechanics
+2. **Then**: `stat-rules.mdc` for detailed stat behavior
+3. **Next**: `prisma-best-practices.mdc` for database patterns
+4. **Then**: `project-structure.mdc` for architecture overview
+5. **Finally**: Implementation guides for specific features
+
+## 🔄 Updates
+
+When making changes:
+
+1. Update the relevant rule file
+2. Update this README if needed
+3. Ensure consistency across all files
+4. Run type checks to catch issues
+
+## 📝 Contributing
+
+When adding new rules:
+
+1. Create a focused, single-purpose file
+2. Reference related rules
+3. Include examples and counter-examples
+4. Update this README

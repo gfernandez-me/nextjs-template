@@ -9,7 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { GearRow } from "@/app/lib/gear";
+import type { GearRow } from "@/lib/data-access";
 import {
   ColumnDef,
   flexRender,
@@ -33,8 +33,7 @@ import {
 import { getGearIcon, getRankColor } from "@/components/icons";
 import { usePathname, useRouter } from "next/navigation";
 // Using native <img> for hero portraits to allow simple onError fallback
-
-export type GearWithRelations = GearRow;
+import type { GearWithRelations } from "@/lib/data-access";
 
 export function GearTable({ rows }: { rows: GearWithRelations[] }) {
   const router = useRouter();
@@ -94,7 +93,7 @@ export function GearTable({ rows }: { rows: GearWithRelations[] }) {
   const heroOptions = React.useMemo<string[]>(() => {
     const set = new Set<string>();
     for (const r of rows) {
-      const n = r.hero?.name?.trim();
+      const n = r.Hero?.name?.trim();
       if (n) set.add(n);
     }
     return Array.from(set).sort((a, b) => a.localeCompare(b));
@@ -104,10 +103,10 @@ export function GearTable({ rows }: { rows: GearWithRelations[] }) {
     // Basic additive score using stat type weights if present; fallback naive weights
     // Business rules recommend weight-based scoring; do not persist
     let score = 0;
-    for (const s of row.substats) {
-      const isPercent = s.statType.statCategory === "percentage";
+    for (const s of row.GearSubStats) {
+      const isPercent = s.StatType.statCategory === "PERCENTAGE";
       const weight =
-        typeof s.statType.weight === "number" ? s.statType.weight : 1;
+        typeof s.StatType.weight === "number" ? s.StatType.weight : 1;
       const value = isPercent ? Number(s.statValue) : Number(s.statValue);
       score += value * weight;
     }
@@ -130,8 +129,8 @@ export function GearTable({ rows }: { rows: GearWithRelations[] }) {
       Health: 0.2,
     };
     let score = 0;
-    for (const s of row.substats) {
-      const name = s.statType.statName;
+    for (const s of row.GearSubStats) {
+      const name = s.StatType.statName;
       const w = weights[name] ?? 1;
       score += Number(s.statValue) * w;
     }
@@ -218,9 +217,9 @@ export function GearTable({ rows }: { rows: GearWithRelations[] }) {
           accessorKey: "gear",
           header: () => <span>Type</span>,
           cell: ({ row }) => {
-            const iconSymbol = getGearIcon(row.original.gear);
+            const iconSymbol = getGearIcon(row.original.type);
             const rankClass = getRankColor(String(row.original.rank));
-            const displayName = row.original.gear;
+            const displayName = row.original.type;
             return (
               <div className="flex items-center gap-2">
                 <span className="text-lg leading-none">{iconSymbol}</span>
@@ -299,17 +298,17 @@ export function GearTable({ rows }: { rows: GearWithRelations[] }) {
             id: `substat_${idx + 1}`,
             header: () => <span>{`Substat ${idx + 1}`}</span>,
             cell: ({ row }: { row: { original: GearRow } }) => {
-              const s = row.original.substats[idx];
+              const s = row.original.GearSubStats[idx];
               if (!s) return <span className="text-muted-foreground">-</span>;
               const badge = getStatBadge(
-                s.statType.statName,
+                s.StatType.statName,
                 Number(s.statValue),
                 row.original.enhance
               );
               return (
                 <div className="flex items-center gap-2 text-[11px] leading-4">
                   <span className="text-muted-foreground">
-                    {stripPercent(abbreviateSubstatLabel(s.statType.statName))}
+                    {stripPercent(abbreviateSubstatLabel(s.StatType.statName))}
                   </span>
                   {badge ? (
                     <span
@@ -324,7 +323,7 @@ export function GearTable({ rows }: { rows: GearWithRelations[] }) {
                   ) : (
                     <span className="font-mono tabular-nums">
                       {s.statValue.toString()}
-                      {s.statType.statCategory === "percentage" ? "%" : ""}
+                      {s.StatType.statCategory === "PERCENTAGE" ? "%" : ""}
                     </span>
                   )}
                 </div>
@@ -332,8 +331,8 @@ export function GearTable({ rows }: { rows: GearWithRelations[] }) {
             },
             enableSorting: true,
             sortingFn: (a, b) => {
-              const sa = a.original.substats[idx]?.statValue ?? -Infinity;
-              const sb = b.original.substats[idx]?.statValue ?? -Infinity;
+              const sa = a.original.GearSubStats[idx]?.statValue ?? -Infinity;
+              const sb = b.original.GearSubStats[idx]?.statValue ?? -Infinity;
               return Number(sa) - Number(sb);
             },
           })
@@ -342,7 +341,7 @@ export function GearTable({ rows }: { rows: GearWithRelations[] }) {
           id: "equipped",
           header: () => <span>Equipped</span>,
           cell: ({ row }) => {
-            const hero = row.original.hero;
+            const hero = row.original.Hero;
             if (!hero?.name) return <span className="text-xs" />;
             return (
               <span className="text-xs font-medium truncate max-w-[160px]">
@@ -352,14 +351,14 @@ export function GearTable({ rows }: { rows: GearWithRelations[] }) {
           },
           enableSorting: true,
           sortingFn: (a, b) => {
-            const na = a.original.hero?.name || "";
-            const nb = b.original.hero?.name || "";
+            const na = a.original.Hero?.name || "";
+            const nb = b.original.Hero?.name || "";
             return na.localeCompare(nb);
           },
           enableColumnFilter: true,
           filterFn: (row, _columnId, value) => {
             if (!value) return true;
-            const name = row.original.hero?.name || "";
+            const name = row.original.Hero?.name || "";
             return name === value;
           },
         },

@@ -50,4 +50,3 @@ next-env.d.ts
 
 # Local reference data (do not commit large or copyrighted data)
 /prisma/gear.txt
-

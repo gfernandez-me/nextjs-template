@@ -1,15 +1,19 @@
 import { NextResponse } from "next/server";
-import { getAuth } from "@/lib/auth";
 import { createDataAccess } from "@/lib/data-access";
-import { db } from "@/lib/db";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import prisma from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 export async function POST(): Promise<NextResponse> {
   try {
-    // Get current user
-    const session = await getAuth();
+    // Get current user using Better Auth
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
     if (!session?.user?.id) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
@@ -27,9 +31,13 @@ export async function POST(): Promise<NextResponse> {
     }
 
     // Get user's gears
-    const gears = await db.gears.findMany({
+    const gears = await prisma.gears.findMany({
       where: { userId: session.user.id },
-      include: { substats: { include: { statType: true } } },
+      include: {
+        GearSubStats: { include: { StatType: true } },
+        User: true,
+        Hero: true,
+      },
     });
 
     // Recalculate scores for all user's gears
@@ -43,8 +51,8 @@ export async function POST(): Promise<NextResponse> {
           string,
           number
         >;
-        for (const substat of gear.substats) {
-          const weight = subWeights[substat.statType.statName] || 1;
+        for (const substat of gear.GearSubStats) {
+          const weight = subWeights[substat.StatType.statName] || 1;
           fScore += Number(substat.statValue) * weight;
         }
       }
@@ -56,7 +64,7 @@ export async function POST(): Promise<NextResponse> {
           number
         >;
         const mainWeight = mainWeights[gear.mainStatType] || 0;
-        fScore += gear.mainStatValue * mainWeight;
+        fScore += Number(gear.mainStatValue) * mainWeight;
       }
 
       // Calculate fixed score (unchanged)
@@ -74,13 +82,13 @@ export async function POST(): Promise<NextResponse> {
         Health: 0.2,
       };
 
-      for (const substat of gear.substats) {
-        const weight = fixedWeights[substat.statType.statName] || 1;
+      for (const substat of gear.GearSubStats) {
+        const weight = fixedWeights[substat.StatType.statName] || 1;
         score += Number(substat.statValue) * weight;
       }
 
       // Update gear with new scores
-      return db.gears.update({
+      return prisma.gears.update({
         where: { id: gear.id },
         data: {
           fScore: Math.round(fScore * 100) / 100,

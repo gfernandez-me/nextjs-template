@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import { ModeToggle } from "@/components/mode-toggle";
 
 const routes = [
   { href: "/gears", label: "Gears", description: "View all gear data" },
@@ -104,6 +105,7 @@ export function Navigation() {
         </div>
         <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
           <div className="flex items-center space-x-2">
+            <ModeToggle />
             <Link href="/profile">
               <Button variant="ghost" size="sm">
                 Profile

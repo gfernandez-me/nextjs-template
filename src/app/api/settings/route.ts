@@ -1,14 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAuth } from "@/lib/auth";
 import { createDataAccess } from "@/lib/data-access";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    // Get current user
-    const session = await getAuth();
-    if (!session?.user?.id) {
+    // Get current user using Better Auth
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session?.user) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
@@ -30,9 +34,12 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    // Get current user
-    const session = await getAuth();
-    if (!session?.user?.id) {
+    // Get current user using Better Auth
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session?.user) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
@@ -47,6 +54,7 @@ export async function POST(request: NextRequest) {
       fScoreSubstatWeights: body.fScoreSubstatWeights,
       fScoreMainStatWeights: body.fScoreMainStatWeights,
       substatThresholds: body.substatThresholds,
+      User: { connect: { id: session.user.id } },
     });
 
     return NextResponse.json(settings);

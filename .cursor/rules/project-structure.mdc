@@ -1,99 +1,66 @@
-# Project Structure and Tech Stack Documentation
+# Epic 7 Gear Optimizer - Project Structure & Architecture
 
-## 1. Technology Stack Overview
+## 1. Application Architecture Overview
 
-### Frontend Framework
+### Technology Stack
 
-- **Next.js**: 15.4.5 (React-based full-stack framework)
-- **React**: 19.1.0 (Latest version)
-- **React DOM**: 19.1.0
-- **TypeScript**: ^5 (Static typing)
+- **Next.js 15**: App Router with Server and Client Components
+- **React 19**: Modern React with hooks and context
+- **TypeScript**: Full type safety throughout the application
+- **Prisma**: Database ORM with PostgreSQL
+- **Better Auth**: Modern authentication system
+- **shadcn/ui**: Component library with Tailwind CSS
+- **@tanstack/react-table**: Data table functionality
 
-### Styling and UI
-
-- **Tailwind CSS**: ^3.4.0 (Utility-first CSS framework)
-- **shadcn/ui**: Modern component library with Tailwind CSS
-- **PostCSS**: Configured for Tailwind processing
-- **Autoprefixer**: CSS vendor prefix automation
-
-### Database and ORM
-
-- **PostgreSQL**: 16.3 (Primary database)
-- **Prisma**: ^6.13.0 (Database ORM)
-- **Prisma Accelerate**: ^2.0.2 (Database connection pooling)
-
-### Development Tools
-
-- **ESLint**: ^9 (Code linting)
-- **ESLint Config Next**: 15.4.5 (Next.js specific rules)
-- **TypeScript**: ^5 (Type checking)
-- **tsx**: ^4.20.3 (TypeScript execution)
-
-### Infrastructure
-
-- **Docker**: Containerization
-- **Redis**: 7-alpine (Caching and session storage)
-- **DevContainer**: Development environment containerization
-
-## 2. Project Architecture
-
-### Directory Structure
+### Project Structure
 
 ```
-/
-├── .devcontainer/          # Development container configuration
-│   ├── devcontainer.json   # VS Code dev container settings
-│   └── compose.yaml        # Docker services (PostgreSQL, Redis)
-├── .cursor/               # Cursor IDE configuration
-│   └── rules/             # Business rules and documentation
-├── prisma/                # Database schema and migrations
-│   ├── schema.prisma      # Prisma schema definition
-│   ├── seed.ts            # Database seeding script
-│   └── generated/         # Generated Prisma client (gitignored)
-│       └── client/        # Prisma client files
-├── src/                   # Application source code
-│   ├── app/                    # Next.js App Router
-│   │   ├── (main)/             # Route group with shared layout
-│   │   │   ├── layout.tsx      # Shared layout with navigation
-│   │   │   ├── page.tsx        # Home page (gear table)
-│   │   │   ├── profile/        # User profile page
-│   │   │   │   └── page.tsx    # Profile management
-│   │   │   ├── settings/       # App settings page
-│   │   │   │   └── page.tsx    # Scoring configuration
-│   │   │   ├── statistics/     # Statistics dashboard
-│   │   │   │   └── page.tsx    # Gear statistics
-│   │   │   └── upload/         # Upload page
-│   │   │       └── page.tsx    # Gear upload
-│   │   ├── api/                # API routes
-│   │   │   ├── auth/           # Authentication endpoints
-│   │   │   │   ├── signin/     # User sign in
-│   │   │   │   ├── signout/    # User sign out
-│   │   │   │   ├── me/         # Current user info
-│   │   │   │   └── change-password/ # Password change
-│   │   │   ├── settings/       # Settings management
-│   │   │   │   └── recalculate/ # Score recalculation
-│   │   │   └── upload/         # File upload processing
-│   │   ├── signin/             # Sign in page
-│   │   │   └── page.tsx        # Authentication form
-│   │   ├── not-found.tsx       # 404 page
-│   │   └── globals.css         # Global styles
-│   ├── components/             # Shared/generic components
-│   │   ├── navigation.tsx      # Main navigation bar
-│   │   ├── profile-form.tsx    # User profile management
-│   │   ├── settings-form.tsx   # Settings configuration
-│   │   ├── upload-form.tsx     # File upload form
-│   │   ├── gear-table.tsx      # Gear inventory table
-│   │   ├── statistics-content.tsx # Statistics display
-│   │   ├── icons.tsx           # Icon helpers
-│   │   └── ui/                 # shadcn/ui primitives
-│   ├── hooks/                  # React hooks
-│   │   └── useAuth.ts          # Authentication state management
-│   ├── lib/                    # Utilities and configuration
-│   │   ├── auth.ts             # Authentication functions
-│   │   ├── data-access.ts      # Data Access Layer (DAL)
-│   │   ├── db.ts               # Prisma database singleton
-│   │   └── utils.ts            # shadcn/ui utilities
-│   └── middleware.ts           # Route protection middleware
+src/
+├── app/                    # Next.js App Router
+│   ├── (dashboard)/        # Protected dashboard routes (logged in users)
+│   │   ├── home/           # Main dashboard page (renamed from dashboard/)
+│   │   ├── gears/          # Gear inventory management
+│   │   ├── heroes/         # Hero management
+│   │   ├── gear-priorities/# Gear optimization settings
+│   │   ├── statistics/     # Gear statistics and analysis
+│   │   ├── settings/       # User settings and preferences
+│   │   ├── upload/         # File upload for gear data
+│   │   └── layout.tsx      # Dashboard layout with sidebar
+│   ├── login/              # Public authentication page
+│   ├── signup/             # Public user registration
+│   ├── change-password/    # Public password change
+│   ├── api/                # Minimal API routes (only essential ones)
+│   │   ├── auth/           # Authentication endpoints
+│   │   ├── upload/         # File upload processing
+│   │   └── settings/       # Settings recalculation (heavy operations)
+│   ├── layout.tsx          # Root layout with navigation
+│   ├── page.tsx            # Root page (redirects to /home)
+│   └── globals.css         # Global styles with shadcn/ui
+├── components/             # Shared/generic components
+│   ├── navigation.tsx      # Main navigation bar
+│   ├── profile-form.tsx    # User profile management
+│   ├── settings-form.tsx   # Settings configuration
+│   ├── upload-form.tsx     # File upload form
+│   ├── gear-table.tsx      # Gear inventory table
+│   ├── statistics-content.tsx # Statistics display
+│   ├── icons.tsx           # Icon helpers
+│   ├── app-sidebar.tsx     # Dashboard sidebar navigation
+│   ├── site-header.tsx     # Site header component
+│   ├── nav-user.tsx        # User navigation component
+│   ├── data-table.tsx      # Reusable data table component
+│   └── ui/                 # shadcn/ui primitives
+├── hooks/                  # React hooks
+│   └── useAuth.ts          # Authentication state management
+├── lib/                    # Utilities and configuration
+│   ├── auth.ts             # Better Auth configuration
+│   ├── auth-client.ts      # Better Auth client
+│   ├── data-access.ts      # Data Access Layer (DAL)
+│   ├── prisma.ts           # Prisma database singleton
+│   ├── decimal.ts          # Prisma decimal conversion utilities
+│   ├── epic7-data.ts       # Epic 7 specific data fetching utilities
+│   ├── stats.ts            # Epic 7 stat utilities
+│   └── utils.ts            # shadcn/ui utilities
+└── middleware.ts           # Route protection middleware
 
 ├── public/                # Static assets
 ├── package.json           # Node.js dependencies and scripts
@@ -130,35 +97,68 @@
 
 The application implements a complete multi-user system with data isolation:
 
-- **User Authentication**: JWT-based authentication with HTTP-only cookies
+- **User Authentication**: Better Auth with session-based authentication
 - **Data Access Layer (DAL)**: Centralized data access with automatic user scoping
 - **Route Protection**: Middleware-based authentication for all protected routes
 - **User Ownership**: All user data (gears, heroes, settings) includes `userId` field
 - **Data Isolation**: Users can only access their own data through database constraints
 
+## 2. Data Flow Architecture
+
+### Direct Database Access Pattern
+
+**NEW APPROACH**: Dashboard pages directly access the database using the Data Access Layer (DAL) instead of going through API routes.
+
+#### Benefits:
+- ✅ **Simplified Architecture**: No unnecessary API layer for simple CRUD operations
+- ✅ **Better Performance**: Direct database access without HTTP overhead
+- ✅ **Type Safety**: Full TypeScript support with Prisma types
+- ✅ **Easier Maintenance**: Logic centralized in pages, not scattered across API routes
+
+#### When to Use API Routes:
+- **File Uploads**: Complex file processing (Fribbels data import)
+- **Heavy Computations**: Settings recalculation across all gears
+- **External Integrations**: Webhooks, third-party API calls
+
+#### When NOT to Use API Routes:
+- **Simple CRUD**: Gear listing, hero management, settings retrieval
+- **Data Display**: Dashboard statistics, gear tables
+- **Form Submissions**: Settings updates, gear priority configuration
+
+### Data Access Layer (DAL)
+
+The DAL provides a clean interface for database operations:
+
+```typescript
+// Create DAL instance for current user
+const dal = createDataAccess(session.user.id);
+
+// Use DAL methods directly in pages
+const gears = await dal.getGearsPage({ page: 1, perPage: 10 });
+const settings = await dal.getSettings();
+```
+
 ## 3. Authentication System
 
 ### Authentication Architecture
 
-- **JWT Tokens**: JSON Web Tokens for session management
-- **HTTP-Only Cookies**: Secure token storage with automatic expiration
-- **bcrypt Hashing**: Password hashing with 12 rounds of salt
+- **Better Auth**: Modern authentication library replacing custom JWT system
+- **Session Management**: Server-side session handling with HTTP-only cookies
 - **Route Protection**: Middleware-based authentication for all protected routes
-- **User Sessions**: 7-day token expiration with automatic cleanup
+- **User Sessions**: Secure session management with automatic expiration
 
 ### Authentication Flow
 
-1. **Sign In**: User provides email/password, receives JWT token
-2. **Token Storage**: Token stored in HTTP-only cookie
-3. **Route Access**: Middleware validates token for protected routes
-4. **API Calls**: All API endpoints require valid authentication
-5. **Sign Out**: Token cleared from cookie
+1. **Sign In**: User provides email/password, receives session
+2. **Session Storage**: Session stored securely on server
+3. **Route Access**: Middleware validates session for protected routes
+4. **API Calls**: Essential API endpoints require valid authentication
+5. **Sign Out**: Session cleared from server
 
 ### Security Features
 
-- **Password Hashing**: bcrypt with 12 rounds of salt
-- **Token Expiration**: Automatic token expiration and cleanup
-- **Route Protection**: All routes protected by default
+- **Session-based**: No JWT tokens in client-side code
+- **Route Protection**: All dashboard routes protected by default
 - **Data Isolation**: Complete user data separation
 - **Input Validation**: Comprehensive input sanitization
 
@@ -177,296 +177,53 @@ The application implements a complete multi-user system with data isolation:
 - **Tailwind CSS IntelliSense**: CSS class autocomplete
 - **Prettier**: Code formatting
 - **ESLint**: Code linting
-- **Prisma**: Database schema support
-- **GitLens**: Git integration
-- **File Utils**: File management utilities
 
-### Port Configuration
+## 5. Key Architectural Decisions
 
-- **PostgreSQL**: 5432
-- **Redis**: 6379
-- **Next.js**: 3000 (default)
+### 1. Dashboard-First Approach
 
-## 4. Dependencies Analysis
+- **Protected Routes**: All user functionality inside `(dashboard)` folder
+- **Public Routes**: Only authentication pages outside dashboard
+- **Consistent Layout**: All dashboard pages use sidebar navigation
 
-### Production Dependencies
+### 2. Direct Database Access
 
-```json
-{
-  "@prisma/client": "^6.13.0", // Database client
-  "@prisma/extension-accelerate": "^2.0.2", // Connection pooling
-  "next": "15.4.5", // React framework
-  "react": "19.1.0", // UI library
-  "react-dom": "19.1.0" // React DOM
-}
-```
+- **Eliminated Redundancy**: Removed unnecessary API routes
+- **Simplified Data Flow**: Pages → DAL → Database
+- **Better Performance**: No HTTP overhead for simple operations
 
-### Development Dependencies
+### 3. Utility-First Organization
 
-```json
-{
-  "@eslint/eslintrc": "^3", // ESLint configuration
-  "@types/node": "^20", // Node.js types
-  "@types/react": "^19", // React types
-  "@types/react-dom": "^19", // React DOM types
-  "autoprefixer": "^10", // CSS vendor prefixes
-  "eslint": "^9", // Code linting
-  "eslint-config-next": "15.4.5", // Next.js ESLint config
-  "postcss": "^8", // CSS processing
-  "prisma": "^6.13.0", // Database ORM
-  "tailwindcss": "^3.4.0", // CSS framework
-  "tsx": "^4.20.3", // TypeScript execution
-  "typescript": "^5" // TypeScript compiler
-}
-```
+- **Epic 7 Specific**: `epic7-data.ts` for game-specific data fetching
+- **Reusable Functions**: Common operations extracted to utility files
+- **Clear Separation**: Business logic vs. UI components
 
-## 5. Configuration Files
+### 4. Better Auth Integration
 
-### TypeScript Configuration (tsconfig.json)
+- **Modern Authentication**: Replaced custom JWT with Better Auth
+- **Session Management**: Server-side sessions for security
+- **Simplified Flow**: No more password hashing in application code
 
-- **Target**: ES2017
-- **Module**: ESNext
-- **JSX**: Preserve
-- **Strict**: Enabled
-- **Paths**: Configured for module resolution
+## 6. Migration from Old Architecture
 
-### Next.js Configuration (next.config.ts)
+### What Changed
 
-- **Framework**: Next.js 15.4.5
-- **TypeScript**: Enabled
-- **Turbopack**: Enabled for development
+1. **API Routes**: Most CRUD operations moved to dashboard pages
+2. **Authentication**: Custom JWT → Better Auth
+3. **Data Flow**: API → DAL → Database → Direct DAL → Database
+4. **Folder Structure**: `dashboard/` → `home/` for clarity
 
-### ESLint Configuration (eslint.config.mjs)
+### What Stayed the Same
 
-- **Framework**: ESLint 9
-- **Next.js**: Specific rules
-- **TypeScript**: Type-aware linting
+1. **Database Schema**: Prisma models unchanged
+2. **Business Logic**: Epic 7 rules and validation
+3. **Component Structure**: React components and UI patterns
+4. **Data Access Layer**: Core DAL functionality
 
-### PostCSS Configuration (postcss.config.mjs)
+### Benefits of New Architecture
 
-- **Tailwind CSS**: v3.4.0 processing
-- **Autoprefixer**: CSS vendor prefixes
-
-### Tailwind CSS Configuration (tailwind.config.ts)
-
-- **Content**: App directory scanning
-- **Theme**: Custom color variables and fonts
-- **Plugins**: None (base configuration)
-
-## 6. Database Architecture
-
-### PostgreSQL Setup
-
-- **Version**: 16.3
-- **User**: postgres
-- **Password**: 123456
-- **Database**: postgres
-- **Port**: 5432
-
-### Redis Setup
-
-- **Version**: 7-alpine
-- **Port**: 6379
-- **Purpose**: Caching and session storage
-
-### Prisma Configuration
-
-- **Provider**: PostgreSQL
-- **Client Output**: `../src/generated/prisma`
-- **Accelerate**: Enabled for connection pooling
-
-### Database Schema Details
-
-- **Relational Design**: Proper foreign key relationships
-- **Enum Constraints**: Database-level enum validation
-- **Cascade Deletes**: SubStats cascade when Gears are deleted
-- **Unique Constraints**: ingameId fields are unique across tables
-- **Decimal Precision**: Proper decimal types for stat values
-
-## 7. Application Features
-
-### Epic 7 Integration
-
-- **Gear Management**: Import/export gear data with proper relationships
-- **Hero Management**: Track hero stats and equipment slots
-- **Optimization**: Weight-based gear optimization algorithms
-- **Data Validation**: Enum-based validation and data integrity
-
-### File Upload System
-
-- **Gear Import**: Handle Epic 7 Optimizer exports
-- **Data Processing**: Parse and validate gear data with enum constraints
-- **Error Handling**: Graceful error management with validation feedback
-
-### User Interface
-
-- **Responsive Design**: Mobile-first approach
-- **shadcn/ui**: Modern component library with consistent design system
-- **Tailwind CSS v3.4.0**: Utility-first styling with traditional configuration
-- **TypeScript**: Type-safe development with enum types
-- **Next.js App Router**: Modern React patterns with Server and Client Components
-
-## 8. Development Workflow
-
-## 13. Naming and Organization Rules
-
-### File Names
-
-- Use kebab-case for new files: `control-bar.tsx`, `statistics-charts.tsx`, `gear-table.tsx`, `icons.tsx`, `gear.ts`.
-- Pages and layouts use Next.js reserved names: `page.tsx`, `layout.tsx`, `not-found.tsx`, `route.ts`.
-- Prefer kebab-case for all modules and components. Legacy PascalCase files (e.g., `GearTable.tsx`) will be migrated to kebab-case; a temporary re-export (`gear-table.tsx`) exists for compatibility.
-
-### Folder Names
-
-- Use kebab-case for directories.
-- Route groups: `(group-name)`.
-- Shared components live in `src/components`. Page-specific components can be colocated under the route when they are not reused.
-- Server-side data access for a domain is centralized in `src/app/lib/<domain>.ts` (e.g., `gear.ts`). Avoid scattering queries across routes.
-- Do not create `src/features/*` unless a cross-route, cross-domain feature truly requires it. Default to App Router colocation and shared `components/`.
-
-### Local Development
-
-1. **DevContainer**: Automatic environment setup
-2. **Hot Reload**: Next.js development server
-3. **Database**: PostgreSQL with persistent data and proper schema
-4. **Caching**: Redis for performance optimization
-
-### Code Quality
-
-- **ESLint**: Code linting and style enforcement
-- **TypeScript**: Static type checking with enum support
-- **Prettier**: Code formatting
-- **Git Hooks**: Pre-commit validation
-
-### Database Management
-
-- **Prisma Migrations**: Schema versioning with enum support
-- **Prisma Studio**: Database GUI for data management
-- **Seeding**: Test data population with proper relationships
-- **Backup**: Data persistence strategies
-
-## 9. Deployment Considerations
-
-### Production Environment
-
-- **Containerization**: Docker-based deployment
-- **Database**: Managed PostgreSQL service with enum support
-- **Caching**: Redis cluster for scalability
-- **CDN**: Static asset optimization
-
-### Performance Optimization
-
-- **Next.js**: Built-in optimizations
-- **Prisma Accelerate**: Database connection pooling
-- **Redis**: Caching layer
-- **Image Optimization**: Next.js image component
-- **Database Indexing**: Proper indexing on foreign keys and enums
-
-### Security
-
-- **Environment Variables**: Secure configuration
-- **Database**: Connection security with enum validation
-- **API**: Rate limiting and validation
-- **Authentication**: User session management
-
-### Environment Variables
-
-- `DATABASE_URL` is required for database features (Prisma)
-- If not set, the home page skips DB queries and the upload API returns a descriptive error
-- Next.js will read from `.env.local`, `.env`, `.env.production` automatically
-- A checked-in `.env.example` is provided and copied to `.env` during install
-
-## 10. Monitoring and Maintenance
-
-### Application Monitoring
-
-- **Error Tracking**: Exception monitoring
-- **Performance**: Response time tracking
-- **Database**: Query performance monitoring with relationship analysis
-- **Uptime**: Service availability
-
-### Database Maintenance
-
-- **Backups**: Regular data backups with relationship integrity
-- **Indexing**: Query performance optimization for foreign keys
-- **Migrations**: Schema updates with enum compatibility
-- **Cleanup**: Data archival strategies
-
-### Code Maintenance
-
-- **Dependency Updates**: Security patches
-- **TypeScript**: Type safety improvements with enum types
-- **ESLint**: Code quality enforcement
-- **Documentation**: API and component docs with schema details
-
-## 11. Database Schema Evolution
-
-### Schema Design Principles
-
-- **Normalization**: Proper table relationships and normalization
-- **Enum Usage**: Database-level enum constraints for data integrity
-- **Foreign Keys**: Proper referential integrity
-- **Cascade Operations**: Appropriate cascade delete rules
-- **Indexing Strategy**: Efficient indexing on frequently queried fields
-
-### Migration Strategy
-
-- **Version Control**: Schema changes tracked in migrations
-- **Backward Compatibility**: Maintain API compatibility during transitions
-- **Data Migration**: Proper data transformation for schema changes
-- **Rollback Plans**: Ability to rollback schema changes if needed
-
-### Performance Considerations
-
-- **Query Optimization**: Efficient queries with proper joins
-- **Indexing**: Strategic indexing on foreign keys and enum fields
-- **Connection Pooling**: Prisma Accelerate for connection management
-- **Caching Strategy**: Redis caching for frequently accessed data
-
-## 12. CSS Framework Configuration
-
-### Tailwind CSS v3.4.0 Setup
-
-- **Migration from v4**: Moved from beta Tailwind v4 to stable v3.4.0
-- **Configuration**: Traditional `tailwind.config.ts` setup
-- **PostCSS**: Standard plugins (tailwindcss, autoprefixer)
-- **Global Styles**: `@tailwind` directives in `globals.css`
-
-### CSS Architecture
-
-```css
-/* globals.css - Traditional Tailwind v3 setup */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-```
-
-### PostCSS Configuration
-
-```javascript
-// postcss.config.mjs
-const config = {
-  plugins: {
-    tailwindcss: {},
-    autoprefixer: {},
-  },
-};
-```
-
-### Turbopack Compatibility
-
-- **Issue**: Tailwind v4 beta caused Turbopack compilation errors
-- **Solution**: Downgraded to stable Tailwind v3.4.0
-- **Benefits**: Improved stability and broader ecosystem compatibility
+- ✅ **Cleaner Code**: No unnecessary API layer
+- ✅ **Better Performance**: Direct database access
+- ✅ **Easier Maintenance**: Logic centralized in pages
+- ✅ **Modern Auth**: Better Auth integration
+- ✅ **Type Safety**: Full Prisma type support

@@ -1,5 +1,5 @@
-import { PrismaClient } from "./generated/client";
-import bcrypt from "bcryptjs";
+import { PrismaClient, StatCategory, GearType } from "./generated/client";
+import { hashPassword } from "better-auth/crypto";
 
 const prisma = new PrismaClient();
 
@@ -7,39 +7,55 @@ async function main() {
   console.log("🌱 Starting database seeding...");
 
   try {
+    // Admin seed credentials (override via env if desired)
+    const adminEmail =
+      process.env.SEED_ADMIN_EMAIL || "admin@epic7optimizer.com";
+    const adminPassword = process.env.SEED_ADMIN_PASSWORD || "admin1234";
+
     // Create admin user if it doesn't exist
     let adminUser = await prisma.user.findUnique({
-      where: { email: "admin@epic7optimizer.com" },
+      where: { email: adminEmail },
     });
 
     if (!adminUser) {
-      const hashedPassword = await bcrypt.hash("admin1234", 12);
       adminUser = await prisma.user.create({
         data: {
           id: "admin-user",
           name: "Admin User",
-          email: "admin@epic7optimizer.com",
-          password: hashedPassword,
+          email: adminEmail,
+          emailVerified: true,
+          image: null,
         },
       });
       console.log("✅ Admin user created successfully!");
       console.log(`   Email: ${adminUser.email}`);
-      console.log(`   Password: admin1234`);
     } else {
-      // Ensure known dev password is valid; if not, reset it for local convenience
-      const valid = await bcrypt.compare("admin1234", adminUser.password);
-      if (!valid) {
-        const resetHash = await bcrypt.hash("admin1234", 12);
-        await prisma.user.update({
-          where: { id: adminUser.id },
-          data: { password: resetHash },
-        });
-        console.log("♻️  Admin password reset to default for development.");
-        console.log(`   Email: ${adminUser.email}`);
-        console.log(`   Password: admin1234`);
-      } else {
-        console.log("✅ Admin user already exists, skipping...");
-      }
+      console.log("✅ Admin user already exists, skipping...");
+    }
+
+    // Ensure Better Auth credential account exists for the admin user
+    // Following Better Auth docs: account providerId should be "credential",
+    // accountId can be the user's id, and password must be hashed using Better Auth's hasher
+    const existingCredentialAccount = await prisma.account.findFirst({
+      where: { userId: adminUser.id, providerId: "credential" },
+    });
+
+    if (!existingCredentialAccount) {
+      const passwordHash = await hashPassword(adminPassword);
+      await prisma.account.create({
+        data: {
+          userId: adminUser.id,
+          providerId: "credential",
+          accountId: adminUser.id,
+          password: passwordHash,
+        },
+      });
+      console.log("✅ Credentials account created for admin user");
+      console.log("   You can login with:");
+      console.log(`   Email: ${adminEmail}`);
+      console.log(`   Password: ${adminPassword}`);
+    } else {
+      console.log("✅ Admin credentials account exists, skipping...");
     }
 
     // Create default settings for admin user if they don't exist
@@ -48,7 +64,7 @@ async function main() {
     });
 
     if (!existingSettings) {
-      const defaultSettings = await prisma.settings.create({
+      await prisma.settings.create({
         data: {
           userId: adminUser.id,
           fScoreIncludeMainStat: true,
@@ -98,84 +114,172 @@ async function main() {
       console.log("✅ Settings already exist for admin user, skipping...");
     }
 
-    // Create default stat types if they don't exist
+    // Create default stat types with proper gear restrictions
+    // Based on Epic 7 game rules from .cursor/rules/stat-rules.mdc
     const statTypes = [
       {
         statName: "Speed",
-        statCategory: "flat" as const,
+        statCategory: StatCategory.FLAT,
         weight: 2.0,
-        isMainStat: false,
-        isSubstat: true,
+        allowedMainStatFor: [GearType.BOOTS], // Speed can only be main stat on boots
+        allowedSubstatFor: [
+          GearType.WEAPON,
+          GearType.ARMOR,
+          GearType.HELM,
+          GearType.NECK,
+          GearType.RING,
+          GearType.BOOTS,
+        ], // Speed can be substat on any gear
       },
       {
         statName: "Attack",
-        statCategory: "flat" as const,
+        statCategory: StatCategory.FLAT,
         weight: 0.3,
-        isMainStat: false,
-        isSubstat: true,
+        allowedMainStatFor: [
+          GearType.WEAPON,
+          GearType.NECK,
+          GearType.RING,
+          GearType.BOOTS,
+        ], // Attack can be main stat on variable gear + fixed on weapon
+        allowedSubstatFor: [
+          GearType.WEAPON,
+          GearType.ARMOR,
+          GearType.HELM,
+          GearType.NECK,
+          GearType.RING,
+          GearType.BOOTS,
+        ], // Attack can be substat on any gear
       },
       {
         statName: "Attack %",
-        statCategory: "percentage" as const,
+        statCategory: StatCategory.PERCENTAGE,
         weight: 1.2,
-        isMainStat: false,
-        isSubstat: true,
+        allowedMainStatFor: [GearType.NECK, GearType.RING, GearType.BOOTS], // Attack % can only be main stat on variable gear
+        allowedSubstatFor: [
+          GearType.WEAPON,
+          GearType.ARMOR,
+          GearType.HELM,
+          GearType.NECK,
+          GearType.RING,
+          GearType.BOOTS,
+        ], // Attack % can be substat on any gear
       },
       {
         statName: "Defense",
-        statCategory: "flat" as const,
+        statCategory: StatCategory.FLAT,
         weight: 0.2,
-        isMainStat: false,
-        isSubstat: true,
+        allowedMainStatFor: [GearType.ARMOR, GearType.NECK], // Defense can be main stat on armor (fixed) + necklace only
+        allowedSubstatFor: [
+          GearType.WEAPON,
+          GearType.ARMOR,
+          GearType.HELM,
+          GearType.NECK,
+          GearType.RING,
+          GearType.BOOTS,
+        ], // Defense can be substat on any gear
       },
       {
         statName: "Defense %",
-        statCategory: "percentage" as const,
+        statCategory: StatCategory.PERCENTAGE,
         weight: 0.8,
-        isMainStat: false,
-        isSubstat: true,
+        allowedMainStatFor: [GearType.NECK, GearType.RING, GearType.BOOTS], // Defense % can only be main stat on variable gear
+        allowedSubstatFor: [
+          GearType.WEAPON,
+          GearType.ARMOR,
+          GearType.HELM,
+          GearType.NECK,
+          GearType.RING,
+          GearType.BOOTS,
+        ], // Defense % can be substat on any gear
       },
       {
         statName: "Health",
-        statCategory: "flat" as const,
+        statCategory: StatCategory.FLAT,
         weight: 0.2,
-        isMainStat: false,
-        isSubstat: true,
+        allowedMainStatFor: [
+          GearType.HELM,
+          GearType.NECK,
+          GearType.RING,
+          GearType.BOOTS,
+        ], // Health can be main stat on helm (fixed) + variable gear
+        allowedSubstatFor: [
+          GearType.WEAPON,
+          GearType.ARMOR,
+          GearType.HELM,
+          GearType.NECK,
+          GearType.RING,
+          GearType.BOOTS,
+        ], // Health can be substat on any gear
       },
       {
         statName: "Health %",
-        statCategory: "percentage" as const,
+        statCategory: StatCategory.PERCENTAGE,
         weight: 0.8,
-        isMainStat: false,
-        isSubstat: true,
+        allowedMainStatFor: [GearType.NECK, GearType.RING, GearType.BOOTS], // Health % can only be main stat on variable gear
+        allowedSubstatFor: [
+          GearType.WEAPON,
+          GearType.ARMOR,
+          GearType.HELM,
+          GearType.NECK,
+          GearType.RING,
+          GearType.BOOTS,
+        ], // Health % can be substat on any gear
       },
       {
         statName: "Crit %",
-        statCategory: "percentage" as const,
+        statCategory: StatCategory.PERCENTAGE,
         weight: 1.5,
-        isMainStat: false,
-        isSubstat: true,
+        allowedMainStatFor: [GearType.NECK], // Crit % can only be main stat on necklace
+        allowedSubstatFor: [
+          GearType.WEAPON,
+          GearType.ARMOR,
+          GearType.HELM,
+          GearType.NECK,
+          GearType.RING,
+          GearType.BOOTS,
+        ], // Crit % can be substat on any gear
       },
       {
         statName: "Crit Dmg %",
-        statCategory: "percentage" as const,
+        statCategory: StatCategory.PERCENTAGE,
         weight: 1.3,
-        isMainStat: false,
-        isSubstat: true,
+        allowedMainStatFor: [GearType.NECK], // Crit Dmg % can only be main stat on necklace
+        allowedSubstatFor: [
+          GearType.WEAPON,
+          GearType.ARMOR,
+          GearType.HELM,
+          GearType.NECK,
+          GearType.RING,
+          GearType.BOOTS,
+        ], // Crit Dmg % can be substat on any gear
       },
       {
         statName: "Effectiveness %",
-        statCategory: "percentage" as const,
+        statCategory: StatCategory.PERCENTAGE,
         weight: 0.7,
-        isMainStat: false,
-        isSubstat: true,
+        allowedMainStatFor: [GearType.RING], // Effectiveness % can only be main stat on ring
+        allowedSubstatFor: [
+          GearType.WEAPON,
+          GearType.ARMOR,
+          GearType.HELM,
+          GearType.NECK,
+          GearType.RING,
+          GearType.BOOTS,
+        ], // Effectiveness % can be substat on any gear
       },
       {
         statName: "Effect Resist %",
-        statCategory: "percentage" as const,
+        statCategory: StatCategory.PERCENTAGE,
         weight: 0.6,
-        isMainStat: false,
-        isSubstat: true,
+        allowedMainStatFor: [GearType.RING], // Effect Resist % can only be main stat on ring
+        allowedSubstatFor: [
+          GearType.WEAPON,
+          GearType.ARMOR,
+          GearType.HELM,
+          GearType.NECK,
+          GearType.RING,
+          GearType.BOOTS,
+        ], // Effect Resist % can be substat on any gear
       },
     ];
 
@@ -186,7 +290,11 @@ async function main() {
         update: statType,
       });
     }
-    console.log("✅ Stat types created/updated!");
+    console.log("✅ Stat types created/updated with proper gear restrictions!");
+    console.log(
+      "   Note: Stat restrictions are defined in .cursor/rules/stat-rules.mdc"
+    );
+
     // Create default gear sets if they don't exist
     const gearSets = [
       {
@@ -286,6 +394,14 @@ async function main() {
     console.log("✅ Gear sets created/updated!");
 
     console.log("🎉 Database seeding completed successfully!");
+    console.log("");
+    console.log("📝 Next steps:");
+    console.log("   1. The admin user has been created");
+    console.log("   2. Use the signup/login pages to set a password");
+    console.log("   3. Default settings and gear data are configured");
+    console.log(
+      "   4. Stat rules are documented in .cursor/rules/stat-rules.mdc"
+    );
   } catch (error) {
     console.error("❌ Error during seeding:", error);
     throw error;

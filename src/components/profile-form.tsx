@@ -12,17 +12,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { User } from "better-auth";
 
-interface ProfileFormProps {
-  user: {
-    id: string;
-    name: string | null;
-    email: string;
-    createdAt: Date;
-  } | null;
-}
-
-export function ProfileForm({ user }: ProfileFormProps) {
+export function ProfileForm({ user }: { user: User }) {
   const { signOut } = useAuth();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");

@@ -1,92 +1,66 @@
-"use client";
+"use client"
 
-import * as React from "react";
+import * as React from "react"
+import * as TabsPrimitive from "@radix-ui/react-tabs"
 
-type TabsContext = {
-  value: string;
-  setValue: (v: string) => void;
-};
+import { cn } from "@/lib/utils"
 
-const Ctx = React.createContext<TabsContext | null>(null);
-
-export function Tabs({
-  defaultValue,
-  value: controlled,
-  onValueChange,
+function Tabs({
   className,
-  children,
-}: {
-  defaultValue?: string;
-  value?: string;
-  onValueChange?: (v: string) => void;
-  className?: string;
-  children: React.ReactNode;
-}) {
-  const [uncontrolled, setUncontrolled] = React.useState(defaultValue || "");
-  const isControlled = controlled !== undefined;
-  const value = isControlled ? (controlled as string) : uncontrolled;
-  const setValue = (v: string) => {
-    if (!isControlled) setUncontrolled(v);
-    onValueChange?.(v);
-  };
+  ...props
+}: React.ComponentProps<typeof TabsPrimitive.Root>) {
   return (
-    <Ctx.Provider value={{ value, setValue }}>
-      <div className={className}>{children}</div>
-    </Ctx.Provider>
-  );
+    <TabsPrimitive.Root
+      data-slot="tabs"
+      className={cn("flex flex-col gap-2", className)}
+      {...props}
+    />
+  )
 }
 
-export function TabsList({
-  children,
+function TabsList({
   className,
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
+  ...props
+}: React.ComponentProps<typeof TabsPrimitive.List>) {
   return (
-    <div
-      className={`inline-flex items-center gap-2 rounded-md border p-1 ${
-        className ?? ""
-      }`}
-    >
-      {children}
-    </div>
-  );
+    <TabsPrimitive.List
+      data-slot="tabs-list"
+      className={cn(
+        "bg-muted text-muted-foreground inline-flex h-9 w-fit items-center justify-center rounded-lg p-[3px]",
+        className
+      )}
+      {...props}
+    />
+  )
 }
 
-export function TabsTrigger({
-  value,
-  children,
-}: {
-  value: string;
-  children: React.ReactNode;
-}) {
-  const ctx = React.useContext(Ctx);
-  if (!ctx) return null;
-  const isActive = ctx.value === value;
-  return (
-    <button
-      type="button"
-      onClick={() => ctx.setValue(value)}
-      className={`px-3 py-1 rounded text-xs font-medium ${
-        isActive ? "bg-foreground text-background" : "hover:bg-muted"
-      }`}
-    >
-      {children}
-    </button>
-  );
-}
-
-export function TabsContent({
-  value,
-  children,
+function TabsTrigger({
   className,
-}: {
-  value: string;
-  children: React.ReactNode;
-  className?: string;
-}) {
-  const ctx = React.useContext(Ctx);
-  if (!ctx || ctx.value !== value) return null;
-  return <div className={className}>{children}</div>;
+  ...props
+}: React.ComponentProps<typeof TabsPrimitive.Trigger>) {
+  return (
+    <TabsPrimitive.Trigger
+      data-slot="tabs-trigger"
+      className={cn(
+        "data-[state=active]:bg-background dark:data-[state=active]:text-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring dark:data-[state=active]:border-input dark:data-[state=active]:bg-input/30 text-foreground dark:text-muted-foreground inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-md border border-transparent px-2 py-1 text-sm font-medium whitespace-nowrap transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        className
+      )}
+      {...props}
+    />
+  )
 }
+
+function TabsContent({
+  className,
+  ...props
+}: React.ComponentProps<typeof TabsPrimitive.Content>) {
+  return (
+    <TabsPrimitive.Content
+      data-slot="tabs-content"
+      className={cn("flex-1 outline-none", className)}
+      {...props}
+    />
+  )
+}
+
+export { Tabs, TabsList, TabsTrigger, TabsContent }

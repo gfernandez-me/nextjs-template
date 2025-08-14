@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { User } from "@/lib/auth";
+import { User } from "#prisma";
 
 interface UseAuthReturn {
-  user: User | null;
+  user: User | null | undefined;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<boolean>;
   signOut: () => Promise<void>;

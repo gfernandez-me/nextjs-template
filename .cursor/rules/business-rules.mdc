@@ -78,6 +78,8 @@ alwaysApply: true
 
 ## 4. Substats Rules
 
+**IMPORTANT**: For detailed stat rules and restrictions, see `.cursor/rules/stat-rules.mdc`
+
 ### Available Substats (Any gear)
 
 - Speed
@@ -98,6 +100,8 @@ alwaysApply: true
 - **Categories**: flat or percentage
 
 ### Stat Categories (Enum)
+
+**IMPORTANT**: Always use Prisma-generated enum types, never string literals. See `.cursor/rules/prisma-best-practices.mdc` for details.
 
 - **flat**: Flat stat values (Attack, Defense, Health, Speed)
 - **percentage**: Percentage-based stats (Attack%, Defense%, Health%, Crit%, etc.)
