@@ -1,46 +1,32 @@
-# Authentication Implementation
+# Authentication Implementation (Better Auth)
 
-## Overview
-
-Custom JWT-based authentication system implemented for the Epic 7 Gear Optimizer, providing secure user management with session-based authentication.
+This project uses Better Auth with the Prisma adapter for email/password authentication and session management.
 
 ## Implementation Details
 
-### 1. User Model (Prisma Schema)
+### 1. Prisma Schema (Auth Models)
 
 ```prisma
-model User {
-  id        String   @id @default(cuid())
-  name      String?
-  email     String   @unique
-  password  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("users")
-}
+// See `prisma/schema.prisma` for full models
+// Key points:
+// - Passwords are stored in `Account.password`, not `User`
+// - Credentials provider uses providerId = "credential"
+// - Session tokens are stored in `Session`
 ```
 
-### 2. Authentication System
+### 2. Auth Setup
 
-- **Type**: Custom JWT-based authentication
-- **Strategy**: HTTP-only cookies for token storage
-- **Security**: bcrypt password hashing (12 rounds)
-- **Session**: 7-day token expiration
-- **Protection**: Route middleware for protected pages
+- Library: Better Auth
+- Adapter: Prisma
+- Email & Password enabled
+- Theme: handled via `next-themes`
 
 ### 3. Key Files
 
-- `src/lib/auth.ts` - Core authentication functions
-- `src/hooks/useAuth.ts` - Client-side auth hook
-- `src/middleware.ts` - Route protection middleware
-- `src/app/api/auth/signin/route.ts` - Sign in endpoint
-- `src/app/api/auth/signout/route.ts` - Sign out endpoint
-- `src/app/api/auth/me/route.ts` - User info endpoint
-- `src/app/api/auth/change-password/route.ts` - Password change endpoint
-- `src/app/(main)/profile/page.tsx` - User profile page
-- `src/app/(main)/signin/page.tsx` - Sign in page
-- `src/components/navigation.tsx` - Updated with auth state
+- `src/lib/auth.ts` - Better Auth configuration (uses prisma singleton)
+- `src/lib/auth-client.ts` - Better Auth client
+- `src/app/(dashboard)/layout.tsx` - Redirects unauthenticated users to `/login`
+- `src/components/auth/login-form.tsx` - Login form using `authClient`
 
 ### 4. Database Setup
 
@@ -53,8 +39,8 @@ npm run db:generate
 # Run migrations (creates tables)
 npm run db:migrate
 
-# Seed database with admin user and default settings
-npm run db:seed
+# Seed database (creates admin user + credentials account)
+npx tsx prisma/seed.ts
 ```
 
 #### What Gets Created
@@ -66,17 +52,17 @@ npm run db:seed
 ### 5. Default Admin User
 
 - **Email**: admin@epic7optimizer.com
-- **Password**: admin1234
+- **Password**: admin1234 (stored in `Account.password` hashed via Better Auth)
 - **ID**: admin-user
-- **Created**: Via `npm run db:seed` command
+- **Created**: Via `prisma/seed.ts` using Better Auth `hashPassword`
 
-### 6. Security Features
+### 6. Notes
 
-- Password hashing with bcrypt (12 rounds)
-- JWT token validation
-- HTTP-only cookies for token storage
-- Route protection middleware
-- Secure password change with current password verification
+- Passwords are hashed with Better Auth’s built-in hasher.
+- `providerId` for credentials is "credential".
+- To add a password for OAuth users, use `auth.api.setPassword`.
+
+Reference: Better Auth users & accounts [docs](https://www.better-auth.com/docs/concepts/users-accounts)
 
 ### 7. User Experience
 

@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import {
-  IconChartBar,
   IconCopy,
   IconDashboard,
   IconDatabase,
@@ -64,11 +63,6 @@ const data = {
       title: "Settings",
       url: "/settings",
       icon: IconSettings,
-    },
-    {
-      title: "Statistics",
-      url: "/statistics",
-      icon: IconChartBar,
     },
     {
       title: "Account",

@@ -1,10 +1,10 @@
 "use client";
+import { Suspense, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { useEffect } from "react";
 import { toast } from "sonner";
 import { LoginForm } from "@/components/auth/login-form";
 
-export default function Page() {
+function LoginContent() {
   const params = useSearchParams();
   const reason = params.get("reason");
 
@@ -20,5 +20,13 @@ export default function Page() {
         <LoginForm />
       </div>
     </div>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={null}>
+      <LoginContent />
+    </Suspense>
   );
 }

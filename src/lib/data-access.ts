@@ -54,6 +54,53 @@ function convertDecimals<T>(obj: T): T {
   return obj;
 }
 
+// Helper function to serialize Prisma objects for client components
+function serializeForClient<T>(obj: T): T {
+  if (obj === null || obj === undefined) return obj;
+
+  if (typeof obj === "object") {
+    if (Array.isArray(obj)) {
+      return obj.map(serializeForClient) as T;
+    }
+
+    // Handle BigInt values
+    if (typeof obj === "bigint") {
+      return Number(obj) as unknown as T;
+    }
+
+    const serialized: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(obj)) {
+      // Skip Prisma methods and internal properties
+      if (
+        key.startsWith("_") ||
+        key.startsWith("$") ||
+        typeof value === "function"
+      ) {
+        continue;
+      }
+
+      if (typeof value === "bigint") {
+        serialized[key] = Number(value);
+      } else if (
+        value &&
+        typeof value === "object" &&
+        "constructor" in value &&
+        value.constructor.name === "Decimal"
+      ) {
+        // Handle Prisma Decimal types
+        serialized[key] = Number(value);
+      } else if (value && typeof value === "object") {
+        serialized[key] = serializeForClient(value);
+      } else {
+        serialized[key] = value;
+      }
+    }
+    return serialized as T;
+  }
+
+  return obj;
+}
+
 export class DataAccessLayer {
   constructor(private userId: string) {}
 
@@ -95,7 +142,7 @@ export class DataAccessLayer {
     ]);
 
     // Convert Decimal types to regular numbers
-    return { rows: convertDecimals(rows), total };
+    return { rows: serializeForClient(rows), total };
   }
 
   // Gear Priorities

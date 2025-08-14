@@ -18,11 +18,10 @@
 src/
 ├── app/                    # Next.js App Router
 │   ├── (dashboard)/        # Protected dashboard routes (logged in users)
-│   │   ├── home/           # Main dashboard page (renamed from dashboard/)
+│   │   ├── home/           # Main dashboard page with statistics overview
 │   │   ├── gears/          # Gear inventory management
 │   │   ├── heroes/         # Hero management
 │   │   ├── gear-priorities/# Gear optimization settings
-│   │   ├── statistics/     # Gear statistics and analysis
 │   │   ├── settings/       # User settings and preferences
 │   │   ├── upload/         # File upload for gear data
 │   │   └── layout.tsx      # Dashboard layout with sidebar
@@ -42,7 +41,7 @@ src/
 │   ├── settings-form.tsx   # Settings configuration
 │   ├── upload-form.tsx     # File upload form
 │   ├── gear-table.tsx      # Gear inventory table
-│   ├── statistics-content.tsx # Statistics display
+│   ├── statistics-content.tsx # Statistics display (used in home dashboard)
 │   ├── icons.tsx           # Icon helpers
 │   ├── app-sidebar.tsx     # Dashboard sidebar navigation
 │   ├── site-header.tsx     # Site header component
@@ -110,17 +109,20 @@ The application implements a complete multi-user system with data isolation:
 **NEW APPROACH**: Dashboard pages directly access the database using the Data Access Layer (DAL) instead of going through API routes.
 
 #### Benefits:
+
 - ✅ **Simplified Architecture**: No unnecessary API layer for simple CRUD operations
 - ✅ **Better Performance**: Direct database access without HTTP overhead
 - ✅ **Type Safety**: Full TypeScript support with Prisma types
 - ✅ **Easier Maintenance**: Logic centralized in pages, not scattered across API routes
 
 #### When to Use API Routes:
+
 - **File Uploads**: Complex file processing (Fribbels data import)
 - **Heavy Computations**: Settings recalculation across all gears
 - **External Integrations**: Webhooks, third-party API calls
 
 #### When NOT to Use API Routes:
+
 - **Simple CRUD**: Gear listing, hero management, settings retrieval
 - **Data Display**: Dashboard statistics, gear tables
 - **Form Submissions**: Settings updates, gear priority configuration

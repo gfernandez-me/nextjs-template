@@ -8,12 +8,15 @@ alwaysApply: true
 
 ### Technology Stack
 
-- **Next.js**: 15.4.5 with App Router
-- **React**: 19.1.0 (Server and Client Components)
+- **Next.js**: 15.3.x with App Router
+- **React**: 19.x (Server and Client Components)
 - **TypeScript**: ^5 (Full type safety)
-- **shadcn/ui**: Modern component library with Tailwind CSS
-- **Prisma**: ^6.13.0 (Database ORM)
-- **PostgreSQL**: 16.3 (Primary database)
+- **Tailwind CSS**: v4
+- **shadcn/ui** + **@radix-ui**
+- **next-themes** for theme switching
+- **Better Auth** (Prisma adapter)
+- **Prisma**: 6.x (output `prisma/generated/client`)
+- **PostgreSQL**: 16.x
 
 ### Project Structure
 
@@ -104,7 +107,11 @@ export type GearWithRelations = Prisma.GearsGetPayload<{
   include: { hero: true; substats: { include: { statType: true } } };
 }>;
 
-export async function getGearsPage(params: { page: number; perPage: number; orderBy?: Prisma.GearsOrderByWithRelationInput[]; }): Promise<GearWithRelations[]> {
+export async function getGearsPage(params: {
+  page: number;
+  perPage: number;
+  orderBy?: Prisma.GearsOrderByWithRelationInput[];
+}): Promise<GearWithRelations[]> {
   const { page, perPage, orderBy } = params;
   return db.gears.findMany({
     skip: (page - 1) * perPage,

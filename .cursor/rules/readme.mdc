@@ -44,9 +44,9 @@ statCategory: StatCategory.FLAT;
 
 ### 3. Use Better Auth for Authentication
 
-- No bcrypt passwords
-- Session-based authentication
-- Modern auth flow
+- Passwords live in `Account.password` (hashed by Better Auth)
+- Credentials provider uses `providerId = "credential"`
+- Session-based authentication with Prisma adapter
 
 ### 4. Clean Architecture
 
