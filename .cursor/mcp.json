@@ -1,0 +1,16 @@
+{
+    "mcpServers": {
+        "DBHub": {
+            "command": "npx @bytebase/dbhub",
+            "env": {
+                "TRANSPORT": "stdio",
+                "DSN": "postgres://postgres:123456@localhost:5432/postgres?sslmode=disable",
+                "READONLY": "true"
+            },
+            "args": []
+        },
+        "github": {
+            "command": "./start-mcp.sh"
+        }
+    }
+}
