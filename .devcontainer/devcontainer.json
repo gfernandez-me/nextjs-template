@@ -3,6 +3,8 @@
     "dockerComposeFile": "compose.yaml",
     "service": "app",
     "workspaceFolder": "/workspace",
+    "overrideCommand": false,
+    "remoteUser": "node",
     "customizations": {
         "vscode": {
             "extensions": [
@@ -21,7 +23,6 @@
             ]
         }
     },
-    "remoteUser": "node",
     "mounts": [
         "source=${env:HOME}/.ssh,target=/home/node/.ssh,type=bind,consistency=cached",
         "source=${env:HOME}/.gitconfig,target=/home/node/.gitconfig,type=bind,consistency=cached"
@@ -33,6 +34,13 @@
         5432,
         6379
     ],
-    "postCreateCommand": "bash -lc 'cp -f .devcontainer/.zshrc-optimized /home/node/.zshrc || true'",
-    "postStartCommand": "bash -lc 'cp -f .devcontainer/.zshrc-optimized /home/node/.zshrc || true'"
+    "containerEnv": {
+        "DEBIAN_FRONTEND": "noninteractive",
+        "CI": "1",
+        "FORCE_COLOR": "0",
+        "NO_COLOR": "1",
+        "TERM": "xterm"
+    },
+    "postCreateCommand": "bash -lc 'cp -f .devcontainer/.zshrc-optimized /home/node/.zshrc && npm install -g @bytebase/dbhub --yes --no-color || true'",
+    "postStartCommand": "npm install --no-color --no-audit --no-fund --no-optional"
 }

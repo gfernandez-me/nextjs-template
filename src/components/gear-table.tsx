@@ -104,10 +104,20 @@ export function GearTable({ rows }: { rows: GearWithRelations[] }) {
     // Business rules recommend weight-based scoring; do not persist
     let score = 0;
     for (const s of row.GearSubStats) {
-      const isPercent = s.StatType.statCategory === "PERCENTAGE";
-      const weight =
-        typeof s.StatType.weight === "number" ? s.StatType.weight : 1;
-      const value = isPercent ? Number(s.statValue) : Number(s.statValue);
+      if (
+        !s ||
+        !s.StatType ||
+        s.statValue === null ||
+        s.statValue === undefined
+      )
+        continue;
+
+      const weight = s.StatType.weight ? Number(s.StatType.weight) : 1;
+      const value = Number(s.statValue);
+
+      // Skip invalid values
+      if (isNaN(value) || isNaN(weight)) continue;
+
       score += value * weight;
     }
     return Math.round(score * 100) / 100;
@@ -130,9 +140,22 @@ export function GearTable({ rows }: { rows: GearWithRelations[] }) {
     };
     let score = 0;
     for (const s of row.GearSubStats) {
+      if (
+        !s ||
+        !s.StatType ||
+        s.statValue === null ||
+        s.statValue === undefined
+      )
+        continue;
+
       const name = s.StatType.statName;
       const w = weights[name] ?? 1;
-      score += Number(s.statValue) * w;
+      const value = Number(s.statValue);
+
+      // Skip invalid values
+      if (isNaN(value) || isNaN(w)) continue;
+
+      score += value * w;
     }
     return Math.round(score * 100) / 100;
   }
@@ -276,22 +299,33 @@ export function GearTable({ rows }: { rows: GearWithRelations[] }) {
         {
           id: "mainStatValue",
           header: () => <span>Main</span>,
-          cell: ({ row }) => (
-            <div className="flex items-center gap-2 text-[11px] leading-4">
-              <span className="text-muted-foreground capitalize">
-                {stripPercent(formatMainStatLabel(row.original.mainStatType))}
-              </span>
-              <span className="font-mono">
-                {formatMainStatValue(
-                  row.original.mainStatType,
-                  row.original.mainStatValue
-                )}
-              </span>
-            </div>
-          ),
+          cell: ({ row }) => {
+            const mainStatValue = Number(row.original.mainStatValue);
+            if (isNaN(mainStatValue)) {
+              return <span className="text-muted-foreground">Invalid</span>;
+            }
+
+            return (
+              <div className="flex items-center gap-2 text-[11px] leading-4">
+                <span className="text-muted-foreground capitalize">
+                  {stripPercent(formatMainStatLabel(row.original.mainStatType))}
+                </span>
+                <span className="font-mono">
+                  {formatMainStatValue(
+                    row.original.mainStatType,
+                    mainStatValue
+                  )}
+                </span>
+              </div>
+            );
+          },
           enableSorting: true,
-          sortingFn: (a, b) =>
-            Number(a.original.mainStatValue) - Number(b.original.mainStatValue),
+          sortingFn: (a, b) => {
+            const aVal = Number(a.original.mainStatValue);
+            const bVal = Number(b.original.mainStatValue);
+            if (isNaN(aVal) || isNaN(bVal)) return 0;
+            return aVal - bVal;
+          },
         },
         ...[0, 1, 2, 3].map(
           (idx): ColumnDef<GearRow> => ({
@@ -299,12 +333,27 @@ export function GearTable({ rows }: { rows: GearWithRelations[] }) {
             header: () => <span>{`Substat ${idx + 1}`}</span>,
             cell: ({ row }: { row: { original: GearRow } }) => {
               const s = row.original.GearSubStats[idx];
-              if (!s) return <span className="text-muted-foreground">-</span>;
+              if (
+                !s ||
+                !s.StatType ||
+                s.statValue === null ||
+                s.statValue === undefined
+              ) {
+                return <span className="text-muted-foreground">-</span>;
+              }
+
               const badge = getStatBadge(
                 s.StatType.statName,
                 Number(s.statValue),
                 row.original.enhance
               );
+
+              // Ensure statValue is properly converted to a number
+              const statValue = Number(s.statValue);
+              if (isNaN(statValue)) {
+                return <span className="text-muted-foreground">Invalid</span>;
+              }
+
               return (
                 <div className="flex items-center gap-2 text-[11px] leading-4">
                   <span className="text-muted-foreground">
@@ -322,7 +371,7 @@ export function GearTable({ rows }: { rows: GearWithRelations[] }) {
                     </span>
                   ) : (
                     <span className="font-mono tabular-nums">
-                      {s.statValue.toString()}
+                      {statValue.toString()}
                       {s.StatType.statCategory === "PERCENTAGE" ? "%" : ""}
                     </span>
                   )}
@@ -333,7 +382,10 @@ export function GearTable({ rows }: { rows: GearWithRelations[] }) {
             sortingFn: (a, b) => {
               const sa = a.original.GearSubStats[idx]?.statValue ?? -Infinity;
               const sb = b.original.GearSubStats[idx]?.statValue ?? -Infinity;
-              return Number(sa) - Number(sb);
+              const saNum = Number(sa);
+              const sbNum = Number(sb);
+              if (isNaN(saNum) || isNaN(sbNum)) return 0;
+              return saNum - sbNum;
             },
           })
         ),

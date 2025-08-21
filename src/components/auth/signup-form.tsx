@@ -59,7 +59,7 @@ export function SignupForm({
         onSuccess: () => {
           // redirect to the dashboard
           //alert("Logged in successfully");
-          router.push("/dashboard");
+          router.push("/home");
         },
         onError: (ctx) => {
           // display the error message

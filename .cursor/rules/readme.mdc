@@ -81,6 +81,46 @@ statCategory: StatCategory.FLAT;
 4. **Using deprecated database fields**
 5. **Creating unnecessary API routes for simple CRUD operations**
 
+## 💻 Running via Cursor Chat
+
+### Non-Interactive Execution
+
+When running commands through Cursor chat in the devcontainer, use the **CI variants** to prevent hanging:
+
+```bash
+# ❌ These may hang in chat
+npm run dev          # Development server (interactive)
+npm run build        # Build (may have prompts)
+npm run lint         # Linting (may have prompts)
+
+# ✅ Use these for chat execution
+npm run build:ci     # Non-interactive build
+npm run lint:ci      # Non-interactive linting
+npm run typecheck:ci # Non-interactive type checking
+```
+
+### Command Wrapper
+
+For complex commands, use the non-interactive wrapper:
+
+```bash
+.devcontainer/run-noninteractive.sh 'npm run build && npm run lint'
+```
+
+### Environment Variables
+
+The devcontainer automatically sets:
+- `CI=1` - Non-interactive mode
+- `FORCE_COLOR=0` - No colors
+- `NO_COLOR=1` - Disable colors
+- `DEBIAN_FRONTEND=noninteractive` - No prompts
+
+### What NOT to Run in Chat
+
+- **Development servers** (`npm run dev`) - Use terminal
+- **Interactive tools** (Prisma Studio, git with prompts)
+- **Long-running processes** - Use terminal with `&` or `screen`
+
 ## 📚 Reading Order
 
 1. **Start with**: `business-rules.mdc` for game mechanics
