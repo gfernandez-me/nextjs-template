@@ -1,0 +1,26 @@
+# Heroes Management Business Rules
+
+## Overview
+
+The Heroes page manages Epic 7 hero data, including hero information, equipment slots, and gear optimization preferences.
+
+## Business Rules
+
+_[Content to be provided by user]_
+
+## Page-Specific Requirements
+
+_[Content to be provided by user]_
+
+## Data Flow
+
+_[Content to be provided by user]_
+
+## User Experience
+
+_[Content to be provided by user]_
+description:
+globs:
+alwaysApply: false
+
+---

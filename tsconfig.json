@@ -38,6 +38,12 @@
       "@/app/*": [
         "./src/app/*"
       ],
+      "@/dashboard/*": [
+        "./src/app/(dashboard)/*"
+      ],
+      "@/admin/*": [
+        "./src/app/(admin)/*"
+      ],
       "@/ui/*": [
         "./src/components/ui/*"
       ],
@@ -69,6 +75,7 @@
     ".next/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    ".next"
   ]
 }

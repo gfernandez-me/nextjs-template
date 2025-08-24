@@ -1,4 +1,4 @@
-import { GearPrioritiesForm } from "@/components/gear-priorities-form";
+import { GearPrioritiesForm } from "./components/gear-priorities-form";
 import { getEpic7Data } from "@/lib/epic7-data";
 
 export default async function GearPrioritiesPage() {

@@ -1,9 +1,9 @@
-import { GearFilters } from "@/components/filters/GearFilters";
-import { GearTable } from "@/components/gear-table";
-import { createDataAccess } from "@/lib/data-access";
+import { GearTable } from "./components/gear-table";
+import { GearFilters } from "./components/GearFilters";
+import { GearsDataAccess } from "./data/gears";
 import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { parseGearSearchParams } from "@/lib/url";
 
 /**
@@ -26,7 +26,7 @@ export default async function GearsPage({
   }
 
   // Create data access layer for current user
-  const dal = createDataAccess(session.user.id);
+  const dal = new GearsDataAccess(session.user.id);
 
   // Parse URL parameters for server-side filtering
   const resolvedSearchParams = await searchParams;

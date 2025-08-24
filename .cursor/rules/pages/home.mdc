@@ -1,0 +1,26 @@
+# Home Dashboard Business Rules
+
+## Overview
+
+The Home Dashboard is the main landing page for authenticated users, providing an overview of their Epic 7 gear optimization progress and key statistics.
+
+## Business Rules
+
+_[Content to be provided by user]_
+
+## Page-Specific Requirements
+
+_[Content to be provided by user]_
+
+## Data Flow
+
+_[Content to be provided by user]_
+
+## User Experience
+
+_[Content to be provided by user]_
+description:
+globs:
+alwaysApply: false
+
+---

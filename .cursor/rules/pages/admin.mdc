@@ -1,0 +1,26 @@
+# Admin Pages Business Rules
+
+## Overview
+
+The Admin pages provide administrative functionality for managing the Epic 7 Gear Optimizer system, including gear set management and other administrative tasks.
+
+## Business Rules
+
+_[Content to be provided by user]_
+
+## Page-Specific Requirements
+
+_[Content to be provided by user]_
+
+## Data Flow
+
+_[Content to be provided by user]_
+
+## User Experience
+
+_[Content to be provided by user]_
+description:
+globs:
+alwaysApply: false
+
+---

@@ -12,7 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
-import type { SettingsWithUser } from "@/lib/data-access";
+import type { SettingsWithUser } from "@/app/(dashboard)/settings/data/settings";
 
 interface UploadFormProps {
   userSettings: SettingsWithUser | null;

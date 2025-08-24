@@ -1,35 +1,34 @@
 "use client";
-import { useState } from "react";
+import React, { useState } from "react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+} from "@/ui/card";
+import { Input } from "@/ui/input";
+import { Label } from "@/ui/label";
 
 import { useRouter } from "next/navigation";
 
 import { authClient } from "@/lib/auth-client";
-import { Alert, AlertDescription } from "../ui/alert";
+import { Alert, AlertDescription } from "@/ui/alert";
 import { Terminal } from "lucide-react";
 
 import { IconLoader } from "@tabler/icons-react";
-import { ErrorContext } from "better-auth/react";
 
-export function ChangePasswordForm({
+export function SignupForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
   const router = useRouter();
 
-  const [newPassword, setNewPassword] = useState("");
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword2, setNewPassword2] = useState("");
+  const [fullname, setFullname] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -37,32 +36,32 @@ export function ChangePasswordForm({
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
-    if (newPassword !== newPassword2) {
-      setError("New passwords do not match");
-      return;
-    }
-
-    await authClient.changePassword(
+    await authClient.signUp.email(
       {
         /**
-         * The user new password
+         * The user email
          */
-        newPassword,
+        email,
         /**
-         * The user current password
+         * The user password
          */
-        currentPassword,
+        password,
+        /**
+         * remember the user session after the browser is closed.
+         * @default true
+         */
+        name: fullname,
       },
       {
         onRequest: () => {
           setLoading(true);
         },
         onSuccess: () => {
-          // redirect to the login page
-          alert("Password changed successfully");
-          router.push("/login");
+          // redirect to the dashboard
+          //alert("Logged in successfully");
+          router.push("/home");
         },
-        onError: (ctx: ErrorContext) => {
+        onError: (ctx) => {
           // display the error message
           setError(ctx.error.message);
           setLoading(false);
@@ -75,11 +74,8 @@ export function ChangePasswordForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
-          <CardTitle>Change your password</CardTitle>
-          <CardDescription>
-            Enter your current password and new password to change your
-            password.
-          </CardDescription>
+          <CardTitle>Create an account</CardTitle>
+          <CardDescription>Get started with your new account</CardDescription>
         </CardHeader>
         <CardContent>
           {error && (
@@ -91,35 +87,42 @@ export function ChangePasswordForm({
           <form onSubmit={(e) => handleSubmit(e)}>
             <div className="flex flex-col gap-6">
               <div className="grid gap-3">
-                <Label htmlFor="currentPassword">Current Password</Label>
+                <Label htmlFor="email">Full Name</Label>
                 <Input
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  value={currentPassword}
-                  id="currentPassword"
-                  type="password"
-                  placeholder="********"
+                  onChange={(e) => setFullname(e.target.value)}
+                  value={fullname}
+                  id="name"
+                  type="text"
+                  placeholder="John Doe"
                   required
                 />
               </div>
               <div className="grid gap-3">
-                <Label htmlFor="newPassword">New Password</Label>
+                <Label htmlFor="email">Email</Label>
                 <Input
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  value={newPassword}
-                  id="newPassword"
-                  type="password"
-                  placeholder="********"
+                  onChange={(e) => setEmail(e.target.value)}
+                  value={email}
+                  id="email"
+                  type="email"
+                  placeholder="john.doe@example.com"
                   required
                 />
               </div>
               <div className="grid gap-3">
-                <Label htmlFor="newPassword">New Password (again)</Label>
+                <div className="flex items-center">
+                  <Label htmlFor="password">Password</Label>
+                  <a
+                    href="/change-password"
+                    className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
+                  >
+                    Forgot your password?
+                  </a>
+                </div>
                 <Input
-                  onChange={(e) => setNewPassword2(e.target.value)}
-                  value={newPassword2}
-                  id="newPassword2"
+                  onChange={(e) => setPassword(e.target.value)}
+                  value={password}
+                  id="password"
                   type="password"
-                  placeholder="********"
                   required
                 />
               </div>
@@ -128,13 +131,19 @@ export function ChangePasswordForm({
                   {loading ? (
                     <IconLoader className="animate-spin" stroke={2} />
                   ) : (
-                    "Change Password"
+                    "Sign Up"
                   )}
                 </Button>
                 <Button variant="outline" className="w-full">
-                  Cancel
+                  Sign Up with Google
                 </Button>
               </div>
+            </div>
+            <div className="mt-4 text-center text-sm">
+              Already have an account?{" "}
+              <a href="/login" className="underline underline-offset-4">
+                Login
+              </a>
             </div>
           </form>
         </CardContent>

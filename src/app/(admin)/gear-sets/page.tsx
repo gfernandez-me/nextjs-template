@@ -1,7 +1,7 @@
-import { createDataAccess } from "@/lib/data-access";
+import { StatisticsDataAccess } from "../data/statistics";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { GearSetsTable } from "@/components/admin/gear-sets-table";
+import { GearSetsTable } from "../components/gear-sets-table";
 
 async function getGearSets() {
   // Get current user using Better Auth
@@ -14,7 +14,7 @@ async function getGearSets() {
   }
 
   // Create data access layer for current user
-  const dal = createDataAccess(session.user.id);
+  const dal = new StatisticsDataAccess(session.user.id);
 
   // Fetch gear sets from database
   return await dal.listGearSets();

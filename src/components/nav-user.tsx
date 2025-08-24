@@ -18,12 +18,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   SidebarMenu,
-  SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
 import { User } from "#prisma";
 import LogoutButton from "./auth/logout-button";
+import { Button } from "@/components/ui/button";
 
 export function NavUser({ user }: { user: User }) {
   const { isMobile } = useSidebar();
@@ -33,9 +33,9 @@ export function NavUser({ user }: { user: User }) {
       <SidebarMenuItem>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <SidebarMenuButton
-              size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+            <Button
+              variant="ghost"
+              className="w-full min-w-56 rounded-lg"
             >
               <Avatar className="h-8 w-8 rounded-lg grayscale">
                 {/* <AvatarImage src={user.avatar} alt={user.name} /> */}
@@ -48,10 +48,10 @@ export function NavUser({ user }: { user: User }) {
                 </span>
               </div>
               <IconDotsVertical className="ml-auto size-4" />
-            </SidebarMenuButton>
+            </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+            className="w-56 min-w-56 rounded-lg"
             side={isMobile ? "bottom" : "right"}
             align="end"
             sideOffset={4}

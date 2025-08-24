@@ -2,7 +2,7 @@
  * Gear scoring utilities for Epic 7 gear optimization
  */
 
-import type { GearRow } from "@/lib/data-access";
+import type { GearForTable } from "@/dashboard/gears/data/gears";
 
 /**
  * Default substat weights for scoring
@@ -58,8 +58,12 @@ export async function fetchScoringWeights(): Promise<{
 
     const data = await res.json();
     return {
-      substatWeights: (data?.fScoreSubstatWeights as Record<string, number>) ?? DEFAULT_SUBSTAT_WEIGHTS,
-      mainStatWeights: (data?.fScoreMainStatWeights as Record<string, number>) ?? DEFAULT_MAIN_STAT_WEIGHTS,
+      substatWeights:
+        (data?.fScoreSubstatWeights as Record<string, number>) ??
+        DEFAULT_SUBSTAT_WEIGHTS,
+      mainStatWeights:
+        (data?.fScoreMainStatWeights as Record<string, number>) ??
+        DEFAULT_MAIN_STAT_WEIGHTS,
       includeMainStat: data?.fScoreIncludeMainStat ?? false,
     };
   } catch {
@@ -74,11 +78,13 @@ export async function fetchScoringWeights(): Promise<{
 /**
  * Compute Fribbels-like score using stat type weights from settings
  */
-export async function computeFribbelsLikeScore(row: GearRow): Promise<number> {
+export async function computeFribbelsLikeScore(
+  row: GearForTable
+): Promise<number> {
   const { mainStatWeights, includeMainStat } = await fetchScoringWeights();
-  
+
   let score = 0;
-  
+
   // Add substat scores
   for (const s of row.GearSubStats) {
     if (!s || !s.StatType || s.statValue === null || s.statValue === undefined)
@@ -98,7 +104,7 @@ export async function computeFribbelsLikeScore(row: GearRow): Promise<number> {
     const mainStatType = row.mainStatType;
     const mainStatValue = Number(row.mainStatValue);
     const mainWeight = mainStatWeights[mainStatType] ?? 0;
-    
+
     if (!isNaN(mainStatValue) && !isNaN(mainWeight)) {
       score += mainStatValue * mainWeight;
     }
@@ -110,11 +116,12 @@ export async function computeFribbelsLikeScore(row: GearRow): Promise<number> {
 /**
  * Compute custom score using configured weights from settings
  */
-export async function computeCustomScore(row: GearRow): Promise<number> {
-  const { substatWeights, mainStatWeights, includeMainStat } = await fetchScoringWeights();
-  
+export async function computeCustomScore(row: GearForTable): Promise<number> {
+  const { substatWeights, mainStatWeights, includeMainStat } =
+    await fetchScoringWeights();
+
   let score = 0;
-  
+
   // Add substat scores using configured weights
   for (const s of row.GearSubStats) {
     if (!s || !s.StatType || s.statValue === null || s.statValue === undefined)
@@ -135,7 +142,7 @@ export async function computeCustomScore(row: GearRow): Promise<number> {
     const mainStatType = row.mainStatType;
     const mainStatValue = Number(row.mainStatValue);
     const mainWeight = mainStatWeights[mainStatType] ?? 0;
-    
+
     if (!isNaN(mainStatValue) && !isNaN(mainWeight)) {
       score += mainStatValue * mainWeight;
     }

@@ -6,22 +6,27 @@ This folder contains all the rules, context, and documentation for the Epic 7 Ge
 
 ## 📁 File Structure
 
-### Core Rules
+### Core Rules (Root Level)
 
-- **`business-rules.mdc`** - Epic 7 game mechanics and business logic
-- **`stat-rules.mdc`** - Comprehensive stat behavior and restrictions
-- **`prisma-best-practices.mdc`** - Database and Prisma usage rules
+- **`business-rules.mdc`** - Epic 7 game mechanics and business logic (generic)
+- **`stat-rules.mdc`** - Comprehensive stat behavior and restrictions (generic)
+- **`prisma-best-practices.mdc`** - Database and Prisma usage rules (generic)
+- **`project-structure.mdc`** - Application architecture and project organization (generic)
+- **`nextjs-implementation.mdc`** - Next.js 15 + App Router patterns (generic)
+- **`auth-implementation.mdc`** - Better Auth integration (generic)
 
-### Implementation Guides
+### Page-Specific Business Rules
 
-- **`project-structure.mdc`** - Application architecture and project organization
-- **`nextjs-implementation.mdc`** - Next.js 15 + App Router patterns
-- **`auth-implementation.mdc`** - Better Auth integration
-
-### Feature Documentation
-
-- **`fribbels-integration.mdc`** - Fribbels Optimizer data format and integration
-- **`scoring-settings.mdc`** - Gear optimization algorithms and scoring
+- **`pages/home.mdc`** - Home dashboard business rules and requirements
+- **`pages/gears.mdc`** - Gear management page business rules
+- **`pages/heroes.mdc`** - Hero management page business rules
+- **`pages/gear-priorities.mdc`** - Gear optimization preferences business rules
+- **`pages/settings.mdc`** - User settings and scoring configuration business rules
+- **`pages/upload.mdc`** - File upload and Fribbels integration business rules
+- **`pages/auth.mdc`** - Authentication pages business rules
+- **`pages/admin.mdc`** - Admin functionality business rules
+- **`pages/gear-set.mdc`** - Gear set management business rules
+- **`pages/statistic.mdc`** - Statistics and analytics business rules
 
 ## 🎯 Key Principles
 
@@ -110,6 +115,7 @@ For complex commands, use the non-interactive wrapper:
 ### Environment Variables
 
 The devcontainer automatically sets:
+
 - `CI=1` - Non-interactive mode
 - `FORCE_COLOR=0` - No colors
 - `NO_COLOR=1` - Disable colors
@@ -127,7 +133,8 @@ The devcontainer automatically sets:
 2. **Then**: `stat-rules.mdc` for detailed stat behavior
 3. **Next**: `prisma-best-practices.mdc` for database patterns
 4. **Then**: `project-structure.mdc` for architecture overview
-5. **Finally**: Implementation guides for specific features
+5. **Next**: Implementation guides for specific features
+6. **Finally**: Page-specific business rules in `pages/` folder
 
 ## 🔄 Updates
 
@@ -146,3 +153,16 @@ When adding new rules:
 2. Reference related rules
 3. Include examples and counter-examples
 4. Update this README
+
+## 📋 Page-Specific Rules Status
+
+- ✅ **Home Dashboard** - Basic structure created, content needed
+- ✅ **Gears Management** - Basic structure created, content needed
+- ✅ **Heroes Management** - Basic structure created, content needed
+- ✅ **Gear Priorities** - Basic structure created, content needed
+- ✅ **Settings** - Basic structure + scoring rules added, other content needed
+- ✅ **Upload** - Basic structure + Fribbels integration added, other content needed
+- ✅ **Authentication** - Basic structure created, content needed
+- ✅ **Admin** - Basic structure created, content needed
+- ✅ **Gear Set Management** - Complete business rules available
+- ✅ **Statistics** - Basic structure created, content needed

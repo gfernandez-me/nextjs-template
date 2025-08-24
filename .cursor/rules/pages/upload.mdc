@@ -1,19 +1,37 @@
----
-alwaysApply: true
----
+# Upload Business Rules
 
-# Fribbels Epic 7 Optimizer Integration Guide
+## Overview
 
-## 1. Data Format Specification
+The Upload page allows users to import Epic 7 gear data from Fribbels Optimizer, supporting both manual file uploads and auto-import functionality.
 
-### File Structure
+## Business Rules
+
+_[Content to be provided by user]_
+
+## Page-Specific Requirements
+
+_[Content to be provided by user]_
+
+## Data Flow
+
+_[Content to be provided by user]_
+
+## User Experience
+
+_[Content to be provided by user]_
+
+## Fribbels Epic 7 Optimizer Integration
+
+### 1. Data Format Specification
+
+#### File Structure
 
 - **Format**: JSON with single line structure
 - **Top-level Keys**: `items` and `heroes` arrays
 - **File Extension**: `.txt` (despite JSON content)
 - **Encoding**: UTF-8
 
-### Gear Item Structure (from gear.txt analysis)
+#### Gear Item Structure (from gear.txt analysis)
 
 ```json
 {
@@ -62,9 +80,9 @@ alwaysApply: true
 }
 ```
 
-## 2. Field Mapping
+### 2. Field Mapping
 
-### Core Fields
+#### Core Fields
 
 - **id/ingameId**: Unique gear identifier (Integer)
 - **type**: Gear slot (weapon, armor, helm, neck, ring, boot)
@@ -74,7 +92,7 @@ alwaysApply: true
 - **enhance**: Enhancement level (0-15)
 - **set**: Gear set name (SpeedSet, AttackSet, etc.)
 
-### Main Stats
+#### Main Stats
 
 - **mainStatType**: Stat type enum (att, def, max_hp, att_rate, etc.)
 - **mainStatValue**: Current main stat value
@@ -82,20 +100,20 @@ alwaysApply: true
 - **statMultiplier**: Stat calculation multiplier
 - **tierMultiplier**: Tier-based multiplier
 
-### Substats (op array and substats array)
+#### Substats (op array and substats array)
 
 - **op**: Raw substat rolls array format `[["stat_type", value], ...]`
 - **substats**: Processed substats with type, value, and rolls
 
-### Equipment Status
+#### Equipment Status
 
 - **storage**: Boolean indicating if in storage
 - **ingameEquippedId**: Hero ID if equipped
 - **equippedBy**: Hero reference for our database
 
-## 3. Stat Type Mappings
+### 3. Stat Type Mappings
 
-### Fribbels → Our Database
+#### Fribbels → Our Database
 
 - `att` → `att` (Flat Attack)
 - `def` → `def` (Flat Defense)
@@ -109,7 +127,7 @@ alwaysApply: true
 - `acc` → `acc` (Effectiveness)
 - `res` → `res` (Effect Resistance)
 
-### Fribbels Substat Types → Our Enums
+#### Fribbels Substat Types → Our Enums
 
 - `CriticalHitChancePercent` → `cri`
 - `CriticalHitDamagePercent` → `cri_dmg`
@@ -123,9 +141,9 @@ alwaysApply: true
 - `Defense` → `def`
 - `Health` → `max_hp`
 
-## 4. Gear Set Mappings
+### 4. Gear Set Mappings
 
-### Fribbels Set Names → Database
+#### Fribbels Set Names → Database
 
 - `AttackSet` → `AttackSet` (4 pieces, +35% Attack)
 - `SpeedSet` → `SpeedSet` (4 pieces, +25% Speed)
@@ -145,9 +163,9 @@ alwaysApply: true
 - `RageSet` → `RageSet` (4 pieces, +30% Crit Dmg vs debuffed targets)
 - `ProtectionSet` → `ProtectionSet` (2 pieces, +15% Barrier strength)
 
-## 5. Import Process
+### 5. Import Process
 
-### Data Validation Steps
+#### Data Validation Steps
 
 1. **JSON Structure**: Validate top-level items/heroes arrays
 2. **Required Fields**: Ensure all mandatory fields present
@@ -155,7 +173,7 @@ alwaysApply: true
 4. **Stat Ranges**: Validate stat values within game limits
 5. **Relationship Integrity**: Check hero-gear equipment relationships
 
-### Processing Pipeline
+#### Processing Pipeline
 
 1. Parse JSON from uploaded file
 2. Extract items and heroes arrays
@@ -167,84 +185,84 @@ alwaysApply: true
 4. Process hero data if present
 5. Update equipment relationships
 
-## 6. Export Process
+### 6. Export Process
 
-### Export Format (Compatible with Fribbels)
+#### Export Format (Compatible with Fribbels)
 
 - Generate JSON with same structure as import
 - Include all Fribbels-specific fields
 - Maintain field naming conventions
 - Preserve numeric precision for stats
 
-### Required Fields for Export
+#### Required Fields for Export
 
 - All core gear fields
 - Main stat information
 - Complete substat arrays (both op and substats formats)
 - Equipment status and relationships
 
-## 7. Auto-Importer Integration
+### 7. Auto-Importer Integration
 
-### Fribbels Auto-Importer Features
+#### Fribbels Auto-Importer Features
 
 - **Network Packet Capture**: Captures game data via network monitoring
 - **Real-time Scanning**: Scans gear while browsing in-game
 - **Automatic Export**: Generates gear.txt file automatically
 - **Data Validation**: Built-in validation for captured data
 
-### Requirements for Auto-Import
+#### Requirements for Auto-Import
 
 - **Windows**: Python + Npcap
 - **Mac**: Python + Wireshark + ChmodBPF
 - **Network Access**: Direct network capture or mobile hotspot
 - **Game Access**: Epic 7 running on supported platform
 
-## 8. Data Integrity Considerations
+### 8. Data Integrity Considerations
 
-### Duplicate Detection
+#### Duplicate Detection
 
 - Use `ingameId` as primary unique identifier
 - Check for duplicate entries during import
 - Implement merge vs replace strategies
 
-### Version Compatibility
+#### Version Compatibility
 
 - Monitor Fribbels optimizer updates
 - Track data format changes
 - Maintain backward compatibility when possible
 
-### Error Handling
+#### Error Handling
 
 - Graceful handling of malformed data
 - Detailed error messages for validation failures
 - Rollback capabilities for failed imports
 
-## 9. Performance Optimization
+### 9. Performance Optimization
 
-### Large Dataset Handling
+#### Large Dataset Handling
 
 - Batch processing for bulk imports
 - Streaming JSON parser for large files
 - Database transaction optimization
 - Progress indicators for user feedback
 
-### Memory Management
+#### Memory Management
 
 - Process data in chunks
 - Clear intermediate objects
 - Optimize database queries
 - Use connection pooling
 
-## 10. Future Enhancements
+### 10. Future Enhancements
 
-### Planned Features
+#### Planned Features
 
 - Real-time sync with Fribbels optimizer
 - Automated update detection
 - Enhanced validation rules
 - Performance monitoring
 
-### API Compatibility
+#### API Compatibility
 
 - REST endpoints matching Fribbels format
 - WebSocket support for real-time updates

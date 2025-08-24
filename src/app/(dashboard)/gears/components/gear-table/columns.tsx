@@ -5,12 +5,12 @@
 import React from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { AlertTriangle, Trophy } from "lucide-react";
-import type { GearRow } from "@/lib/data-access";
+import type { GearForTable } from "@/dashboard/gears/data/gears";
 import { getGearIcon, getRankColor } from "@/components/icons";
 import {
-  abbreviateSubstatLabel,
   formatMainStatLabel,
   formatMainStatValue,
+  abbreviateSubstatLabel,
 } from "@/lib/stats";
 import { stripPercent } from "@/lib/string-utils";
 import { getStatBadge, type StatThresholds } from "@/lib/gear-thresholds";
@@ -21,7 +21,7 @@ interface CreateColumnsOptions {
 
 export function createGearTableColumns({
   thresholds,
-}: CreateColumnsOptions): ColumnDef<GearRow>[] {
+}: CreateColumnsOptions): ColumnDef<GearForTable>[] {
   const getStatBadgeWithThresholds = (
     statName: string,
     statValue: number,
@@ -49,42 +49,28 @@ export function createGearTableColumns({
       enableColumnFilter: false,
     },
     {
-      id: "fScore",
+      accessorKey: "fScore",
       header: () => <span>F Score</span>,
-      accessorFn: (row: GearRow) => {
-        // For now, use a placeholder value since scoring is async
-        // In a real implementation, you'd need to handle this differently
-        // or pre-calculate scores on the server side
-        const existingScore = (row as GearRow & { fScore?: number | null }).fScore;
-        if (typeof existingScore === "number") {
-          return existingScore;
+      cell: ({ getValue }) => {
+        const value = getValue<number | null>();
+        if (value === null) {
+          return <span className="text-muted-foreground">-</span>;
         }
-        // Return a default value for now - this should be handled server-side
-        return 0;
+        return <span className="font-mono text-xs">{value}</span>;
       },
-      cell: ({ getValue }) => (
-        <span className="font-mono text-xs">{getValue<number>()}</span>
-      ),
       enableSorting: true,
       sortingFn: "basic",
     },
     {
-      id: "score",
+      accessorKey: "score",
       header: () => <span>Score</span>,
-      accessorFn: (row: GearRow) => {
-        // For now, use a placeholder value since scoring is async
-        // In a real implementation, you'd need to handle this differently
-        // or pre-calculate scores on the server side
-        const existingScore = (row as GearRow & { score?: number | null }).score;
-        if (typeof existingScore === "number") {
-          return existingScore;
+      cell: ({ getValue }) => {
+        const value = getValue<number | null>();
+        if (value === null) {
+          return <span className="text-muted-foreground">-</span>;
         }
-        // Return a default value for now - this should be handled server-side
-        return 0;
+        return <span className="font-mono text-xs">{value}</span>;
       },
-      cell: ({ getValue }) => (
-        <span className="font-mono text-xs">{getValue<number>()}</span>
-      ),
       enableSorting: true,
       sortingFn: "basic",
     },
@@ -105,18 +91,20 @@ export function createGearTableColumns({
       id: "mainStatValue",
       header: () => <span>Main</span>,
       cell: ({ row }) => {
+        const mainStatType = row.original.mainStatType;
         const mainStatValue = Number(row.original.mainStatValue);
-        if (isNaN(mainStatValue)) {
-          return <span className="text-muted-foreground">Invalid</span>;
+
+        if (!mainStatType || !mainStatValue) {
+          return <span className="text-muted-foreground">-</span>;
         }
 
         return (
           <div className="flex items-center gap-2 text-[11px] leading-4">
             <span className="text-muted-foreground capitalize">
-              {stripPercent(formatMainStatLabel(row.original.mainStatType))}
+              {stripPercent(formatMainStatLabel(mainStatType))}
             </span>
             <span className="font-mono">
-              {formatMainStatValue(row.original.mainStatType, mainStatValue)}
+              {formatMainStatValue(mainStatType, mainStatValue)}
             </span>
           </div>
         );
@@ -125,15 +113,15 @@ export function createGearTableColumns({
       sortingFn: (a, b) => {
         const aVal = Number(a.original.mainStatValue);
         const bVal = Number(b.original.mainStatValue);
-        if (isNaN(aVal) || isNaN(bVal)) return 0;
+        if (!aVal || !bVal) return 0;
         return aVal - bVal;
       },
     },
     ...[0, 1, 2, 3].map(
-      (idx): ColumnDef<GearRow> => ({
+      (idx): ColumnDef<GearForTable> => ({
         id: `substat_${idx + 1}`,
         header: () => <span>{`Substat ${idx + 1}`}</span>,
-        cell: ({ row }: { row: { original: GearRow } }) => {
+        cell: ({ row }: { row: { original: GearForTable } }) => {
           const s = row.original.GearSubStats[idx];
           if (
             !s ||
@@ -150,17 +138,13 @@ export function createGearTableColumns({
             row.original.enhance
           );
 
-          // Ensure statValue is properly converted to a number
           const statValue = Number(s.statValue);
-          if (isNaN(statValue)) {
-            return <span className="text-muted-foreground">Invalid</span>;
-          }
 
           return (
             <div className="flex items-center gap-2 text-[11px] leading-4">
-              <span className="text-muted-foreground">
-                {stripPercent(abbreviateSubstatLabel(s.StatType.statName))}
-              </span>
+                              <span className="text-muted-foreground">
+                  {stripPercent(abbreviateSubstatLabel(s.StatType.statName))}
+                </span>
               {badge ? (
                 <span
                   className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] ${badge.className}`}
@@ -186,7 +170,7 @@ export function createGearTableColumns({
           const sb = b.original.GearSubStats[idx]?.statValue ?? -Infinity;
           const saNum = Number(sa);
           const sbNum = Number(sb);
-          if (isNaN(saNum) || isNaN(sbNum)) return 0;
+          if (!saNum || !sbNum) return 0;
           return saNum - sbNum;
         },
       })
@@ -216,5 +200,5 @@ export function createGearTableColumns({
         return name === value;
       },
     },
-  ] as ColumnDef<GearRow>[];
+  ] as ColumnDef<GearForTable>[];
 }

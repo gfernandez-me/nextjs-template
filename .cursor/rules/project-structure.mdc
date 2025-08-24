@@ -1,243 +1,254 @@
-# Epic 7 Gear Optimizer - Project Structure & Architecture
+# Epic 7 Gear Optimizer - Project Structure
 
-## 1. Application Architecture Overview
+## Application Architecture Overview
 
 ### Technology Stack
 
 - **Next.js 15**: App Router with Server and Client Components
-- **React 19**: Modern React with hooks and context
+- **React 19**: Latest React features and patterns
 - **TypeScript**: Full type safety throughout the application
-- **Prisma**: Database ORM with PostgreSQL
-- **Better Auth**: Modern authentication system
-- **shadcn/ui**: Component library with Tailwind CSS
-- **@tanstack/react-table**: Data table functionality
+- **Prisma**: ORM for PostgreSQL with generated types
+- **Better Auth**: Authentication system with Prisma adapter
+- **Tailwind CSS 3**: Utility-first CSS framework
+- **shadcn/ui**: Component library built on Radix UI primitives
 
 ### Project Structure
 
 ```
 src/
-├── app/                    # Next.js App Router
-│   ├── (dashboard)/        # Protected dashboard routes (logged in users)
-│   │   ├── home/           # Main dashboard page with statistics overview
-│   │   ├── gears/          # Gear inventory management
-│   │   ├── heroes/         # Hero management
-│   │   ├── gear-priorities/# Gear optimization settings
-│   │   ├── settings/       # User settings and preferences
-│   │   ├── upload/         # File upload for gear data
-│   │   └── layout.tsx      # Dashboard layout with sidebar
-│   ├── login/              # Public authentication page
-│   ├── signup/             # Public user registration
-│   ├── change-password/    # Public password change
-│   ├── api/                # Minimal API routes (only essential ones)
-│   │   ├── auth/           # Authentication endpoints
-│   │   ├── upload/         # File upload processing
-│   │   └── settings/       # Settings recalculation (heavy operations)
-│   ├── layout.tsx          # Root layout with navigation
-│   ├── page.tsx            # Root page (redirects to /home)
-│   └── globals.css         # Global styles with shadcn/ui
-├── components/             # Shared/generic components
-│   ├── navigation.tsx      # Main navigation bar
-│   ├── profile-form.tsx    # User profile management
-│   ├── settings-form.tsx   # Settings configuration
-│   ├── upload-form.tsx     # File upload form
-│   ├── gear-table.tsx      # Gear inventory table
-│   ├── statistics-content.tsx # Statistics display (used in home dashboard)
-│   ├── icons.tsx           # Icon helpers
-│   ├── app-sidebar.tsx     # Dashboard sidebar navigation
-│   ├── site-header.tsx     # Site header component
-│   ├── nav-user.tsx        # User navigation component
-│   ├── data-table.tsx      # Reusable data table component
-│   └── ui/                 # shadcn/ui primitives
-├── hooks/                  # React hooks
-│   └── useAuth.ts          # Authentication state management
-├── lib/                    # Utilities and configuration
-│   ├── auth.ts             # Better Auth configuration
-│   ├── auth-client.ts      # Better Auth client
-│   ├── data-access.ts      # Data Access Layer (DAL)
-│   ├── prisma.ts           # Prisma database singleton
-│   ├── decimal.ts          # Prisma decimal conversion utilities
-│   ├── epic7-data.ts       # Epic 7 specific data fetching utilities
-│   ├── stats.ts            # Epic 7 stat utilities
-│   └── utils.ts            # shadcn/ui utilities
-└── middleware.ts           # Route protection middleware
-
-├── public/                # Static assets
-├── package.json           # Node.js dependencies and scripts
-├── tsconfig.json          # TypeScript configuration
-├── next.config.ts         # Next.js configuration
-├── postcss.config.mjs     # PostCSS configuration
-├── tailwind.config.ts     # Tailwind CSS configuration
-├── eslint.config.mjs      # ESLint configuration
-└── README.md             # Project documentation
+├── app/                           # Next.js App Router
+│   ├── (dashboard)/              # Protected dashboard routes
+│   │   ├── gears/                # Gear inventory page
+│   │   │   ├── components/       # Page-specific components
+│   │   │   │   ├── gear-table/   # Gear table components
+│   │   │   │   ├── GearFilters.tsx
+│   │   │   │   └── gear-priorities-form.tsx
+│   │   │   ├── data/             # Page-specific data access
+│   │   │   │   └── gears.ts      # GearsDataAccess class
+│   │   │   └── page.tsx          # Main page component
+│   │   ├── heroes/                # Heroes management page
+│   │   │   ├── components/       # Page-specific components
+│   │   │   ├── data/             # Page-specific data access
+│   │   │   │   └── heroes.ts     # HeroesDataAccess class
+│   │   │   └── page.tsx          # Main page component
+│   │   ├── settings/              # User settings page
+│   │   │   ├── components/       # Page-specific components
+│   │   │   │   └── settings-form.tsx
+│   │   │   ├── data/             # Page-specific data access
+│   │   │   │   └── settings.ts   # SettingsDataAccess class
+│   │   │   └── page.tsx          # Main page component
+│   │   ├── admin/                 # Admin management pages
+│   │   │   ├── components/       # Page-specific components
+│   │   │   │   └── statistics-content.tsx
+│   │   │   ├── data/             # Page-specific data access
+│   │   │   │   └── statistics.ts # StatisticsDataAccess class
+│   │   │   └── gear-sets/        # Gear sets management
+│   │   │       └── page.tsx      # Admin gear sets page
+│   │   └── layout.tsx            # Dashboard layout
+│   ├── upload/                    # Upload page (public)
+│   │   ├── components/           # Page-specific components
+│   │   │   └── upload-form.tsx
+│   │   └── page.tsx              # Upload page component
+│   ├── api/                      # API routes
+│   │   ├── upload/               # File upload endpoint
+│   │   ├── settings/             # Settings management
+│   │   └── scores/               # Score calculation
+│   ├── layout.tsx                # Root layout
+│   └── page.tsx                  # Home page
+├── components/                    # Shared/reusable components
+│   ├── ui/                       # shadcn/ui components
+│   ├── navigation.tsx            # Main navigation
+│   ├── data-table.tsx            # Generic data table
+│   └── icons.tsx                 # Icon components
+├── lib/                          # Shared utilities and configuration
+│   ├── auth.ts                   # Better Auth configuration
+│   ├── db.ts                     # Prisma database singleton
+│   ├── utils.ts                  # shadcn/ui utilities
+│   ├── url.ts                    # URL parameter management
+│   ├── url-hooks.ts              # URL hooks for client
+│   ├── stats.ts                  # Stat formatting utilities
+│   ├── calculate-scores.ts       # Score calculation logic
+│   ├── gear-scoring.ts           # Gear scoring utilities
+│   └── epic7-data.ts             # Epic 7 reference data
+└── prisma/                       # Database schema and migrations
+    ├── schema.prisma             # Prisma schema definition
+    ├── generated/                 # Generated Prisma client
+    └── migrations/                # Database migrations
 ```
 
-### Database Schema Architecture
+## Data Access Layer (DAL) Architecture
 
-The schema is organized into modular files for better maintainability:
+### New Page-Specific Structure
 
-#### Schema Files
+The application has been refactored from a monolithic data access layer to a page-specific structure:
 
-- **`main.prisma`**: Generator and datasource configuration only
-- **`auth.prisma`**: User, Account, Session, Verification models
-- **`gears.prisma`**: All Epic 7 enums, StatTypes, GearSets, Gears, Heroes, GearSubStats
-- **`recommendation.prisma`**: GearPriorities, GearPriorityHeroes, GearRecommendation
-- **`settings.prisma`**: User-specific Settings model
+- **Each page has its own data access layer** in a `data/` folder
+- **Page-specific components** are located in `components/` folders within each page
+- **Shared components** remain in the root `src/components/` folder
+- **Generic utilities** stay in `src/lib/` for cross-page use
 
-#### Key Tables
+### Data Access Classes
 
-- **Users Table**: User accounts with authentication and relationships
-- **Gears Table**: Core gear items with user ownership and enums
-- **Heroes Table**: Epic 7 heroes with user ownership and equipment slots
-- **GearSubStats Table**: Individual substat records with user ownership and weights
-- **StatTypes Table**: Shared reference table for stat definitions
-- **Settings Table**: User-specific scoring configuration and thresholds
-- **Relationships**: Proper foreign key relationships with user-based data isolation
+- **`GearsDataAccess`**: Located in `src/app/(dashboard)/gears/data/gears.ts`
+- **`HeroesDataAccess`**: Located in `src/app/(dashboard)/heroes/data/heroes.ts`
+- **`SettingsDataAccess`**: Located in `src/app/(dashboard)/settings/data/settings.ts`
+- **`StatisticsDataAccess`**: Located in `src/app/(dashboard)/admin/data/statistics.ts`
 
-### Enum System
+### Benefits of New Structure
 
-- **GearType**: weapon, armor, helm, neck, ring, boot
-- **GearDisplayName**: Weapon, Armor, Helmet, Necklace, Ring, Boots
-- **GearRank**: Common, Uncommon, Rare, Epic, Heroic
-- **MainStatType**: All main stat types (att, def, max_hp, etc.)
-- **StatCategory**: flat, percentage
-- **HeroElement**: Fire, Ice, Earth, Light, Dark
-- **HeroRarity**: THREE_STAR, FOUR_STAR, FIVE_STAR
-- **HeroClass**: Warrior, Knight, Ranger, Mage, SoulWeaver, Thief
+1. **Better Organization**: Each page manages its own data and components
+2. **Easier Maintenance**: Changes to one page don't affect others
+3. **Clearer Dependencies**: Each page explicitly imports what it needs
+4. **Scalability**: New pages can have their own data access without conflicts
+5. **Type Safety**: Each DAL class has its own specific types and methods
 
-### Multi-User Architecture
+## Database Schema
 
-The application implements a complete multi-user system with data isolation:
+### Core Tables
 
-- **User Authentication**: Better Auth with session-based authentication
-- **Data Access Layer (DAL)**: Centralized data access with automatic user scoping
-- **Route Protection**: Middleware-based authentication for all protected routes
-- **User Ownership**: All user data (gears, heroes, settings) includes `userId` field
-- **Data Isolation**: Users can only access their own data through database constraints
+- **`gears`**: Gear items with stats and properties
+- **`heroes`**: Epic 7 heroes with equipment slots
+- **`gear_sub_stats`**: Individual substats for each gear piece
+- **`stat_types`**: Reference table for valid stat types and weights
+- **`gear_sets`**: Reference table for gear sets and their effects
+- **`users`**: User accounts and settings
 
-## 2. Data Flow Architecture
+### Relationships
 
-### Direct Database Access Pattern
+- **Gear-Hero**: `gears.equippedBy` references `heroes.ingameId`
+- **Gear-Substats**: `gear_sub_stats.gearId` references `gears.id`
+- **Substat-StatType**: `gear_sub_stats.statTypeId` references `stat_types.id`
+- **User-Settings**: `users.id` references settings tables
 
-**NEW APPROACH**: Dashboard pages directly access the database using the Data Access Layer (DAL) instead of going through API routes.
+## Enum System
 
-#### Benefits:
+### Prisma-Generated Enums
 
-- ✅ **Simplified Architecture**: No unnecessary API layer for simple CRUD operations
-- ✅ **Better Performance**: Direct database access without HTTP overhead
-- ✅ **Type Safety**: Full TypeScript support with Prisma types
-- ✅ **Easier Maintenance**: Logic centralized in pages, not scattered across API routes
+- **`GearType`**: weapon, armor, helm, neck, ring, boot
+- **`GearRank`**: Common, Uncommon, Rare, Epic, Heroic
+- **`MainStatType`**: All main stat types (att, def, max_hp, etc.)
+- **`HeroElement`**: Fire, Ice, Earth, Light, Dark
+- **`HeroClass`**: Warrior, Knight, Ranger, Mage, SoulWeaver, Thief
 
-#### When to Use API Routes:
-
-- **File Uploads**: Complex file processing (Fribbels data import)
-- **Heavy Computations**: Settings recalculation across all gears
-- **External Integrations**: Webhooks, third-party API calls
-
-#### When NOT to Use API Routes:
-
-- **Simple CRUD**: Gear listing, hero management, settings retrieval
-- **Data Display**: Dashboard statistics, gear tables
-- **Form Submissions**: Settings updates, gear priority configuration
-
-### Data Access Layer (DAL)
-
-The DAL provides a clean interface for database operations:
+### Usage Pattern
 
 ```typescript
-// Create DAL instance for current user
-const dal = createDataAccess(session.user.id);
+import { GearType, GearRank, MainStatType } from "#prisma";
 
-// Use DAL methods directly in pages
-const gears = await dal.getGearsPage({ page: 1, perPage: 10 });
-const settings = await dal.getSettings();
+// Always use Prisma enums, never string literals
+const gearType: GearType = GearType.WEAPON;
+const rank: GearRank = GearRank.EPIC;
 ```
 
-## 3. Authentication System
+## Multi-User Architecture
 
-### Authentication Architecture
+### User Isolation
 
-- **Better Auth**: Modern authentication library replacing custom JWT system
-- **Session Management**: Server-side session handling with HTTP-only cookies
-- **Route Protection**: Middleware-based authentication for all protected routes
-- **User Sessions**: Secure session management with automatic expiration
+- **User ID**: All data access is scoped to the authenticated user
+- **Row-Level Security**: Database queries include `userId` filters
+- **Session Management**: Better Auth handles authentication state
 
-### Authentication Flow
+### Data Access Pattern
 
-1. **Sign In**: User provides email/password, receives session
-2. **Session Storage**: Session stored securely on server
-3. **Route Access**: Middleware validates session for protected routes
-4. **API Calls**: Essential API endpoints require valid authentication
-5. **Sign Out**: Session cleared from server
+```typescript
+// Each DAL class is instantiated with a user ID
+const dal = new GearsDataAccess(session.user.id);
 
-### Security Features
+// All operations are automatically scoped to that user
+const gears = await dal.getGearsPage({ page: 1, perPage: 20 });
+```
 
-- **Session-based**: No JWT tokens in client-side code
-- **Route Protection**: All dashboard routes protected by default
-- **Data Isolation**: Complete user data separation
-- **Input Validation**: Comprehensive input sanitization
+## Development Environment
 
-## 4. Development Environment
+### Prerequisites
 
-### DevContainer Configuration
+- Node.js 18+ and npm
+- PostgreSQL 16+
+- Docker (for development database)
 
-- **Base Image**: `mcr.microsoft.com/devcontainers/javascript-node:1-22-bookworm`
-- **Services**:
-  - PostgreSQL 16.3 (Database)
-  - Redis 7-alpine (Cache)
-  - Node.js application container
+### Setup Commands
 
-### VS Code Extensions
+```bash
+npm install                    # Install dependencies
+npm run db:generate           # Generate Prisma client
+npm run db:push               # Push schema to database
+npm run dev                   # Start development server
+```
 
-- **Tailwind CSS IntelliSense**: CSS class autocomplete
-- **Prettier**: Code formatting
-- **ESLint**: Code linting
+### Database Management
 
-## 5. Key Architectural Decisions
+```bash
+npm run studio               # Open Prisma Studio
+npm run db:migrate          # Run migrations
+npm run db:reset            # Reset database
+```
 
-### 1. Dashboard-First Approach
+## Key Architectural Decisions
 
-- **Protected Routes**: All user functionality inside `(dashboard)` folder
-- **Public Routes**: Only authentication pages outside dashboard
-- **Consistent Layout**: All dashboard pages use sidebar navigation
+### 1. Page-Specific Data Access
 
-### 2. Direct Database Access
+- **Why**: Better organization and maintainability
+- **How**: Each page has its own `data/` folder with DAL classes
+- **Benefits**: Easier to understand, modify, and extend
 
-- **Eliminated Redundancy**: Removed unnecessary API routes
-- **Simplified Data Flow**: Pages → DAL → Database
-- **Better Performance**: No HTTP overhead for simple operations
+### 2. Prisma-First Approach
 
-### 3. Utility-First Organization
+- **Why**: Type safety and database consistency
+- **How**: All database operations use Prisma with generated types
+- **Benefits**: Compile-time error checking, automatic migrations
 
-- **Epic 7 Specific**: `epic7-data.ts` for game-specific data fetching
-- **Reusable Functions**: Common operations extracted to utility files
-- **Clear Separation**: Business logic vs. UI components
+### 3. Server Component Architecture
 
-### 4. Better Auth Integration
+- **Why**: Better performance and SEO
+- **How**: Pages fetch data server-side, components are client-side when needed
+- **Benefits**: Faster initial page loads, better caching
 
-- **Modern Authentication**: Replaced custom JWT with Better Auth
-- **Session Management**: Server-side sessions for security
-- **Simplified Flow**: No more password hashing in application code
+### 4. TypeScript Everywhere
 
-## 6. Migration from Old Architecture
+- **Why**: Catch errors at compile time
+- **How**: Strict TypeScript configuration with Prisma types
+- **Benefits**: Fewer runtime errors, better developer experience
+
+## Migration from Old Architecture
 
 ### What Changed
 
-1. **API Routes**: Most CRUD operations moved to dashboard pages
-2. **Authentication**: Custom JWT → Better Auth
-3. **Data Flow**: API → DAL → Database → Direct DAL → Database
-4. **Folder Structure**: `dashboard/` → `home/` for clarity
+1. **Monolithic DAL**: `src/lib/data-access.ts` → Page-specific DAL classes
+2. **Component Organization**: Generic components → Page-specific + shared
+3. **Import Paths**: All imports updated to use new file locations
+4. **Data Access Pattern**: `createDataAccess()` → Direct class instantiation
 
-### What Stayed the Same
+### Migration Steps Completed
 
-1. **Database Schema**: Prisma models unchanged
-2. **Business Logic**: Epic 7 rules and validation
-3. **Component Structure**: React components and UI patterns
-4. **Data Access Layer**: Core DAL functionality
+1. ✅ **Created new folder structure** for each page
+2. ✅ **Moved data access files** to page-specific `data/` folders
+3. ✅ **Moved page-specific components** to page-specific `components/` folders
+4. ✅ **Updated all import paths** to use new file locations
+5. ✅ **Removed old monolithic DAL** (`src/lib/data-access.ts`)
+6. ✅ **Updated API routes** to use new DAL structure
+7. ✅ **Updated utility files** to use new import paths
 
-### Benefits of New Architecture
+### Benefits Achieved
 
-- ✅ **Cleaner Code**: No unnecessary API layer
-- ✅ **Better Performance**: Direct database access
-- ✅ **Easier Maintenance**: Logic centralized in pages
-- ✅ **Modern Auth**: Better Auth integration
-- ✅ **Type Safety**: Full Prisma type support
+- **Cleaner Organization**: Each page is self-contained
+- **Easier Maintenance**: Changes are isolated to specific pages
+- **Better Scalability**: New pages can follow the same pattern
+- **Clearer Dependencies**: Each file explicitly shows what it needs
+- **Reduced Coupling**: Pages don't depend on a central DAL
+
+## Future Enhancements
+
+### Planned Improvements
+
+1. **Page-Specific Types**: Each page can define its own type interfaces
+2. **Custom Hooks**: Page-specific React hooks for data management
+3. **Optimized Queries**: Page-specific query optimization
+4. **Caching Strategies**: Page-level caching for better performance
+
+### Best Practices
+
+1. **Keep page-specific code in page folders**
+2. **Use shared components for common functionality**
+3. **Maintain clear separation between data and presentation**
+4. **Follow consistent naming conventions**
+5. **Use TypeScript for all new code**

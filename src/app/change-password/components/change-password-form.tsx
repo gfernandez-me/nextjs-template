@@ -1,33 +1,35 @@
 "use client";
-import { useState } from "react";
+import React, { useState } from "react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+} from "@/ui/card";
+import { Input } from "@/ui/input";
+import { Label } from "@/ui/label";
 
 import { useRouter } from "next/navigation";
 
 import { authClient } from "@/lib/auth-client";
-import { Alert, AlertDescription } from "../ui/alert";
+import { Alert, AlertDescription } from "@/ui/alert";
 import { Terminal } from "lucide-react";
 
 import { IconLoader } from "@tabler/icons-react";
+import { ErrorContext } from "better-auth/react";
 
-export function LoginForm({
+export function ChangePasswordForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
   const router = useRouter();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword2, setNewPassword2] = useState("");
 
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -35,35 +37,32 @@ export function LoginForm({
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
-    await authClient.signIn.email(
+    if (newPassword !== newPassword2) {
+      setError("New passwords do not match");
+      return;
+    }
+
+    await authClient.changePassword(
       {
         /**
-         * The user email
+         * The user new password
          */
-        email,
+        newPassword,
         /**
-         * The user password
+         * The user current password
          */
-        password,
-        /**
-         * a url to redirect to after the user verifies their email (optional)
-         */
-        callbackURL: "/home",
-        /**
-         * remember the user session after the browser is closed.
-         * @default true
-         */
-        rememberMe: false,
+        currentPassword,
       },
       {
         onRequest: () => {
           setLoading(true);
         },
         onSuccess: () => {
-          // redirect to the dashboard
-          router.push("/home");
+          // redirect to the login page
+          alert("Password changed successfully");
+          router.push("/login");
         },
-        onError: (ctx) => {
+        onError: (ctx: ErrorContext) => {
           // display the error message
           setError(ctx.error.message);
           setLoading(false);
@@ -76,9 +75,10 @@ export function LoginForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
-          <CardTitle>Login to your account</CardTitle>
+          <CardTitle>Change your password</CardTitle>
           <CardDescription>
-            Enter your email below to login to your account
+            Enter your current password and new password to change your
+            password.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -91,31 +91,35 @@ export function LoginForm({
           <form onSubmit={(e) => handleSubmit(e)}>
             <div className="flex flex-col gap-6">
               <div className="grid gap-3">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="currentPassword">Current Password</Label>
                 <Input
-                  onChange={(e) => setEmail(e.target.value)}
-                  value={email}
-                  id="email"
-                  type="email"
-                  placeholder="m@example.com"
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  value={currentPassword}
+                  id="currentPassword"
+                  type="password"
+                  placeholder="********"
                   required
                 />
               </div>
               <div className="grid gap-3">
-                <div className="flex items-center">
-                  <Label htmlFor="password">Password</Label>
-                  <a
-                    href="/change-password"
-                    className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
-                  >
-                    Forgot your password?
-                  </a>
-                </div>
+                <Label htmlFor="newPassword">New Password</Label>
                 <Input
-                  onChange={(e) => setPassword(e.target.value)}
-                  value={password}
-                  id="password"
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  value={newPassword}
+                  id="newPassword"
                   type="password"
+                  placeholder="********"
+                  required
+                />
+              </div>
+              <div className="grid gap-3">
+                <Label htmlFor="newPassword">New Password (again)</Label>
+                <Input
+                  onChange={(e) => setNewPassword2(e.target.value)}
+                  value={newPassword2}
+                  id="newPassword2"
+                  type="password"
+                  placeholder="********"
                   required
                 />
               </div>
@@ -124,19 +128,13 @@ export function LoginForm({
                   {loading ? (
                     <IconLoader className="animate-spin" stroke={2} />
                   ) : (
-                    "Login"
+                    "Change Password"
                   )}
                 </Button>
                 <Button variant="outline" className="w-full">
-                  Login with Google
+                  Cancel
                 </Button>
               </div>
-            </div>
-            <div className="mt-4 text-center text-sm">
-              Don&apos;t have an account?{" "}
-              <a href="/signup" className="underline underline-offset-4">
-                Sign up
-              </a>
             </div>
           </form>
         </CardContent>

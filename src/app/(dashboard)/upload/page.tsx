@@ -1,9 +1,21 @@
-import { UploadForm } from "@/components/upload-form";
+import { Suspense } from "react";
+import { UploadForm } from "./components/upload-form";
+import { SettingsDataAccess } from "@/dashboard/settings/data/settings";
+import { auth } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 
 async function getUserSettings() {
-  // This would normally fetch from your database
-  // For now, return null to use defaults
-  return null;
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session?.user?.id) {
+    redirect("/login");
+  }
+
+  const dal = new SettingsDataAccess(session.user.id);
+  return await dal.getSettings();
 }
 
 export default async function UploadPage() {

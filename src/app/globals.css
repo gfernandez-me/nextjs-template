@@ -29,6 +29,19 @@
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
+    
+    /* Sidebar layout variables */
+    --spacing: 0.25rem;
+    --sidebar-width: calc(var(--spacing) * 72);
+    --sidebar-width-icon: calc(var(--spacing) * 12);
+    --header-height: calc(var(--spacing) * 12);
+    
+    /* Sidebar colors */
+    --sidebar: 0 0% 100%;
+    --sidebar-foreground: 20 14.3% 4.1%;
+    --sidebar-border: 20 5.9% 90%;
+    --sidebar-accent: 60 4.8% 95.9%;
+    --sidebar-accent-foreground: 24 9.8% 10%;
   }
 
   .dark {
@@ -56,6 +69,13 @@
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
+    
+    /* Dark mode sidebar colors */
+    --sidebar: 20 14.3% 4.1%;
+    --sidebar-foreground: 60 9.1% 97.8%;
+    --sidebar-border: 12 6.5% 15.1%;
+    --sidebar-accent: 12 6.5% 15.1%;
+    --sidebar-accent-foreground: 60 9.1% 97.8%;
   }
 }
 

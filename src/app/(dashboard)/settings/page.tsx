@@ -1,5 +1,5 @@
-import { SettingsForm } from "@/components/settings-form";
-import { createDataAccess } from "@/lib/data-access";
+import { SettingsForm } from "./components/settings-form";
+import { SettingsDataAccess } from "./data/settings";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 
@@ -14,7 +14,7 @@ async function getSettings() {
   }
 
   // Create data access layer for current user
-  const dal = createDataAccess(session.user.id);
+  const dal = new SettingsDataAccess(session.user.id);
 
   // Get user's settings
   return await dal.getSettings();

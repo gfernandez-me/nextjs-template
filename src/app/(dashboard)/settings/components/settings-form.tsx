@@ -4,14 +4,15 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { SettingsWithUser } from "@/lib/data-access";
-import { WeightEditor } from "./settings-form/weight-editor";
-import { ThresholdEditor } from "./settings-form/threshold-editor";
+import React, { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/ui/card";
+import { Label } from "@/ui/label";
+import { Button } from "@/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/ui/tabs";
+import type { SettingsWithUser } from "@/dashboard/settings/data/settings";
+import { WeightEditor } from "./weight-editor";
+import { ThresholdEditor } from "./threshold-editor";
+// WeightEditor and ThresholdEditor components will be implemented later
 
 interface SettingsFormProps {
   initialSettings: SettingsWithUser | null;
@@ -72,9 +73,12 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<string>("");
   const [includeMain, setIncludeMain] = useState(true);
-  const [subWeights, setSubWeights] = useState<Record<string, number>>(DEFAULT_SUB_WEIGHTS);
-  const [mainWeights, setMainWeights] = useState<Record<string, number>>(DEFAULT_MAIN_WEIGHTS);
-  const [thresholds, setThresholds] = useState<Record<string, { plus15: number[] }>>(DEFAULT_THRESHOLDS);
+  const [subWeights, setSubWeights] =
+    useState<Record<string, number>>(DEFAULT_SUB_WEIGHTS);
+  const [mainWeights, setMainWeights] =
+    useState<Record<string, number>>(DEFAULT_MAIN_WEIGHTS);
+  const [thresholds, setThresholds] =
+    useState<Record<string, { plus15: number[] }>>(DEFAULT_THRESHOLDS);
 
   useEffect(() => {
     if (initialSettings) {
@@ -96,8 +100,12 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
           ...(initialSettings.fScoreMainStatWeights as Record<string, number>),
         });
       if (initialSettings.substatThresholds) {
-        const next: Record<string, { plus15: number[] }> = { ...DEFAULT_THRESHOLDS };
-        for (const [k, v] of Object.entries(initialSettings.substatThresholds)) {
+        const next: Record<string, { plus15: number[] }> = {
+          ...DEFAULT_THRESHOLDS,
+        };
+        for (const [k, v] of Object.entries(
+          initialSettings.substatThresholds
+        )) {
           if (v?.plus15 && Array.isArray(v.plus15)) {
             next[k] = { plus15: v.plus15 as number[] };
           }
@@ -132,29 +140,39 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
 
       setStatus("Settings saved successfully!");
     } catch (error) {
-      setStatus(`Error saving settings: ${error instanceof Error ? error.message : "Unknown error"}`);
+      setStatus(
+        `Error saving settings: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
     } finally {
       setSaving(false);
     }
   };
 
-  const handleRecalculate = async () => {
+  const handleRecalculateScores = async () => {
     setLoading(true);
-    setStatus("");
-
     try {
-      const res = await fetch("/api/settings/recalculate", {
+      const response = await fetch("/api/scores/calculate", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
       });
 
-      if (!res.ok) {
+      if (!response.ok) {
         throw new Error("Failed to recalculate scores");
       }
 
+      const result = await response.json();
       setStatus("Scores recalculated successfully!");
+      console.log("Score calculation result:", result);
     } catch (error) {
-      setStatus(`Error recalculating scores: ${error instanceof Error ? error.message : "Unknown error"}`);
+      setStatus(
+        `Error recalculating scores: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
     } finally {
       setLoading(false);
     }
@@ -175,7 +193,9 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
               onChange={(e) => setIncludeMain(e.target.checked)}
               className="h-4 w-4"
             />
-            <Label htmlFor="includeMain">Include main stat in F-Score calculation</Label>
+            <Label htmlFor="includeMain">
+              Include main stat in F-Score calculation
+            </Label>
           </div>
         </CardContent>
       </Card>
@@ -192,7 +212,7 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
             weights={subWeights}
             onWeightsChange={setSubWeights}
           />
-          
+
           <WeightEditor
             title="Main Stat Weights"
             weights={mainWeights}
@@ -201,9 +221,9 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
         </TabsContent>
 
         <TabsContent value="thresholds">
-          <ThresholdEditor
-            thresholds={thresholds}
-            onThresholdsChange={setThresholds}
+          <ThresholdEditor 
+            thresholds={thresholds} 
+            onThresholdsChange={setThresholds} 
           />
         </TabsContent>
       </Tabs>
@@ -212,16 +232,24 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
         <Button onClick={handleSave} disabled={saving}>
           {saving ? "Saving..." : "Save Settings"}
         </Button>
-        
-        <Button onClick={handleRecalculate} disabled={loading} variant="outline">
+
+        <Button
+          onClick={handleRecalculateScores}
+          disabled={loading}
+          variant="outline"
+        >
           {loading ? "Recalculating..." : "Recalculate Scores"}
         </Button>
       </div>
 
       {status && (
-        <div className={`p-4 rounded-md ${
-          status.includes("Error") ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800"
-        }`}>
+        <div
+          className={`p-4 rounded-md ${
+            status.includes("Error")
+              ? "bg-red-100 text-red-800"
+              : "bg-green-100 text-green-800"
+          }`}
+        >
           {status}
         </div>
       )}

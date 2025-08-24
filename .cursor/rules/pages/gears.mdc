@@ -1,0 +1,26 @@
+# Gears Management Business Rules
+
+## Overview
+
+The Gears page provides comprehensive gear inventory management, including viewing, filtering, sorting, and analyzing Epic 7 gear items.
+
+## Business Rules
+
+_[Content to be provided by user]_
+
+## Page-Specific Requirements
+
+_[Content to be provided by user]_
+
+## Data Flow
+
+_[Content to be provided by user]_
+
+## User Experience
+
+_[Content to be provided by user]_
+description:
+globs:
+alwaysApply: false
+
+---

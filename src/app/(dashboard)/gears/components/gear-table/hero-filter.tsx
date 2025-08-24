@@ -5,13 +5,13 @@
 "use client";
 
 import React from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button } from "@/ui/button";
+import { Input } from "@/ui/input";
 import { ChevronsUpDown, X } from "lucide-react";
-import type { GearWithRelations } from "@/lib/data-access";
+import type { GearWithFullRelations } from "@/dashboard/gears/data/gears";
 
 interface HeroFilterProps {
-  gears: GearWithRelations[];
+  gears: GearWithFullRelations[];
 }
 
 export function HeroFilter({ gears }: HeroFilterProps) {
@@ -156,4 +156,3 @@ export function HeroFilter({ gears }: HeroFilterProps) {
     </div>
   );
 }
-

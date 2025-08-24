@@ -26,19 +26,53 @@ src/
 │   ├── layout.tsx         # Root layout with navigation
 │   ├── page.tsx           # Home page (gear table)
 │   ├── upload/            # Upload page route
+│   │   ├── components/    # Page-specific components
+│   │   │   └── upload-form.tsx
 │   │   └── page.tsx       # Upload form
+│   ├── (dashboard)/       # Protected dashboard routes
+│   │   ├── gears/         # Gear inventory page
+│   │   │   ├── components/ # Page-specific components
+│   │   │   │   ├── gear-table/ # Gear table components
+│   │   │   │   ├── GearFilters.tsx
+│   │   │   │   └── gear-priorities-form.tsx
+│   │   │   ├── data/      # Page-specific data access
+│   │   │   │   └── gears.ts # GearsDataAccess class
+│   │   │   └── page.tsx   # Main page component
+│   │   ├── settings/      # User settings page
+│   │   │   ├── components/ # Page-specific components
+│   │   │   │   └── settings-form.tsx
+│   │   │   ├── data/      # Page-specific data access
+│   │   │   │   └── settings.ts # SettingsDataAccess class
+│   │   │   └── page.tsx   # Settings page
+│   │   ├── admin/         # Admin management pages
+│   │   │   ├── components/ # Page-specific components
+│   │   │   │   └── statistics-content.tsx
+│   │   │   ├── data/      # Page-specific data access
+│   │   │   │   └── statistics.ts # StatisticsDataAccess class
+│   │   │   └── gear-sets/ # Gear sets management
+│   │   │       └── page.tsx
+│   │   └── layout.tsx     # Dashboard layout
 │   ├── api/               # API routes
 │   │   └── upload/        # File upload endpoint
 │   │       └── route.ts   # POST handler for gear import
 │   └── globals.css        # Global styles with shadcn/ui
-├── components/            # React components
+├── components/            # Shared/reusable components
 │   ├── navigation.tsx     # Main navigation component
+│   ├── data-table.tsx     # Generic data table
 │   └── ui/               # shadcn/ui components
 ├── lib/                  # Utilities and configuration
 │   ├── db.ts            # Prisma database singleton
-│   └── utils.ts         # shadcn/ui utilities
-└── generated/           # Generated Prisma client
-    └── prisma/
+│   ├── utils.ts         # shadcn/ui utilities
+│   ├── url.ts           # URL parameter management
+│   ├── url-hooks.ts     # URL hooks for client
+│   ├── stats.ts         # Stat formatting utilities
+│   ├── calculate-scores.ts # Score calculation logic
+│   ├── gear-scoring.ts  # Gear scoring utilities
+│   └── epic7-data.ts    # Epic 7 reference data
+└── prisma/              # Database schema and migrations
+    ├── schema.prisma    # Prisma schema definition
+    ├── generated/        # Generated Prisma client
+    └── migrations/       # Database migrations
 ```
 
 ## 2. Navigation Implementation
@@ -94,42 +128,35 @@ export const db = globalForPrisma.prisma ?? new PrismaClient();
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = db;
 ```
 
-### Server Component Data Fetching (Typed Data Layer)
+### Page-Specific Data Access Layer
 
-Use a typed data-access layer that leverages Prisma types:
+Each page now has its own data access layer for better organization:
 
 ```tsx
-// app/data/gears.ts
-import { db } from "@/lib/db";
-import type { Prisma } from "#prisma";
+// app/(dashboard)/gears/data/gears.ts
+export class GearsDataAccess {
+  constructor(private userId: string) {}
 
-export type GearWithRelations = Prisma.GearsGetPayload<{
-  include: { hero: true; substats: { include: { statType: true } } };
-}>;
-
-export async function getGearsPage(params: {
-  page: number;
-  perPage: number;
-  orderBy?: Prisma.GearsOrderByWithRelationInput[];
-}): Promise<GearWithRelations[]> {
-  const { page, perPage, orderBy } = params;
-  return db.gears.findMany({
-    skip: (page - 1) * perPage,
-    take: perPage,
-    orderBy: orderBy?.length ? orderBy : [{ createdAt: "desc" }],
-    include: { hero: true, substats: { include: { statType: true } } },
-  });
+  async getGearsPage(params: {
+    page: number;
+    perPage: number;
+    orderBy?: Prisma.GearsOrderByWithRelationInput[];
+  }): Promise<GearForTable[]> {
+    return this.prisma.gears.findMany({
+      where: { userId: this.userId },
+      skip: (params.page - 1) * params.perPage,
+      take: params.perPage,
+      orderBy: params.orderBy?.length
+        ? params.orderBy
+        : [{ createdAt: "desc" }],
+      include: { hero: true, substats: { include: { statType: true } } },
+    });
+  }
 }
 
-export async function getGearStats() {
-  const [total, equipped, epicPlus, maxEnhanced] = await Promise.all([
-    db.gears.count(),
-    db.gears.count({ where: { equipped: true } }),
-    db.gears.count({ where: { OR: [{ rank: "Epic" }, { rank: "Heroic" }] } }),
-    db.gears.count({ where: { enhance: 15 } }),
-  ]);
-  return { total, equipped, epicPlus, maxEnhanced };
-}
+// Usage in page component
+const dal = new GearsDataAccess(session.user.id);
+const gears = await dal.getGearsPage({ page: 1, perPage: 20 });
 ```
 
 ## 4. UI Components with shadcn/ui
@@ -471,6 +498,36 @@ import { Button } from "@/ui/button";
 - ESLint warnings in generated Prisma files are expected and don't affect functionality
 - Tailwind CSS configuration is correct with `tailwindcss-animate` properly installed
 - All custom code passes linting without errors
+
+### Data Access Layer Refactoring (Major Improvement ✅)
+
+**Problem**: Monolithic data access layer in `src/lib/data-access.ts` was hard to maintain and organize
+**Solution**: Refactored to page-specific data access layers following modern architecture patterns:
+
+#### New Structure
+
+- **Page-specific DAL classes**: Each page has its own `data/` folder with DAL classes
+- **Page-specific components**: Each page has its own `components/` folder
+- **Shared components**: Generic/reusable components remain in `src/components/`
+- **Clean imports**: Each page imports only what it needs
+
+#### Benefits Achieved
+
+- ✅ **Better Organization**: Each page manages its own data and components
+- ✅ **Easier Maintenance**: Changes to one page don't affect others
+- ✅ **Clearer Dependencies**: Each page explicitly shows what it needs
+- ✅ **Better Scalability**: New pages can follow the same pattern
+- ✅ **Reduced Coupling**: Pages don't depend on a central DAL
+
+#### Migration Completed
+
+1. ✅ **Created new folder structure** for each page
+2. ✅ **Moved data access files** to page-specific `data/` folders
+3. ✅ **Moved page-specific components** to page-specific `components/` folders
+4. ✅ **Updated all import paths** to use new file locations
+5. ✅ **Removed old monolithic DAL** (`src/lib/data-access.ts`)
+6. ✅ **Updated API routes** to use new DAL structure
+7. ✅ **Updated utility files** to use new import paths
 
 ## 16. Testing Strategy
 

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createDataAccess } from "@/lib/data-access";
+import { SettingsDataAccess } from "@/dashboard/settings/data/settings";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import prisma from "@/lib/prisma";
@@ -19,7 +19,7 @@ export async function POST(): Promise<NextResponse> {
     }
 
     // Create data access layer for current user
-    const dal = createDataAccess(session.user.id);
+    const dal = new SettingsDataAccess(session.user.id);
 
     // Get user's settings
     const settings = await dal.getSettings();

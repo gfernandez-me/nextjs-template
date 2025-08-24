@@ -12,7 +12,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "@/ui/table";
 import {
   flexRender,
   getCoreRowModel,
@@ -24,7 +24,7 @@ import {
   VisibilityState,
 } from "@tanstack/react-table";
 import { usePathname, useRouter } from "next/navigation";
-import type { GearWithRelations } from "@/lib/data-access";
+import type { GearForTable } from "@/dashboard/gears/data/gears";
 import { HeroFilter } from "./gear-table/hero-filter";
 import { Pagination } from "./gear-table/pagination";
 import { createGearTableColumns } from "./gear-table/columns";
@@ -40,7 +40,7 @@ export function GearTable({
   currentPage,
   pageSize,
 }: {
-  gears: GearWithRelations[];
+  gears: GearForTable[];
   totalCount: number;
   pageCount: number;
   currentPage: number;

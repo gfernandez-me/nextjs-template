@@ -1,0 +1,26 @@
+# Gear Priorities Business Rules
+
+## Overview
+
+The Gear Priorities page allows users to configure optimization preferences for different gear types and hero combinations, defining which substats are most important for optimization calculations.
+
+## Business Rules
+
+_[Content to be provided by user]_
+
+## Page-Specific Requirements
+
+_[Content to be provided by user]_
+
+## Data Flow
+
+_[Content to be provided by user]_
+
+## User Experience
+
+_[Content to be provided by user]_
+description:
+globs:
+alwaysApply: false
+
+---

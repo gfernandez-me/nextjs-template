@@ -1,23 +1,14 @@
-// Settings Module - User configuration and scoring preferences
-// This file contains the Settings model for user-specific optimization preferences
-
-// Global settings for scoring and thresholds (per user)
 model Settings {
-    id                    Int     @id @default(autoincrement())
-    // fScore configuration
-    fScoreIncludeMainStat Boolean @default(true)
-    fScoreSubstatWeights  Json? // { "Speed": 2.0, "Crit %": 1.5, ... }
-    fScoreMainStatWeights Json? // { "att": 0.0, "def": 0.0, "max_hp": 0.0, "att_rate": 0.5, ... }
-    // Threshold configuration per substat for badge coloring
-    substatThresholds     Json? // { "Speed": { "plus15": [4,8,12,18] }, "Crit %": { "plus15": [4,8,12,16] }, ... }
-    // User ownership
-    userId                String
-    User                  User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                    Int      @id @default(autoincrement())
+  fScoreIncludeMainStat Boolean  @default(true)
+  fScoreSubstatWeights  Json?
+  fScoreMainStatWeights Json?
+  substatThresholds     Json?
+  userId                String   @unique
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  User                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    @@unique([userId]) // One settings per user
-    @@index([userId])
-    @@map("settings")
+  @@index([userId])
+  @@map("settings")
 }

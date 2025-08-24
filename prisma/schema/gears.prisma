@@ -1,232 +1,183 @@
-// Gears Module - Core gear and hero functionality
-// This file contains all gear-related models, enums, and their relationships
-
-// Epic 7 Gear Types
-enum GearType {
-    WEAPON
-    ARMOR
-    HELM
-    NECK
-    RING
-    BOOTS
-}
-
-// Epic 7 Gear Ranks
-enum GearRank {
-    COMMON
-    UNCOMMON
-    RARE
-    EPIC
-    HEROIC
-}
-
-// Epic 7 Main Stat Types
-enum MainStatType {
-    ATT
-    DEF
-    MAX_HP
-    ATT_RATE
-    DEF_RATE
-    MAX_HP_RATE
-    CRI
-    CRI_DMG
-    SPEED
-    ACC
-    RES
-}
-
-// Epic 7 Stat Categories
-enum StatCategory {
-    FLAT
-    PERCENTAGE
-}
-
-// Epic 7 Hero Elements
-enum HeroElement {
-    FIRE
-    ICE
-    EARTH
-    LIGHT
-    DARK
-}
-
-// Epic 7 Hero Rarities
-enum HeroRarity {
-    THREE_STAR
-    FOUR_STAR
-    FIVE_STAR
-    SIX_STAR
-}
-
-// Epic 7 Hero Classes
-enum HeroClass {
-    WARRIOR
-    KNIGHT
-    RANGER
-    MAGE
-    SOUL_WEAVER
-    THIEF
-}
-
-// Reference table for valid stat types and their weights
 model StatTypes {
-    id           Int          @id @default(autoincrement())
-    statName     String       @unique // Speed, Attack, Defense, etc.
-    statCategory StatCategory // FLAT, PERCENTAGE
-    weight       Decimal      @db.Decimal(5, 2) // Weight for optimization calculations
+  id                      Int                      @id @default(autoincrement())
+  statName                String                   @unique
+  statCategory            StatCategory
+  weight                  Decimal                  @db.Decimal(5, 2)
+  allowedMainStatFor      GearType[]
+  allowedSubstatFor       GearType[]
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  GearPrioritySub1        GearPriorities[]         @relation("PrioritySub1")
+  GearPrioritySub2        GearPriorities[]         @relation("PrioritySub2")
+  GearPrioritySub3        GearPriorities[]         @relation("PrioritySub3")
+  GearPrioritySub4        GearPriorities[]         @relation("PrioritySub4")
+  GearRecommendationItem1 GearRecommendationItem[] @relation("StatType1")
+  GearRecommendationItem2 GearRecommendationItem[] @relation("StatType2")
+  GearRecommendationItem3 GearRecommendationItem[] @relation("StatType3")
+  GearRecommendationItem4 GearRecommendationItem[] @relation("StatType4")
+  GearSubStats            GearSubStats[]
 
-    // Gear-specific restrictions - which gear types can have this stat as main stat or substat
-    allowedMainStatFor GearType[] // Array of gear types that can have this as main stat
-    allowedSubstatFor  GearType[] // Array of gear types that can have this as substat
-
-    // Relationships
-    GearSubStats     GearSubStats[]
-    // Back-relations to gear priorities ordered substats
-    GearPrioritySub1 GearPriorities[] @relation("PrioritySub1")
-    GearPrioritySub2 GearPriorities[] @relation("PrioritySub2")
-    GearPrioritySub3 GearPriorities[] @relation("PrioritySub3")
-    GearPrioritySub4 GearPriorities[] @relation("PrioritySub4")
-
-    GearRecommendationItem1 GearRecommendationItem[] @relation("StatType1")
-    GearRecommendationItem2 GearRecommendationItem[] @relation("StatType2")
-    GearRecommendationItem3 GearRecommendationItem[] @relation("StatType3")
-    GearRecommendationItem4 GearRecommendationItem[] @relation("StatType4")
-
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    @@map("stat_types")
+  @@map("stat_types")
 }
 
-// Reference table for gear sets and their effects
 model GearSets {
-    id                Int     @id @default(autoincrement())
-    setName           String  @unique // SpeedSet, AttackSet, etc.
-    piecesRequired    Int // 2 or 4
-    effectDescription String // +25% Speed, +35% Attack, etc.
-    icon              String // Unicode icon or icon identifier for display
-    isActive          Boolean @default(true)
+  id                Int              @id @default(autoincrement())
+  setName           String           @unique
+  piecesRequired    Int
+  effectDescription String
+  icon              String
+  isActive          Boolean          @default(true)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  GearPriorities    GearPriorities[]
 
-    GearPriorities GearPriorities[]
-
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    @@map("gear_sets")
+  @@map("gear_sets")
 }
 
-// Individual substats for each gear
 model GearSubStats {
-    id         Int     @id @default(autoincrement())
-    gearId     Int
-    statTypeId Int
-    statValue  Decimal @db.Decimal(10, 2)
-    rolls      Int // 0-5
-    weight     Decimal @db.Decimal(5, 2)
-    isModified Boolean @default(false) // Whether this substat was modified (reforged)
+  id         Int       @id @default(autoincrement())
+  gearId     Int
+  statTypeId Int
+  statValue  Decimal   @db.Decimal(10, 2)
+  rolls      Int
+  weight     Decimal   @db.Decimal(5, 2)
+  isModified Boolean   @default(false)
+  userId     String
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  Gear       Gears     @relation(fields: [gearId], references: [id], onDelete: Cascade)
+  StatType   StatTypes @relation(fields: [statTypeId], references: [id])
+  User       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-    // Relationships
-    Gear     Gears     @relation(fields: [gearId], references: [id], onDelete: Cascade)
-    StatType StatTypes @relation(fields: [statTypeId], references: [id])
-    userId   String // User who owns this substat
-    User     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    @@map("gear_substats")
+  @@map("gear_substats")
 }
 
 model Gears {
-    id Int @id @default(autoincrement())
+  id                Int            @id @default(autoincrement())
+  ingameId          BigInt         @unique
+  code              String
+  type              GearType
+  rank              GearRank
+  level             Int
+  enhance           Int
+  fScore            Float?
+  score             Float?
+  mainStatType      MainStatType
+  mainStatValue     Float
+  mainStatBaseValue Float
+  statMultiplier    Float
+  tierMultiplier    Float
+  storage           Boolean        @default(true)
+  equipped          Boolean        @default(false)
+  equippedBy        BigInt?
+  ingameEquippedId  String?
+  userId            String
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  set               String?
+  GearSubStats      GearSubStats[]
+  Hero              Heroes?        @relation(fields: [equippedBy], references: [ingameId])
+  User              User           @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-    // Epic 7 Optimizer specific fields
-    ingameId BigInt   @unique // Original game ID (can exceed 32-bit range)
-    code     String // Gear code identifier
-    type     GearType // WEAPON, ARMOR, HELM, NECK, RING, BOOTS
-    rank     GearRank // COMMON, UNCOMMON, RARE, EPIC, HEROIC
-    level    Int
-    enhance  Int // Enhancement level (0-15)
-
-    // Precomputed scores (optional)
-    fScore Float? // Fribbels-like score
-    score  Float? // Custom score
-
-    // Main stat
-    mainStatType      MainStatType // ATT, DEF, MAX_HP, ATT_RATE, DEF_RATE, MAX_HP_RATE, CRI, CRI_DMG, SPEED, ACC, RES
-    mainStatValue     Float
-    mainStatBaseValue Float
-
-    // Additional properties
-    statMultiplier Float
-    tierMultiplier Float
-    storage        Boolean @default(true)
-    equipped       Boolean @default(false)
-
-    // Gear set relationship
-    set String? // References GearSets.setName
-
-    // Equipment relationship - references hero ingameId
-    equippedBy       BigInt? // Hero ingameId if equipped
-    ingameEquippedId String?
-
-    // Relationships
-    Hero         Heroes?        @relation(fields: [equippedBy], references: [ingameId])
-    GearSubStats GearSubStats[]
-    userId       String // User who owns this gear
-    User         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    @@index([createdAt])
-    @@index([rank])
-    @@index([enhance])
-    @@index([equipped])
-    @@index([userId])
-    @@index([set])
-    @@map("gears")
+  @@index([createdAt])
+  @@index([rank])
+  @@index([enhance])
+  @@index([equipped])
+  @@index([userId])
+  @@index([set])
+  @@map("gears")
 }
 
 model Heroes {
-    id Int @id @default(autoincrement())
+  id                  Int                  @id @default(autoincrement())
+  ingameId            BigInt               @unique
+  name                String
+  element             HeroElement?
+  rarity              HeroRarity?
+  class               HeroClass?
+  attack              Int?
+  defense             Int?
+  health              Int?
+  speed               Int?
+  criticalHitChance   Int?
+  criticalHitDamage   Int?
+  effectiveness       Int?
+  effectResistance    Int?
+  weaponId            Int?
+  armorId             Int?
+  helmetId            Int?
+  necklaceId          Int?
+  ringId              Int?
+  bootId              Int?
+  userId              String
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  GearPriorities      GearPriorities[]
+  GearPriorityLinks   GearPriorityHeroes[]
+  GearRecommendations GearRecommendation[]
+  Gears               Gears[]
+  User                User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-    // Epic 7 specific fields
-    ingameId BigInt       @unique // Original game ID (can exceed 32-bit range)
-    name     String
-    element  HeroElement? // FIRE, ICE, EARTH, LIGHT, DARK
-    rarity   HeroRarity? // THREE_STAR, FOUR_STAR, FIVE_STAR, SIX_STAR
-    class    HeroClass? // WARRIOR, KNIGHT, RANGER, MAGE, SOUL_WEAVER, THIEF
+  @@index([userId])
+  @@map("heroes")
+}
 
-    // Stats (base stats from hero data)
-    attack            Int?
-    defense           Int?
-    health            Int?
-    speed             Int?
-    criticalHitChance Int?
-    criticalHitDamage Int?
-    effectiveness     Int?
-    effectResistance  Int?
+enum GearType {
+  WEAPON
+  ARMOR
+  HELM
+  NECK
+  RING
+  BOOTS
+}
 
-    // Equipment slots (using gear ingameId references)
-    weaponId   Int? // References gear ingameId
-    armorId    Int? // References gear ingameId
-    helmetId   Int? // References gear ingameId
-    necklaceId Int? // References gear ingameId
-    ringId     Int? // References gear ingameId
-    bootId     Int? // References gear ingameId
+enum GearRank {
+  COMMON
+  UNCOMMON
+  RARE
+  EPIC
+  HEROIC
+}
 
-    // Relationships
-    Gears               Gears[] // All gears equipped by this hero
-    userId              String // User who owns this hero
-    User                User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-    GearPriorities      GearPriorities[]
-    GearPriorityLinks   GearPriorityHeroes[]
-    GearRecommendations GearRecommendation[]
+enum MainStatType {
+  ATT
+  DEF
+  MAX_HP
+  ATT_RATE
+  DEF_RATE
+  MAX_HP_RATE
+  CRI
+  CRI_DMG
+  SPEED
+  ACC
+  RES
+}
 
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+enum StatCategory {
+  FLAT
+  PERCENTAGE
+}
 
-    @@index([userId])
-    @@map("heroes")
+enum HeroElement {
+  FIRE
+  ICE
+  EARTH
+  LIGHT
+  DARK
+}
+
+enum HeroRarity {
+  THREE_STAR
+  FOUR_STAR
+  FIVE_STAR
+  SIX_STAR
+}
+
+enum HeroClass {
+  WARRIOR
+  KNIGHT
+  RANGER
+  MAGE
+  SOUL_WEAVER
+  THIEF
 }

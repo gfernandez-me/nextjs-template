@@ -8,6 +8,7 @@ import {
   validateSubstatData,
   mapStatName,
 } from "@/lib/epic7-validation";
+import { calculateFScore, calculateScore } from "@/lib/calculate-scores";
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
@@ -191,6 +192,39 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
               await prisma.gearSubStats.create({ data: substatData });
             }
           }
+        }
+
+        // Calculate and save scores after gear and substats are created
+        try {
+          const gearWithSubstats = await prisma.gears.findUnique({
+            where: { id: gear.id },
+            include: {
+              GearSubStats: {
+                include: {
+                  StatType: true,
+                },
+              },
+            },
+          });
+
+          if (gearWithSubstats) {
+            const fScore = calculateFScore(gearWithSubstats);
+            const score = calculateScore(gearWithSubstats);
+
+            await prisma.gears.update({
+              where: { id: gear.id },
+              data: {
+                fScore,
+                score,
+              },
+            });
+          }
+        } catch (scoreError) {
+          console.error(
+            `Error calculating scores for gear ${gear.id}:`,
+            scoreError
+          );
+          // Don't fail the import if score calculation fails
         }
 
         importedCount++;

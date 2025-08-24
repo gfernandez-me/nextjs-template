@@ -1,72 +1,63 @@
-// Auth Module - User authentication and management
-// This file contains all authentication-related models
-
-// User authentication model
 model Account {
-    id                    String    @id @default(cuid())
-    accountId             String
-    providerId            String
-    userId                String
-    accessToken           String?
-    refreshToken          String?
-    idToken               String?
-    accessTokenExpiresAt  DateTime?
-    refreshTokenExpiresAt DateTime?
-    scope                 String?
-    password              String?
-    User                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                    String    @id @default(cuid())
+  accountId             String
+  providerId            String
+  userId                String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  User                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    @@map("accounts")
+  @@map("accounts")
 }
 
 model Session {
-    id        String   @id @default(cuid())
-    expiresAt DateTime
-    token     String   @unique
-    ipAddress String?
-    userAgent String?
-    userId    String
-    User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        String   @id @default(cuid())
+  expiresAt DateTime
+  token     String   @unique
+  ipAddress String?
+  userAgent String?
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    @@map("sessions")
+  @@map("sessions")
 }
 
 model User {
-    id            String  @id @default(cuid())
-    name          String
-    email         String  @unique
-    emailVerified Boolean @default(false)
-    image         String?
+  id                  String               @id @default(cuid())
+  name                String
+  email               String               @unique
+  emailVerified       Boolean              @default(false)
+  image               String?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  Account             Account[]
+  GearPriorities      GearPriorities[]
+  GearRecommendations GearRecommendation[]
+  GearSubStats        GearSubStats[]
+  Gears               Gears[]
+  Heroes              Heroes[]
+  Session             Session[]
+  Settings            Settings?
 
-    Account             Account[]
-    Session             Session[]
-    Gears               Gears[]
-    Heroes              Heroes[]
-    Settings            Settings?
-    GearSubStats        GearSubStats[]
-    GearPriorities      GearPriorities[]
-    GearRecommendations GearRecommendation[]
-
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    @@map("users")
+  @@map("users")
 }
 
 model Verification {
-    id         String   @id @default(cuid())
-    identifier String
-    value      String
-    expiresAt  DateTime
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    @@map("verifications")
+  @@map("verifications")
 }

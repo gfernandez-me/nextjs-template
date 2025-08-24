@@ -1,0 +1,26 @@
+# Authentication Pages Business Rules
+
+## Overview
+
+The Authentication pages handle user registration, login, and password management, including login, signup, and change-password functionality.
+
+## Business Rules
+
+_[Content to be provided by user]_
+
+## Page-Specific Requirements
+
+_[Content to be provided by user]_
+
+## Data Flow
+
+_[Content to be provided by user]_
+
+## User Experience
+
+_[Content to be provided by user]_
+description:
+globs:
+alwaysApply: false
+
+---

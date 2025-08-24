@@ -1,103 +1,77 @@
-// Recommendation Module - Gear priorities and recommendations
-// This file contains all recommendation-related models
-
-// User defined gear chasing / priority profiles
 model GearPriorities {
-    id     Int    @id @default(autoincrement())
-    // Ownership
-    userId String
-    User   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id             Int                  @id @default(autoincrement())
+  userId         String
+  name           String
+  gearType       GearType?
+  gearSetId      Int?
+  mainStatType   MainStatType?
+  prioritySub1Id Int?
+  prioritySub2Id Int?
+  prioritySub3Id Int?
+  prioritySub4Id Int?
+  heroIngameId   BigInt?
+  heroName       String?
+  isActive       Boolean              @default(true)
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+  gearSet        GearSets?            @relation(fields: [gearSetId], references: [id])
+  TargetHero     Heroes?              @relation(fields: [heroIngameId], references: [ingameId])
+  PrioritySub1   StatTypes?           @relation("PrioritySub1", fields: [prioritySub1Id], references: [id])
+  PrioritySub2   StatTypes?           @relation("PrioritySub2", fields: [prioritySub2Id], references: [id])
+  PrioritySub3   StatTypes?           @relation("PrioritySub3", fields: [prioritySub3Id], references: [id])
+  PrioritySub4   StatTypes?           @relation("PrioritySub4", fields: [prioritySub4Id], references: [id])
+  User           User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Heroes         GearPriorityHeroes[]
 
-    // Friendly name, often a hero name or generic label
-    name String
-
-    // Desired set and main stat
-    gearType     GearType?
-    gearSetId    Int?
-    gearSet      GearSets?     @relation(fields: [gearSetId], references: [id])
-    mainStatType MainStatType?
-
-    // Priority substats (ordered). Nullable to allow fewer than four.
-    prioritySub1Id Int?
-    PrioritySub1   StatTypes? @relation("PrioritySub1", fields: [prioritySub1Id], references: [id])
-    prioritySub2Id Int?
-    PrioritySub2   StatTypes? @relation("PrioritySub2", fields: [prioritySub2Id], references: [id])
-    prioritySub3Id Int?
-    PrioritySub3   StatTypes? @relation("PrioritySub3", fields: [prioritySub3Id], references: [id])
-    prioritySub4Id Int?
-    PrioritySub4   StatTypes? @relation("PrioritySub4", fields: [prioritySub4Id], references: [id])
-
-    // Optional hero association
-    heroIngameId BigInt?
-    TargetHero   Heroes? @relation(fields: [heroIngameId], references: [ingameId])
-    heroName     String?
-
-    // State
-    isActive Boolean              @default(true)
-    Heroes   GearPriorityHeroes[]
-
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    @@unique([userId, name])
-    @@index([userId])
-    @@index([gearType])
-    @@index([gearSetId])
-    @@index([heroIngameId])
-    @@map("gear_priorities")
+  @@unique([userId, name])
+  @@index([userId])
+  @@index([gearType])
+  @@index([gearSetId])
+  @@index([heroIngameId])
+  @@map("gear_priorities")
 }
 
-// Join table: many heroes can be linked to one gear priority
 model GearPriorityHeroes {
-    id             Int    @id @default(autoincrement())
-    gearPriorityId Int
-    heroIngameId   BigInt
+  id             Int            @id @default(autoincrement())
+  gearPriorityId Int
+  heroIngameId   BigInt
+  GearPriority   GearPriorities @relation(fields: [gearPriorityId], references: [id], onDelete: Cascade)
+  Hero           Heroes         @relation(fields: [heroIngameId], references: [ingameId], onDelete: Cascade)
 
-    GearPriority GearPriorities @relation(fields: [gearPriorityId], references: [id], onDelete: Cascade)
-    Hero         Heroes         @relation(fields: [heroIngameId], references: [ingameId], onDelete: Cascade)
-
-    @@unique([gearPriorityId, heroIngameId])
-    @@index([heroIngameId])
-    @@map("gear_priority_heroes")
+  @@unique([gearPriorityId, heroIngameId])
+  @@index([heroIngameId])
+  @@map("gear_priority_heroes")
 }
 
-// Gear recommendation page
 model GearRecommendation {
-    id     Int    @id @default(autoincrement())
-    userId String
-    User   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                     Int                      @id @default(autoincrement())
+  userId                 String
+  heroIngameId           BigInt
+  createdAt              DateTime                 @default(now())
+  updatedAt              DateTime                 @updatedAt
+  GearRecommendationItem GearRecommendationItem[]
+  Hero                   Heroes                   @relation(fields: [heroIngameId], references: [ingameId], onDelete: Cascade)
+  User                   User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-    heroIngameId BigInt
-    Hero         Heroes @relation(fields: [heroIngameId], references: [ingameId], onDelete: Cascade)
-
-    GearRecommendationItem GearRecommendationItem[]
-
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    @@map("gear_recommendations")
+  @@map("gear_recommendations")
 }
 
 model GearRecommendationItem {
-    id Int @id @default(autoincrement())
+  id                   Int                @id @default(autoincrement())
+  gearRecommendationId Int
+  type                 GearType
+  mainStatType         MainStatType
+  statType1Id          Int
+  statType2Id          Int?
+  statType3Id          Int?
+  statType4Id          Int?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  GearRecommendation   GearRecommendation @relation(fields: [gearRecommendationId], references: [id], onDelete: Cascade)
+  StatType1            StatTypes          @relation("StatType1", fields: [statType1Id], references: [id])
+  StatType2            StatTypes?         @relation("StatType2", fields: [statType2Id], references: [id])
+  StatType3            StatTypes?         @relation("StatType3", fields: [statType3Id], references: [id])
+  StatType4            StatTypes?         @relation("StatType4", fields: [statType4Id], references: [id])
 
-    gearRecommendationId Int
-    GearRecommendation   GearRecommendation @relation(fields: [gearRecommendationId], references: [id], onDelete: Cascade)
-
-    type         GearType
-    mainStatType MainStatType
-
-    statType1Id Int
-    statType2Id Int?
-    statType3Id Int?
-    statType4Id Int?
-    StatType1   StatTypes  @relation("StatType1", fields: [statType1Id], references: [id])
-    StatType2   StatTypes? @relation("StatType2", fields: [statType2Id], references: [id])
-    StatType3   StatTypes? @relation("StatType3", fields: [statType3Id], references: [id])
-    StatType4   StatTypes? @relation("StatType4", fields: [statType4Id], references: [id])
-
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    @@map("gear_recommendation_items")
+  @@map("gear_recommendation_items")
 }

@@ -1,4 +1,4 @@
-import { createDataAccess } from "@/lib/data-access";
+import { StatisticsDataAccess } from "@/admin/data/statistics";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { MainStatType, GearSets, StatTypes } from "#prisma";
@@ -24,7 +24,7 @@ export async function getEpic7Data(): Promise<Epic7Data> {
   }
 
   // Create data access layer for current user
-  const dal = createDataAccess(session.user.id);
+  const dal = new StatisticsDataAccess(session.user.id);
 
   // Fetch real data from database
   const [gearSets, substats] = await Promise.all([

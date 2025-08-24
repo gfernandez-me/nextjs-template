@@ -26,10 +26,10 @@ export default async function GearsPage({
 }) {
   // Parse URL parameters for server-side filtering
   const filters = parseSearchParams(searchParams);
-  
+
   // Fetch data with filters applied server-side
   const gears = await getGearsWithFilters(filters);
-  
+
   return (
     <div>
       <FilterBar />
@@ -52,28 +52,31 @@ export function GearFilters() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
-  
-  const updateFilters = useCallback((newFilters: Partial<GearFilters>) => {
-    startTransition(() => {
-      const params = new URLSearchParams(searchParams);
-      
-      // Update URL parameters
-      Object.entries(newFilters).forEach(([key, value]) => {
-        if (value && value !== "") {
-          params.set(key, String(value));
-        } else {
-          params.delete(key);
-        }
+
+  const updateFilters = useCallback(
+    (newFilters: Partial<GearFilters>) => {
+      startTransition(() => {
+        const params = new URLSearchParams(searchParams);
+
+        // Update URL parameters
+        Object.entries(newFilters).forEach(([key, value]) => {
+          if (value && value !== "") {
+            params.set(key, String(value));
+          } else {
+            params.delete(key);
+          }
+        });
+
+        // Reset to first page when filters change
+        params.delete("page");
+
+        // Update URL (triggers server re-render)
+        router.replace(`?${params.toString()}`, { scroll: false });
       });
-      
-      // Reset to first page when filters change
-      params.delete("page");
-      
-      // Update URL (triggers server re-render)
-      router.replace(`?${params.toString()}`, { scroll: false });
-    });
-  }, [searchParams, router, startTransition]);
-  
+    },
+    [searchParams, router, startTransition]
+  );
+
   return (
     <div>
       <input
@@ -93,13 +96,17 @@ export function GearFilters() {
 // components/GearTable.tsx (Client Component)
 "use client";
 
-import { useReactTable, getCoreRowModel, getSortedRowModel } from "@tanstack/react-table";
+import {
+  useReactTable,
+  getCoreRowModel,
+  getSortedRowModel,
+} from "@tanstack/react-table";
 import { useRouter, useSearchParams } from "next/navigation";
 
 export function GearTable({ gears }: { gears: Gear[] }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  
+
   const table = useReactTable({
     data: gears, // Data comes from server, no fetching needed
     columns: gearColumns,
@@ -120,35 +127,37 @@ export function GearTable({ gears }: { gears: Gear[] }) {
       updateURL({ sorting: newSorting });
     },
     onPaginationChange: (updater) => {
-      const newPagination = typeof updater === "function" ? updater({ pageIndex: 0, pageSize: 10 }) : updater;
+      const newPagination =
+        typeof updater === "function"
+          ? updater({ pageIndex: 0, pageSize: 10 })
+          : updater;
       updateURL({ pagination: newPagination });
     },
   });
-  
-  const updateURL = useCallback((updates: Partial<TableState>) => {
-    const params = new URLSearchParams(searchParams);
-    
-    if (updates.sorting) {
-      const sortString = updates.sorting
-        .map(sort => `${sort.id}:${sort.desc ? "desc" : "asc"}`)
-        .join(",");
-      if (sortString) params.set("sort", sortString);
-      else params.delete("sort");
-    }
-    
-    if (updates.pagination) {
-      params.set("page", String(updates.pagination.pageIndex + 1));
-      params.set("size", String(updates.pagination.pageSize));
-    }
-    
-    router.replace(`?${params.toString()}`, { scroll: false });
-  }, [searchParams, router]);
-  
-  return (
-    <table>
-      {/* Table rendering */}
-    </table>
+
+  const updateURL = useCallback(
+    (updates: Partial<TableState>) => {
+      const params = new URLSearchParams(searchParams);
+
+      if (updates.sorting) {
+        const sortString = updates.sorting
+          .map((sort) => `${sort.id}:${sort.desc ? "desc" : "asc"}`)
+          .join(",");
+        if (sortString) params.set("sort", sortString);
+        else params.delete("sort");
+      }
+
+      if (updates.pagination) {
+        params.set("page", String(updates.pagination.pageIndex + 1));
+        params.set("size", String(updates.pagination.pageSize));
+      }
+
+      router.replace(`?${params.toString()}`, { scroll: false });
+    },
+    [searchParams, router]
   );
+
+  return <table>{/* Table rendering */}</table>;
 }
 ```
 
@@ -169,8 +178,8 @@ export function parseSearchParams(searchParams: URLSearchParams) {
 
 export function parseSorting(sortString: string) {
   if (!sortString) return [];
-  
-  return sortString.split(",").map(sort => {
+
+  return sortString.split(",").map((sort) => {
     const [id, direction] = sort.split(":");
     return {
       id,
@@ -184,28 +193,30 @@ export function parseFilters(searchParams: URLSearchParams) {
     name: searchParams.get("name") || undefined,
     type: searchParams.get("type") || undefined,
     rank: searchParams.get("rank")?.split("|") || [],
-    level: searchParams.get("level") ? parseInt(searchParams.get("level")!, 10) : undefined,
+    level: searchParams.get("level")
+      ? parseInt(searchParams.get("level")!, 10)
+      : undefined,
   };
 }
 
 export function buildSearchParams(updates: Partial<TableState>) {
   const params = new URLSearchParams();
-  
+
   if (updates.page && updates.page > 1) {
     params.set("page", String(updates.page));
   }
-  
+
   if (updates.size && updates.size !== 10) {
     params.set("size", String(updates.size));
   }
-  
+
   if (updates.sort && updates.sort.length > 0) {
     const sortString = updates.sort
-      .map(sort => `${sort.id}:${sort.desc ? "desc" : "asc"}`)
+      .map((sort) => `${sort.id}:${sort.desc ? "desc" : "asc"}`)
       .join(",");
     params.set("sort", sortString);
   }
-  
+
   if (updates.filters) {
     Object.entries(updates.filters).forEach(([key, value]) => {
       if (value !== undefined && value !== null && value !== "") {
@@ -219,7 +230,7 @@ export function buildSearchParams(updates: Partial<TableState>) {
       }
     });
   }
-  
+
   return params;
 }
 ```
@@ -232,18 +243,21 @@ export function useDebouncedSearchParams(delay: number = 300) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const timeoutRef = useRef<NodeJS.Timeout>();
-  
-  const updateSearchParams = useCallback((updates: Partial<TableState>) => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-    
-    timeoutRef.current = setTimeout(() => {
-      const params = buildSearchParams(updates);
-      router.replace(`?${params.toString()}`, { scroll: false });
-    }, delay);
-  }, [router, delay]);
-  
+
+  const updateSearchParams = useCallback(
+    (updates: Partial<TableState>) => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+
+      timeoutRef.current = setTimeout(() => {
+        const params = buildSearchParams(updates);
+        router.replace(`?${params.toString()}`, { scroll: false });
+      }, delay);
+    },
+    [router, delay]
+  );
+
   useEffect(() => {
     return () => {
       if (timeoutRef.current) {
@@ -251,7 +265,7 @@ export function useDebouncedSearchParams(delay: number = 300) {
       }
     };
   }, []);
-  
+
   return updateSearchParams;
 }
 ```
@@ -265,35 +279,38 @@ export function useDebouncedSearchParams(delay: number = 300) {
 const table = useReactTable({
   data: gears,
   columns: gearColumns,
-  
+
   // Manual mode for server-side operations
   manualSorting: true,
   manualPagination: true,
   manualFiltering: true,
-  
+
   // Row count for pagination
   pageCount: Math.ceil(totalCount / pageSize),
-  
+
   // State from URL
   state: {
     sorting: currentSorting,
     pagination: currentPagination,
     columnFilters: currentFilters,
   },
-  
+
   // Event handlers update URL
   onSortingChange: (updater) => {
-    const newSorting = typeof updater === "function" ? updater(currentSorting) : updater;
+    const newSorting =
+      typeof updater === "function" ? updater(currentSorting) : updater;
     updateURL({ sorting: newSorting });
   },
-  
+
   onPaginationChange: (updater) => {
-    const newPagination = typeof updater === "function" ? updater(currentPagination) : updater;
+    const newPagination =
+      typeof updater === "function" ? updater(currentPagination) : updater;
     updateURL({ pagination: newPagination });
   },
-  
+
   onColumnFiltersChange: (updater) => {
-    const newFilters = typeof updater === "function" ? updater(currentFilters) : updater;
+    const newFilters =
+      typeof updater === "function" ? updater(currentFilters) : updater;
     updateURL({ filters: newFilters });
   },
 });
@@ -339,39 +356,40 @@ const gearColumns: ColumnDef<Gear>[] = [
 ### 1. Data Access Layer
 
 ```tsx
-// lib/data-access.ts
 export async function getGearsWithFilters(filters: GearFilters) {
   const { page = 1, size = 10, sort = [], filters: filterParams } = filters;
-  
+
   const where: Prisma.GearsWhereInput = {};
-  
+
   // Apply filters
   if (filterParams.name) {
     where.name = { contains: filterParams.name, mode: "insensitive" };
   }
-  
+
   if (filterParams.type && filterParams.type !== "All") {
     where.type = filterParams.type;
   }
-  
+
   if (filterParams.rank && filterParams.rank.length > 0) {
     where.rank = { in: filterParams.rank };
   }
-  
+
   if (filterParams.level) {
     where.level = filterParams.level;
   }
-  
+
   // Build orderBy from sort
-  const orderBy: Prisma.GearsOrderByWithRelationInput[] = sort.map(sortItem => ({
-    [sortItem.id]: sortItem.desc ? "desc" : "asc",
-  }));
-  
+  const orderBy: Prisma.GearsOrderByWithRelationInput[] = sort.map(
+    (sortItem) => ({
+      [sortItem.id]: sortItem.desc ? "desc" : "asc",
+    })
+  );
+
   // Default sorting if none specified
   if (orderBy.length === 0) {
     orderBy.push({ createdAt: "desc" });
   }
-  
+
   const [gears, totalCount] = await Promise.all([
     db.gears.findMany({
       where,
@@ -387,7 +405,7 @@ export async function getGearsWithFilters(filters: GearFilters) {
     }),
     db.gears.count({ where }),
   ]);
-  
+
   return {
     gears,
     totalCount,
@@ -410,15 +428,15 @@ export default async function GearsPage({
   const session = await auth.api.getSession({
     headers: await headers(),
   });
-  
+
   if (!session?.user) {
     redirect("/login");
   }
-  
+
   const dal = createDataAccess(session.user.id);
   const filters = parseSearchParams(searchParams);
   const result = await dal.getGearsWithFilters(filters);
-  
+
   return (
     <div className="space-y-6">
       <div>
@@ -427,10 +445,10 @@ export default async function GearsPage({
           View and manage your Epic 7 gear inventory.
         </p>
       </div>
-      
+
       <GearFilters />
-      <GearTable 
-        gears={result.gears} 
+      <GearTable
+        gears={result.gears}
         totalCount={result.totalCount}
         pageCount={result.pageCount}
         currentPage={result.currentPage}
@@ -450,7 +468,7 @@ export default async function GearsPage({
 export function GearFilters() {
   const searchParams = useSearchParams();
   const updateFilters = useDebouncedSearchParams();
-  
+
   return (
     <div className="space-y-4">
       <div className="flex gap-4">
@@ -459,16 +477,20 @@ export function GearFilters() {
           <Input
             id="name-filter"
             defaultValue={searchParams.get("name") || ""}
-            onChange={(e) => updateFilters({ filters: { name: e.target.value } })}
+            onChange={(e) =>
+              updateFilters({ filters: { name: e.target.value } })
+            }
             placeholder="Filter by name..."
           />
         </div>
-        
+
         <div>
           <Label htmlFor="type-filter">Type</Label>
           <Select
             value={searchParams.get("type") || "All"}
-            onValueChange={(value) => updateFilters({ filters: { type: value } })}
+            onValueChange={(value) =>
+              updateFilters({ filters: { type: value } })
+            }
           >
             <SelectTrigger>
               <SelectValue />
@@ -482,11 +504,11 @@ export function GearFilters() {
           </Select>
         </div>
       </div>
-      
+
       <div className="flex gap-2">
         {["Epic", "Heroic"].map((rank) => {
           const isActive = searchParams.get("rank")?.includes(rank) || false;
-          
+
           return (
             <Button
               key={rank}
@@ -494,9 +516,9 @@ export function GearFilters() {
               onClick={() => {
                 const currentRanks = searchParams.get("rank")?.split("|") || [];
                 const newRanks = isActive
-                  ? currentRanks.filter(r => r !== rank)
+                  ? currentRanks.filter((r) => r !== rank)
                   : [...currentRanks, rank];
-                
+
                 updateFilters({ filters: { rank: newRanks } });
               }}
             >
@@ -529,9 +551,9 @@ export function RangeFilter({
 }) {
   const searchParams = useSearchParams();
   const updateFilters = useDebouncedSearchParams();
-  
+
   const currentValue = searchParams.get(paramName);
-  
+
   return (
     <div>
       <Label htmlFor={`${paramName}-filter`}>{label}</Label>
@@ -545,8 +567,8 @@ export function RangeFilter({
           defaultValue={currentValue || ""}
           onChange={(e) => {
             const value = e.target.value;
-            updateFilters({ 
-              filters: { [paramName]: value ? parseInt(value, 10) : undefined } 
+            updateFilters({
+              filters: { [paramName]: value ? parseInt(value, 10) : undefined },
             });
           }}
           className="w-20"
@@ -579,22 +601,25 @@ export function Pagination({
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  
-  const updatePage = useCallback((newPage: number) => {
-    const params = new URLSearchParams(searchParams);
-    params.set("page", String(newPage));
-    router.replace(`?${params.toString()}`, { scroll: false });
-  }, [searchParams, router]);
-  
+
+  const updatePage = useCallback(
+    (newPage: number) => {
+      const params = new URLSearchParams(searchParams);
+      params.set("page", String(newPage));
+      router.replace(`?${params.toString()}`, { scroll: false });
+    },
+    [searchParams, router]
+  );
+
   if (pageCount <= 1) return null;
-  
+
   return (
     <div className="flex items-center justify-between">
       <div className="text-sm text-muted-foreground">
-        Showing {((currentPage - 1) * pageSize) + 1} to{" "}
+        Showing {(currentPage - 1) * pageSize + 1} to{" "}
         {Math.min(currentPage * pageSize, totalCount)} of {totalCount} results
       </div>
-      
+
       <div className="flex items-center space-x-2">
         <Button
           variant="outline"
@@ -604,7 +629,7 @@ export function Pagination({
         >
           Previous
         </Button>
-        
+
         <div className="flex items-center space-x-1">
           {Array.from({ length: pageCount }, (_, i) => i + 1).map((page) => (
             <Button
@@ -617,7 +642,7 @@ export function Pagination({
             </Button>
           ))}
         </div>
-        
+
         <Button
           variant="outline"
           size="sm"
@@ -641,8 +666,10 @@ export function Pagination({
 const debouncedUpdateFilters = useDebouncedSearchParams(300);
 
 <input
-  onChange={(e) => debouncedUpdateFilters({ filters: { name: e.target.value } })}
-/>
+  onChange={(e) =>
+    debouncedUpdateFilters({ filters: { name: e.target.value } })
+  }
+/>;
 ```
 
 ### 2. Memoized Components
@@ -667,12 +694,15 @@ return (
 // Use optimistic updates for immediate feedback
 const [optimisticFilters, setOptimisticFilters] = useState(filters);
 
-const updateFiltersOptimistically = useCallback((newFilters) => {
-  setOptimisticFilters(newFilters); // Immediate UI update
-  
-  // Debounced URL update
-  debouncedUpdateFilters(newFilters);
-}, [debouncedUpdateFilters]);
+const updateFiltersOptimistically = useCallback(
+  (newFilters) => {
+    setOptimisticFilters(newFilters); // Immediate UI update
+
+    // Debounced URL update
+    debouncedUpdateFilters(newFilters);
+  },
+  [debouncedUpdateFilters]
+);
 ```
 
 ## Testing Patterns
@@ -685,15 +715,15 @@ describe("parseSearchParams", () => {
   it("parses pagination parameters", () => {
     const searchParams = new URLSearchParams("page=2&size=20");
     const result = parseSearchParams(searchParams);
-    
+
     expect(result.page).toBe(2);
     expect(result.size).toBe(20);
   });
-  
+
   it("parses sorting parameters", () => {
     const searchParams = new URLSearchParams("sort=name:asc,level:desc");
     const result = parseSearchParams(searchParams);
-    
+
     expect(result.sort).toEqual([
       { id: "name", desc: false },
       { id: "level", desc: true },
@@ -709,13 +739,15 @@ describe("parseSearchParams", () => {
 describe("GearFilters", () => {
   it("updates URL when filters change", async () => {
     const mockRouter = { replace: jest.fn() };
-    jest.spyOn(require("next/navigation"), "useRouter").mockReturnValue(mockRouter);
-    
+    jest
+      .spyOn(require("next/navigation"), "useRouter")
+      .mockReturnValue(mockRouter);
+
     render(<GearFilters />);
-    
+
     const nameInput = screen.getByLabelText(/name/i);
     fireEvent.change(nameInput, { target: { value: "sword" } });
-    
+
     // Wait for debounced update
     await waitFor(() => {
       expect(mockRouter.replace).toHaveBeenCalledWith(
@@ -771,7 +803,7 @@ useEffect(() => {
 // ✅ GOOD: CSS classes or callback refs
 <div className="w-full">
   <table>...</table>
-</div>
+</div>;
 ```
 
 ## Migration Checklist
@@ -786,4 +818,3 @@ useEffect(() => {
 - [ ] Ensure proper loading states and error handling
 - [ ] Test browser back/forward navigation
 - [ ] Optimize with debouncing and memoization
-

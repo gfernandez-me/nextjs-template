@@ -1,31 +1,37 @@
 import type { MainStatType } from "#prisma";
 
 export function formatMainStatLabel(statType: MainStatType | string): string {
-  switch (statType) {
-    case "att":
+  // Convert to uppercase for case-insensitive comparison
+  const normalizedStatType = String(statType).toUpperCase();
+
+  switch (normalizedStatType) {
+    case "ATT":
       return "Atk";
-    case "def":
+    case "DEF":
       return "Def";
-    case "max_hp":
+    case "MAX_HP":
       return "HP";
-    case "att_rate":
+    case "ATT_RATE":
       return "Atk %";
-    case "def_rate":
+    case "DEF_RATE":
       return "Def %";
-    case "max_hp_rate":
+    case "MAX_HP_RATE":
       return "HP %";
-    case "cri":
+    case "CRI":
       return "Crit %";
-    case "cri_dmg":
+    case "CRI_DMG":
       return "Crit Dmg %";
-    case "speed":
+    case "SPEED":
       return "Speed";
-    case "acc":
+    case "ACC":
       return "Effectiveness %";
-    case "res":
+    case "RES":
       return "Effect Resist %";
     default:
-      return String(statType);
+      // Handle any unknown stat types gracefully
+      return String(statType)
+        .replace(/_/g, " ")
+        .replace(/\b\w/g, (l) => l.toUpperCase());
   }
 }
 
@@ -62,10 +68,17 @@ export function formatMainStatValue(
   statType: MainStatType | string,
   value: number
 ): string {
+  // Convert to uppercase for case-insensitive comparison
+  const normalizedStatType = String(statType).toUpperCase();
+
+  // Check if this is a percentage stat based on database categories
   const isPercent =
-    String(statType).includes("rate") ||
-    statType === "cri" ||
-    statType === "cri_dmg";
+    normalizedStatType.includes("RATE") ||
+    normalizedStatType === "CRI" ||
+    normalizedStatType === "CRI_DMG" ||
+    normalizedStatType === "ACC" ||
+    normalizedStatType === "RES";
+
   // Fribbels main stat percents are often stored as decimals (e.g., 0.65 for 65%)
   // Normalize: if percent and value <= 1, multiply by 100
   const normalized = isPercent && value <= 1 ? value * 100 : value;
