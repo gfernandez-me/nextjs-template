@@ -1,0 +1,332 @@
+# Statistics Page Business Rules
+
+## 1. Overview
+
+The statistics page will be reworked to provide comprehensive gear analytics with a focus on gear set distribution and usage patterns. This will help users understand their gear collection composition and make informed decisions about gear optimization.
+
+## 2. Core Statistics Requirements
+
+### 2.1 Gear Set Statistics
+
+**Primary Display Format:**
+Each gear set shows comprehensive statistics in a clear, readable format:
+
+```
+Speed Set
+All: 150-83%-30%   (Total Qty - % of All Gears - % of All Sets)
+Equipped: 75-50%-18% (Equipped Qty - % of Set Total - % of All Equipped)
+```
+
+**Calculation Rules:**
+
+- **Total Qty**: Count of all gears with this set
+- **% of All Gears**: (Set Total / Total Gears) × 100
+- **% of All Sets**: (Set Total / Total Gears with Sets) × 100
+- **Equipped Qty**: Count of equipped gears with this set
+- **% of Set Total**: (Equipped / Set Total) × 100
+- **% of All Equipped**: (Equipped / Total Equipped) × 100
+
+### 2.2 Gear Set Categories
+
+**4-Piece Sets (Primary Sets):**
+
+- SpeedSet, AttackSet, DestructionSet, LifestealSet, CounterSet, InjurySet, RageSet
+- These require 4 pieces for full effect
+- Higher priority in statistics display
+
+**2-Piece Sets (Secondary Sets):**
+
+- HealthSet, DefenseSet, CriticalSet, HitSet, ImmunitySet, ResistSet, TorrentSet, PenetrationSet, UnitySet, ProtectionSet
+- These require 2 pieces for full effect
+- Lower priority in statistics display
+
+### 2.3 Display Priority
+
+1. **Active Sets**: Only show sets that have at least 1 gear piece
+2. **Sorting**: Primary sets first, then secondary sets, alphabetically within each category
+3. **Empty Sets**: Hide sets with 0 gears
+4. **Percentage Formatting**: Round to nearest whole number, show as "X%" format
+
+## 3. Data Requirements
+
+### 3.1 Database Queries
+
+**Gear Set Statistics Query:**
+
+```sql
+-- Get gear set counts and equipped counts
+SELECT
+  gs.setName,
+  gs.piecesRequired,
+  COUNT(g.id) as totalCount,
+  COUNT(CASE WHEN g.equipped = true THEN 1 END) as equippedCount
+FROM gear_sets gs
+LEFT JOIN gears g ON g.set = gs.setName AND g.userId = :userId
+WHERE gs.isActive = true
+GROUP BY gs.setName, gs.piecesRequired
+HAVING COUNT(g.id) > 0
+ORDER BY gs.piecesRequired DESC, gs.setName ASC
+```
+
+**Total Gear Counts:**
+
+```sql
+-- Get total gears and equipped gears
+SELECT
+  COUNT(*) as totalGears,
+  COUNT(CASE WHEN equipped = true THEN 1 END) as totalEquipped
+FROM gears
+WHERE userId = :userId
+```
+
+### 3.2 Data Structure
+
+**Gear Set Stat Interface:**
+
+```typescript
+interface GearSetStat {
+  setName: string;
+  piecesRequired: number;
+  totalCount: number;
+  equippedCount: number;
+  totalGears: number;
+  totalEquipped: number;
+  totalGearsWithSets: number;
+}
+```
+
+**Calculated Percentages:**
+
+```typescript
+interface GearSetDisplay {
+  setName: string;
+  piecesRequired: number;
+  all: {
+    count: number;
+    percentOfAll: number;
+    percentOfSets: number;
+  };
+  equipped: {
+    count: number;
+    percentOfSet: number;
+    percentOfAllEquipped: number;
+  };
+}
+```
+
+## 4. UI/UX Requirements
+
+### 4.1 Layout Structure
+
+**Primary Section:**
+
+- **Title**: "Gear Set Distribution"
+- **Subtitle**: "Overview of your gear collection by set type"
+- **Grid Layout**: Responsive grid showing gear set statistics
+
+**Secondary Section:**
+
+- **Title**: "Collection Overview"
+- **Content**: Total gears, equipped gears, epic+ gears, max enhanced
+- **Progress Bars**: Visual representation of collection progress
+
+### 4.2 Visual Design
+
+**Gear Set Cards:**
+
+- **Header**: Set name with appropriate icon
+- **Body**: Statistics in clear, readable format
+- **Footer**: Set effect description
+- **Color Coding**: Different colors for 4-piece vs 2-piece sets
+
+**Responsive Design:**
+
+- **Mobile**: Single column layout
+- **Tablet**: 2-column grid
+- **Desktop**: 3-4 column grid
+- **Large Desktop**: 4+ column grid
+
+### 4.3 Accessibility
+
+**Screen Reader Support:**
+
+- Proper ARIA labels for statistics
+- Semantic HTML structure
+- Clear content hierarchy
+
+**Keyboard Navigation:**
+
+- Tab order follows visual layout
+- Focus indicators for interactive elements
+
+## 5. Performance Considerations
+
+### 5.1 Data Loading
+
+**Optimization Strategies:**
+
+- Single database query for all gear set statistics
+- Client-side percentage calculations
+- Memoization of expensive calculations
+- Lazy loading for large datasets
+
+**Caching:**
+
+- Cache statistics for 5 minutes
+- Invalidate cache on gear updates
+- Background refresh for real-time data
+
+### 5.2 Query Efficiency
+
+**Database Indexes:**
+
+- Index on `gears.userId`
+- Index on `gears.set`
+- Index on `gears.equipped`
+- Composite index on `(userId, set, equipped)`
+
+## 6. Future Enhancements
+
+### 6.1 Advanced Analytics
+
+**Trend Analysis:**
+
+- Gear collection growth over time
+- Set completion rates
+- Enhancement progress tracking
+
+**Comparison Features:**
+
+- Compare with other users
+- Benchmark against optimal builds
+- Historical performance tracking
+
+### 6.2 Interactive Elements
+
+**Drill-Down Capabilities:**
+
+- Click on set to see individual gears
+- Filter by gear rank or enhancement level
+- Export set-specific data
+
+**Real-Time Updates:**
+
+- WebSocket integration for live updates
+- Push notifications for set completion
+- Auto-refresh on gear changes
+
+## 7. Implementation Phases
+
+### Phase 1 (Current): Basic Statistics
+
+- Gear set distribution display
+- Basic percentage calculations
+- Responsive grid layout
+- Icon integration
+
+### Phase 2: Enhanced Analytics
+
+- Trend analysis charts
+- Set completion tracking
+- Performance metrics
+
+### Phase 3: Interactive Features
+
+- Drill-down capabilities
+- Real-time updates
+- Advanced filtering
+
+## 8. Testing Requirements
+
+### 8.1 Unit Testing
+
+**Calculation Tests:**
+
+- Percentage calculation accuracy
+- Edge case handling (0 gears, 100% equipped)
+- Rounding behavior validation
+
+**Data Structure Tests:**
+
+- Interface compliance
+- Type safety validation
+- Null/undefined handling
+
+### 8.2 Integration Testing
+
+**Database Tests:**
+
+- Query performance validation
+- Data consistency checks
+- User isolation verification
+
+**UI Tests:**
+
+- Responsive design validation
+- Accessibility compliance
+- Cross-browser compatibility
+
+## 9. Error Handling
+
+### 9.1 Data Errors
+
+**Graceful Degradation:**
+
+- Show partial data when available
+- Display error messages for failed calculations
+- Fallback to basic statistics
+
+**User Feedback:**
+
+- Clear error messages
+- Retry mechanisms
+- Support contact information
+
+### 9.2 Performance Errors
+
+**Timeout Handling:**
+
+- Query timeout limits (30 seconds)
+- Loading state indicators
+- Progressive data loading
+
+**Memory Management:**
+
+- Efficient data structures
+- Garbage collection optimization
+- Memory leak prevention
+
+## 10. Documentation
+
+### 10.1 User Documentation
+
+**Statistics Explanation:**
+
+- Clear explanation of percentage calculations
+- Set effect descriptions
+- Optimization recommendations
+
+**Troubleshooting:**
+
+- Common issues and solutions
+- Data refresh instructions
+- Support contact information
+
+### 10.2 Developer Documentation
+
+**API Documentation:**
+
+- Data structure definitions
+- Calculation algorithms
+- Performance considerations
+
+**Maintenance Guide:**
+
+- Update procedures
+- Configuration options
+- Troubleshooting steps
+  description:
+  globs:
+  alwaysApply: false
+
+---

@@ -1,5 +1,5 @@
-import type { Prisma } from "#prisma";
-import type { MainStatType, GearType } from "#prisma";
+import type { Prisma, MainStatType, GearType } from "#prisma";
+import { GearRank } from "#prisma";
 import prisma from "@/lib/prisma";
 
 // Type definitions for data access layer
@@ -256,13 +256,62 @@ export class DataAccessLayer {
       prisma.gears.count({
         where: {
           userId: this.userId,
-          OR: [{ rank: "EPIC" }, { rank: "HEROIC" }],
+          OR: [{ rank: GearRank.EPIC }, { rank: GearRank.HEROIC }],
         },
       }),
       prisma.gears.count({ where: { userId: this.userId, enhance: 15 } }),
     ]);
 
     return { total, equipped, epicPlus, maxEnhanced };
+  }
+
+  async getGearSetStats() {
+    // Get total counts for percentage calculations
+    const [totalGears, totalEquipped] = await Promise.all([
+      prisma.gears.count({ where: { userId: this.userId } }),
+      prisma.gears.count({ where: { userId: this.userId, equipped: true } }),
+    ]);
+
+    // Get gear set statistics with counts
+    const gearSetStats = await prisma.$queryRaw<
+      Array<{
+        setName: string;
+        piecesRequired: number;
+        totalCount: number;
+        equippedCount: number;
+      }>
+    >`
+      SELECT 
+        gs.setName,
+        gs.piecesRequired,
+        COUNT(g.id) as totalCount,
+        COUNT(CASE WHEN g.equipped = true THEN 1 END) as equippedCount
+      FROM gear_sets gs
+      LEFT JOIN gears g ON g.set = gs.setName AND g.userId = ${this.userId}
+      WHERE gs.isActive = true
+      GROUP BY gs.setName, gs.piecesRequired
+      HAVING COUNT(g.id) > 0
+      ORDER BY gs.piecesRequired DESC, gs.setName ASC
+    `;
+
+    // Get total gears with sets for percentage calculation
+    const totalGearsWithSets = await prisma.gears.count({
+      where: {
+        userId: this.userId,
+        set: { not: null },
+      },
+    });
+
+    return {
+      totalGears,
+      totalEquipped,
+      totalGearsWithSets,
+      gearSetStats: gearSetStats.map((stat) => ({
+        ...stat,
+        totalCount: Number(stat.totalCount),
+        equippedCount: Number(stat.equippedCount),
+      })),
+    };
   }
 
   // Settings

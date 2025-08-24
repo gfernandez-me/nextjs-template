@@ -57,6 +57,9 @@
         "./public/*"
       ]
     },
+    "types": [
+      "node"
+    ],
     "baseUrl": "."
   },
   "include": [

@@ -1,0 +1,13 @@
+// Main Prisma Schema - Epic 7 Gear Optimizer
+// This file contains the generator and datasource configuration
+
+generator client {
+    provider = "prisma-client-js"
+    output   = "../generated/client"
+    seed     = "npx tsx prisma/seed.ts"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}

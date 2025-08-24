@@ -1,0 +1,523 @@
+# Gear Set Management Business Rules
+
+## 1. Overview
+
+The Gear Set Management feature provides administrators with comprehensive control over Epic 7 gear sets. This includes creating, reading, updating, and deleting gear sets, as well as managing their properties and effects. This feature is critical for maintaining the game's gear system integrity and ensuring accurate optimization calculations.
+
+## 2. Access Control
+
+### 2.1 Admin-Only Access
+
+**User Requirements:**
+
+- **Role**: Admin users only
+- **Authentication**: Must be logged in with admin privileges
+- **Route Protection**: `/admin/gear-sets` route requires admin authentication
+- **API Protection**: All CRUD endpoints require admin validation
+
+**Security Measures:**
+
+- Server-side role validation on all endpoints
+- Client-side role checking for UI rendering
+- Middleware-based route protection
+- Session-based authentication validation
+
+### 2.2 Permission Validation
+
+**Admin Check Implementation:**
+
+```typescript
+// Middleware or API route validation
+const isAdmin = await validateAdminRole(session.user.id);
+if (!isAdmin) {
+  return new Response("Unauthorized", { status: 403 });
+}
+```
+
+**UI Permission Check:**
+
+```typescript
+// Component-level permission checking
+const { user } = useAuth();
+const isAdmin = user?.role === "ADMIN";
+
+if (!isAdmin) {
+  return <AccessDenied />;
+}
+```
+
+## 3. Data Model
+
+### 3.1 Gear Set Schema
+
+**Core Fields:**
+
+- **id**: Auto-incrementing primary key
+- **setName**: Unique identifier (e.g., "SpeedSet", "AttackSet")
+- **piecesRequired**: Number of pieces needed (2 or 4)
+- **effectDescription**: Human-readable effect description
+- **icon**: Unicode icon or icon identifier for display
+- **isActive**: Boolean flag for enabling/disabling sets
+
+**Metadata Fields:**
+
+- **createdAt**: Timestamp of creation
+- **updatedAt**: Timestamp of last modification
+
+**Relationships:**
+
+- **GearPriorities**: One-to-many with gear priority configurations
+- **Gears**: Indirect relationship through gear.set field
+
+### 3.2 Data Validation Rules
+
+**setName Validation:**
+
+- Required field
+- Unique across all gear sets
+- Format: PascalCase (e.g., "SpeedSet", "AttackSet")
+- Length: 3-50 characters
+- No special characters except letters and numbers
+
+**piecesRequired Validation:**
+
+- Required field
+- Must be either 2 or 4
+- Integer value only
+- No decimal or negative values
+
+**effectDescription Validation:**
+
+- Required field
+- Length: 5-200 characters
+- Human-readable format
+- No HTML or script tags
+
+**icon Validation:**
+
+- Required field
+- Unicode emoji or icon identifier
+- Length: 1-10 characters
+- No malicious content
+
+## 4. CRUD Operations
+
+### 4.1 Create Operation
+
+**Endpoint**: `POST /api/admin/gear-sets`
+
+**Request Validation:**
+
+```typescript
+interface CreateGearSetRequest {
+  setName: string;
+  piecesRequired: 2 | 4;
+  effectDescription: string;
+  icon: string;
+}
+```
+
+**Business Rules:**
+
+- Check for duplicate setName
+- Validate piecesRequired value
+- Sanitize effectDescription
+- Validate icon format
+- Set isActive to true by default
+- Generate timestamps automatically
+
+**Response:**
+
+```typescript
+interface CreateGearSetResponse {
+  success: boolean;
+  data?: GearSet;
+  error?: string;
+}
+```
+
+### 4.2 Read Operations
+
+**List All Gear Sets:**
+
+- **Endpoint**: `GET /api/admin/gear-sets`
+- **Pagination**: Support for page, limit parameters
+- **Sorting**: By setName, piecesRequired, createdAt
+- **Filtering**: By isActive status, piecesRequired
+
+**Get Single Gear Set:**
+
+- **Endpoint**: `GET /api/admin/gear-sets/:id`
+- **Response**: Full gear set data with relationships
+- **Error Handling**: 404 for non-existent sets
+
+**Data Access:**
+
+- Include all gear set fields
+- Include relationship counts (gear priorities, gears)
+- Support for eager loading of related data
+
+### 4.3 Update Operation
+
+**Endpoint**: `PUT /api/admin/gear-sets/:id`
+
+**Request Validation:**
+
+```typescript
+interface UpdateGearSetRequest {
+  setName?: string;
+  piecesRequired?: 2 | 4;
+  effectDescription?: string;
+  icon?: string;
+  isActive?: boolean;
+}
+```
+
+**Business Rules:**
+
+- Partial updates supported
+- Validate unique constraints for setName changes
+- Check for active gears using this set before deactivation
+- Maintain data integrity across relationships
+
+**Update Restrictions:**
+
+- Cannot change setName if gears are using it
+- Cannot deactivate set if gears are equipped
+- Cannot change piecesRequired if it affects existing gear combinations
+
+### 4.4 Delete Operation
+
+**Endpoint**: `DELETE /api/admin/gear-sets/:id`
+
+**Business Rules:**
+
+- **Soft Delete**: Mark as inactive instead of hard delete
+- **Dependency Check**: Verify no gears are using this set
+- **Cascade Handling**: Handle related gear priority configurations
+- **Audit Trail**: Log deletion for administrative purposes
+
+**Deletion Restrictions:**
+
+- Cannot delete if gears are using the set
+- Cannot delete if gear priorities reference it
+- Cannot delete system-critical sets (SpeedSet, AttackSet, etc.)
+
+## 5. User Interface
+
+### 5.1 Management Page Layout
+
+**Page Structure:**
+
+- **Header**: "Gear Set Management" with create button
+- **Content**: Data table with gear set information
+- **Actions**: Edit, delete, toggle active status
+- **Pagination**: Navigate through large datasets
+
+**Navigation:**
+
+- **Route**: `/admin/gear-sets`
+- **Breadcrumb**: Admin > Gear Sets
+- **Sidebar**: Include in admin navigation menu
+
+### 5.2 Data Table
+
+**Columns:**
+
+- **Icon**: Visual representation of the set
+- **Set Name**: Primary identifier
+- **Pieces Required**: 2 or 4 piece requirement
+- **Effect**: Description of set bonus
+- **Status**: Active/Inactive indicator
+- **Usage**: Count of gears using this set
+- **Actions**: Edit, delete, toggle buttons
+
+**Features:**
+
+- **Sorting**: By any column
+- **Filtering**: By status, pieces required
+- **Search**: Text search across all fields
+- **Responsive**: Mobile-friendly design
+
+### 5.3 Forms
+
+**Create/Edit Form:**
+
+- **Set Name**: Text input with validation
+- **Pieces Required**: Radio button (2 or 4)
+- **Effect Description**: Textarea with character count
+- **Icon**: Icon picker or text input
+- **Active Status**: Toggle switch
+- **Validation**: Real-time feedback
+- **Submit**: Save or cancel actions
+
+**Form Validation:**
+
+- Client-side validation for immediate feedback
+- Server-side validation for security
+- Error message display
+- Success confirmation
+
+## 6. API Design
+
+### 6.1 RESTful Endpoints
+
+**Base URL**: `/api/admin/gear-sets`
+
+**Endpoints:**
+
+- `GET /` - List all gear sets (with pagination)
+- `GET /:id` - Get single gear set
+- `POST /` - Create new gear set
+- `PUT /:id` - Update existing gear set
+- `DELETE /:id` - Soft delete gear set
+- `PATCH /:id/toggle` - Toggle active status
+
+**Response Format:**
+
+```typescript
+interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  message?: string;
+}
+```
+
+### 6.2 Error Handling
+
+**HTTP Status Codes:**
+
+- **200**: Success
+- **201**: Created
+- **400**: Bad Request (validation errors)
+- **401**: Unauthorized (not logged in)
+- **403**: Forbidden (not admin)
+- **404**: Not Found
+- **409**: Conflict (duplicate or dependency)
+- **500**: Internal Server Error
+
+**Error Response Format:**
+
+```typescript
+interface ErrorResponse {
+  success: false;
+  error: string;
+  details?: Record<string, string[]>;
+  code?: string;
+}
+```
+
+### 6.3 Rate Limiting
+
+**API Protection:**
+
+- Rate limiting on all endpoints
+- Admin endpoints: 100 requests per minute
+- Create/Update/Delete: 10 requests per minute
+- IP-based rate limiting
+
+## 7. Data Integrity
+
+### 7.1 Referential Integrity
+
+**Gear Relationships:**
+
+- Check gear dependencies before updates
+- Prevent deletion of sets in use
+- Handle set name changes carefully
+- Maintain data consistency
+
+**Priority Relationships:**
+
+- Update gear priority configurations
+- Handle set deactivation gracefully
+- Maintain optimization calculations
+
+### 7.2 Validation Rules
+
+**Business Logic Validation:**
+
+- Set name uniqueness across all sets
+- Pieces required validation (2 or 4 only)
+- Effect description format validation
+- Icon format and safety validation
+
+**Data Consistency:**
+
+- Ensure no orphaned gear references
+- Maintain referential integrity
+- Handle cascading updates properly
+
+## 8. Performance Considerations
+
+### 8.1 Database Optimization
+
+**Indexing Strategy:**
+
+- Primary key on id
+- Unique index on setName
+- Index on isActive for filtering
+- Index on piecesRequired for grouping
+
+**Query Optimization:**
+
+- Use efficient JOINs for relationship data
+- Implement pagination for large datasets
+- Cache frequently accessed data
+- Optimize for common filter combinations
+
+### 8.2 Caching Strategy
+
+**Cache Levels:**
+
+- **Application Cache**: In-memory cache for active sets
+- **Database Cache**: Query result caching
+- **CDN Cache**: Static asset caching
+
+**Cache Invalidation:**
+
+- Invalidate on gear set changes
+- Invalidate on gear updates
+- Time-based cache expiration
+- Manual cache refresh option
+
+## 9. Security Measures
+
+### 9.1 Input Validation
+
+**Sanitization:**
+
+- HTML entity encoding
+- SQL injection prevention
+- XSS protection
+- Input length validation
+
+**Content Security:**
+
+- Icon content validation
+- Effect description sanitization
+- Set name format validation
+
+### 9.2 Access Control
+
+**Authentication:**
+
+- Session-based authentication
+- Secure cookie handling
+- CSRF protection
+- Session timeout
+
+**Authorization:**
+
+- Role-based access control
+- Admin privilege validation
+- Route-level protection
+- API-level authorization
+
+## 10. Testing Requirements
+
+### 10.1 Unit Testing
+
+**Component Tests:**
+
+- Form validation logic
+- Data transformation functions
+- Error handling components
+- UI interaction testing
+
+**API Tests:**
+
+- Endpoint functionality
+- Request validation
+- Response formatting
+- Error handling
+
+### 10.2 Integration Testing
+
+**Database Tests:**
+
+- CRUD operation integrity
+- Relationship handling
+- Constraint validation
+- Performance testing
+
+**End-to-End Tests:**
+
+- Complete user workflows
+- Admin operations
+- Error scenarios
+- Cross-browser compatibility
+
+## 11. Monitoring and Logging
+
+### 11.1 Audit Trail
+
+**Operation Logging:**
+
+- All CRUD operations logged
+- User action tracking
+- Timestamp and user identification
+- Change history maintenance
+
+**Performance Monitoring:**
+
+- API response times
+- Database query performance
+- Error rate tracking
+- Usage pattern analysis
+
+### 11.2 Error Tracking
+
+**Error Logging:**
+
+- Detailed error information
+- Stack trace capture
+- User context information
+- Error categorization
+
+**Alert System:**
+
+- Critical error notifications
+- Performance degradation alerts
+- Security incident alerts
+- Admin notification system
+
+## 12. Future Enhancements
+
+### 12.1 Advanced Features
+
+**Bulk Operations:**
+
+- Import/export gear sets
+- Bulk status updates
+- Mass deletion (with validation)
+- Template-based creation
+
+**Analytics Dashboard:**
+
+- Set usage statistics
+- Popular set combinations
+- Optimization recommendations
+- Performance metrics
+
+### 12.2 Integration Features
+
+**External Systems:**
+
+- Epic 7 game data sync
+- Community set sharing
+- Third-party optimizer integration
+- API for external tools
+
+**Automation:**
+
+- Automatic set validation
+- Smart set suggestions
+- Performance optimization
+- Maintenance scheduling
+  description:
+  globs:
+  alwaysApply: false
+
+---

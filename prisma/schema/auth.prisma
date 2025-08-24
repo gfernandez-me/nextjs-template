@@ -1,0 +1,72 @@
+// Auth Module - User authentication and management
+// This file contains all authentication-related models
+
+// User authentication model
+model Account {
+    id                    String    @id @default(cuid())
+    accountId             String
+    providerId            String
+    userId                String
+    accessToken           String?
+    refreshToken          String?
+    idToken               String?
+    accessTokenExpiresAt  DateTime?
+    refreshTokenExpiresAt DateTime?
+    scope                 String?
+    password              String?
+    User                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@map("accounts")
+}
+
+model Session {
+    id        String   @id @default(cuid())
+    expiresAt DateTime
+    token     String   @unique
+    ipAddress String?
+    userAgent String?
+    userId    String
+    User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@map("sessions")
+}
+
+model User {
+    id            String  @id @default(cuid())
+    name          String
+    email         String  @unique
+    emailVerified Boolean @default(false)
+    image         String?
+
+    Account             Account[]
+    Session             Session[]
+    Gears               Gears[]
+    Heroes              Heroes[]
+    Settings            Settings?
+    GearSubStats        GearSubStats[]
+    GearPriorities      GearPriorities[]
+    GearRecommendations GearRecommendation[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@map("users")
+}
+
+model Verification {
+    id         String   @id @default(cuid())
+    identifier String
+    value      String
+    expiresAt  DateTime
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@map("verifications")
+}

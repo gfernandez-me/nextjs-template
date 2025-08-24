@@ -3,6 +3,7 @@
 ## 1. Enum Usage - ALWAYS Use Generated Types
 
 ### ❌ WRONG - String Literals with as const
+
 ```typescript
 // NEVER do this
 statCategory: "FLAT" as const,
@@ -10,6 +11,7 @@ statCategory: "PERCENTAGE" as const,
 ```
 
 ### ✅ CORRECT - Use Generated Enum Types
+
 ```typescript
 // ALWAYS do this
 import { PrismaClient, StatCategory } from "./generated/client";
@@ -28,16 +30,16 @@ statCategory: StatCategory.PERCENTAGE,
 ## 3. Common Enum Types in This Project
 
 ```typescript
-import { 
+import {
   PrismaClient,
-  StatCategory,        // FLAT, PERCENTAGE
-  GearType,           // weapon, armor, helm, neck, ring, boot
-  GearDisplayName,    // Weapon, Armor, Helmet, Necklace, Ring, Boots
-  GearRank,           // Common, Uncommon, Rare, Epic, Heroic
-  MainStatType,       // att, def, max_hp, att_rate, def_rate, etc.
-  HeroElement,        // Fire, Ice, Earth, Light, Dark
-  HeroRarity,         // THREE_STAR, FOUR_STAR, FIVE_STAR, SIX_STAR
-  HeroClass           // Warrior, Knight, Ranger, Mage, SoulWeaver, Thief
+  StatCategory, // FLAT, PERCENTAGE
+  GearType, // weapon, armor, helm, neck, ring, boot
+  GearDisplayName, // Weapon, Armor, Helmet, Necklace, Ring, Boots
+  GearRank, // Common, Uncommon, Rare, Epic, Heroic
+  MainStatType, // att, def, max_hp, att_rate, def_rate, etc.
+  HeroElement, // Fire, Ice, Earth, Light, Dark
+  HeroRarity, // THREE_STAR, FOUR_STAR, FIVE_STAR, SIX_STAR
+  HeroClass, // Warrior, Knight, Ranger, Mage, SoulWeaver, Thief
 } from "./generated/client";
 ```
 
@@ -53,24 +55,27 @@ const prisma = new PrismaClient();
 ## 5. When Writing Seed Files
 
 ### ❌ Avoid
+
 ```typescript
 const data = {
-  statCategory: "FLAT" as const,  // Wrong!
-  gearType: "weapon" as const,    // Wrong!
+  statCategory: "FLAT" as const, // Wrong!
+  gearType: "weapon" as const, // Wrong!
 };
 ```
 
 ### ✅ Use
+
 ```typescript
 const data = {
-  statCategory: StatCategory.FLAT,  // Correct!
-  gearType: GearType.weapon,        // Correct!
+  statCategory: StatCategory.FLAT, // Correct!
+  gearType: GearType.weapon, // Correct!
 };
 ```
 
 ## 6. Validation
 
 Before committing any Prisma-related code:
+
 1. ✅ Check that all enum values use generated types
 2. ✅ Verify imports include necessary enum types
 3. ✅ Run `npm run typecheck` to catch any issues
@@ -79,18 +84,19 @@ Before committing any Prisma-related code:
 ## 7. Examples of Correct Usage
 
 ### Seed Files
+
 ```typescript
 const statTypes = [
   {
     statName: "Speed",
-    statCategory: StatCategory.FLAT,        // ✅ Correct
+    statCategory: StatCategory.FLAT, // ✅ Correct
     weight: 2.0,
     isMainStat: false,
     isSubstat: true,
   },
   {
     statName: "Attack %",
-    statCategory: StatCategory.PERCENTAGE,  // ✅ Correct
+    statCategory: StatCategory.PERCENTAGE, // ✅ Correct
     weight: 1.2,
     isMainStat: false,
     isSubstat: true,
@@ -99,11 +105,12 @@ const statTypes = [
 ```
 
 ### Component Props
+
 ```typescript
 interface GearProps {
-  type: GearType;           // ✅ Correct
-  rank: GearRank;           // ✅ Correct
-  mainStat: MainStatType;   // ✅ Correct
+  type: GearType; // ✅ Correct
+  rank: GearRank; // ✅ Correct
+  mainStat: MainStatType; // ✅ Correct
 }
 ```
 
@@ -114,7 +121,40 @@ interface GearProps {
 - **Check imports** before using any enum values
 - **Run typecheck** to catch any violations
 - **This rule applies to ALL Prisma operations**: seeds, components, API routes, etc.
+
+## 9. Modular Schema Structure
+
+Since Prisma v5.15+, the schema is organized into multiple files for better maintainability:
+
+### File Organization
+
+```
+prisma/schema/
+├── main.prisma          # Generator and datasource only
+├── auth.prisma          # User, Account, Session, Verification
+├── gears.prisma         # All Epic 7 enums, gear and hero models
+├── recommendation.prisma # GearPriorities, recommendations
+└── settings.prisma      # User settings and scoring
+```
+
+### Key Rules
+
+- **Enums**: All Epic 7 enums are in `gears.prisma` (GearType, GearRank, etc.)
+- **No README**: Documentation goes in `.cursor/rules/`, not in schema folder
+- **Configuration**: Set in `package.json` under `"prisma": { "schema": "./prisma/schema" }`
+- **Cross-references**: Models can reference each other across files seamlessly
+
+### Benefits
+
+- **Team collaboration**: Reduce merge conflicts
+- **Domain separation**: Related models grouped together
+- **Maintainability**: Easier navigation and debugging
+- **Scalability**: Handle large schemas without complexity
+
+---
+
 description:
 globs:
 alwaysApply: false
+
 ---

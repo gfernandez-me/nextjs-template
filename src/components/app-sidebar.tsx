@@ -14,6 +14,7 @@ import {
   IconSword,
   IconUserCircle,
   IconUsers,
+  IconShield,
 } from "@tabler/icons-react";
 
 import { NavDocuments } from "@/components/nav-documents";
@@ -119,6 +120,19 @@ const data = {
       icon: IconCopy,
     },
   ],
+  navAdmin: [
+    {
+      title: "Admin Panel",
+      icon: IconShield,
+      url: "/admin/gear-sets",
+      items: [
+        {
+          title: "Gear Sets",
+          url: "/admin/gear-sets",
+        },
+      ],
+    },
+  ],
   documents: [
     {
       name: "Gear Database",
@@ -163,6 +177,9 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
       <SidebarContent>
         <NavMain items={data.navMain} />
         <NavDocuments items={data.documents} />
+        {user.email === "admin@epic7optimizer.com" && (
+          <NavSecondary items={data.navAdmin} className="mt-4" />
+        )}
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>

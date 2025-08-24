@@ -41,6 +41,6 @@
         "NO_COLOR": "1",
         "TERM": "xterm"
     },
-    "postCreateCommand": "bash -lc 'cp -f .devcontainer/.zshrc-optimized /home/node/.zshrc && npm install -g @bytebase/dbhub --yes --no-color || true'",
-    "postStartCommand": "npm install --no-color --no-audit --no-fund --no-optional"
+    "postCreateCommand": "npm install -g @bytebase/dbhub --yes --no-color || true'",
+    "postStartCommand": "npm install --no-color --no-audit --no-fund"
 }

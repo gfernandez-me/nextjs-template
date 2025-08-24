@@ -1,33 +1,45 @@
-import ControlBar from "@/components/control-bar";
+import { GearFilters } from "@/components/filters/GearFilters";
 import { GearTable } from "@/components/gear-table";
 import { createDataAccess } from "@/lib/data-access";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+import { parseGearSearchParams } from "@/lib/url";
 
-async function getGearData() {
+/**
+ * Server Component that fetches gear data based on URL search parameters
+ *
+ * @see https://nextjs.org/docs/app/guides/forms
+ */
+export default async function GearsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   // Get current user using Better Auth
   const session = await auth.api.getSession({
     headers: await headers(),
   });
 
   if (!session?.user) {
-    throw new Error("Unauthorized");
+    redirect("/login");
   }
 
   // Create data access layer for current user
   const dal = createDataAccess(session.user.id);
 
-  // Fetch real data from database
+  // Parse URL parameters for server-side filtering
+  const resolvedSearchParams = await searchParams;
+  const filters = parseGearSearchParams(
+    new URLSearchParams(resolvedSearchParams as Record<string, string>)
+  );
+
+  // Fetch data with filters applied server-side
   const result = await dal.getGearsPage({
-    page: 1,
-    perPage: 10,
+    page: filters.page,
+    perPage: filters.size,
+    // TODO: Add sorting and filtering support to DAL
   });
-
-  return result.rows;
-}
-
-export default async function GearsPage() {
-  const rows = await getGearData();
 
   return (
     <div className="space-y-6">
@@ -39,8 +51,14 @@ export default async function GearsPage() {
         </p>
       </div>
 
-      <ControlBar />
-      <GearTable rows={rows} />
+      <GearFilters />
+      <GearTable
+        gears={result.rows}
+        totalCount={result.total}
+        pageCount={Math.ceil(result.total / filters.size)}
+        currentPage={filters.page}
+        pageSize={filters.size}
+      />
     </div>
   );
 }

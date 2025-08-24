@@ -10,14 +10,30 @@ async function getDashboardStats() {
   });
 
   if (!session?.user) {
-    return { total: 0, equipped: 0, epicPlus: 0, maxEnhanced: 0 };
+    return {
+      total: 0,
+      equipped: 0,
+      epicPlus: 0,
+      maxEnhanced: 0,
+      gearSetStats: {
+        totalGears: 0,
+        totalEquipped: 0,
+        totalGearsWithSets: 0,
+        gearSetStats: [],
+      },
+    };
   }
 
   // Create data access layer for current user
   const dal = createDataAccess(session.user.id);
 
   // Fetch real stats from database
-  return await dal.getGearStats();
+  const [basicStats, gearSetStats] = await Promise.all([
+    dal.getGearStats(),
+    dal.getGearSetStats(),
+  ]);
+
+  return { ...basicStats, gearSetStats };
 }
 
 export default async function DashboardPage() {

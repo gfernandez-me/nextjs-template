@@ -73,6 +73,18 @@ src/
 
 ### Database Schema Architecture
 
+The schema is organized into modular files for better maintainability:
+
+#### Schema Files
+
+- **`main.prisma`**: Generator and datasource configuration only
+- **`auth.prisma`**: User, Account, Session, Verification models
+- **`gears.prisma`**: All Epic 7 enums, StatTypes, GearSets, Gears, Heroes, GearSubStats
+- **`recommendation.prisma`**: GearPriorities, GearPriorityHeroes, GearRecommendation
+- **`settings.prisma`**: User-specific Settings model
+
+#### Key Tables
+
 - **Users Table**: User accounts with authentication and relationships
 - **Gears Table**: Core gear items with user ownership and enums
 - **Heroes Table**: Epic 7 heroes with user ownership and equipment slots

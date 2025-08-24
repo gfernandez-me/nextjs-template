@@ -108,25 +108,25 @@ alwaysApply: true
 
 ## 5. Gear Sets and Effects
 
-| Set Name       | Pieces | Effect                            |
-| -------------- | ------ | --------------------------------- |
-| SpeedSet       | 4      | +25% Speed                        |
-| AttackSet      | 4      | +35% Attack                       |
-| HealthSet      | 2      | +15% Health                       |
-| DefenseSet     | 2      | +15% Defense                      |
-| CriticalSet    | 2      | +12% Crit Chance                  |
-| HitSet         | 2      | +20% Effectiveness                |
-| DestructionSet | 4      | +40% Crit Damage                  |
-| LifestealSet   | 4      | Heal 20% of damage dealt          |
-| CounterSet     | 4      | 20% chance to counterattack       |
-| ImmunitySet    | 2      | Grants Immunity for 1 turn        |
-| ResistSet      | 2      | +20% Effect Resistance            |
-| TorrentSet     | 2      | +10% Atk, -10% HP                 |
-| InjurySet      | 4      | Reduces enemy max HP              |
-| PenetrationSet | 2      | Ignores 15% Defense               |
-| UnitySet       | 2      | +4% Ally Dual Attack Chance       |
-| RageSet        | 4      | +30% Crit Dmg vs debuffed targets |
-| ProtectionSet  | 2      | +15% Barrier strength             |
+| Set Name       | Pieces | Effect                            | Icon |
+| -------------- | ------ | --------------------------------- | ---- |
+| SpeedSet       | 4      | +25% Speed                        | ⚡   |
+| AttackSet      | 4      | +35% Attack                       | ⚔️   |
+| HealthSet      | 2      | +15% Health                       | ❤️   |
+| DefenseSet     | 2      | +15% Defense                      | 🛡️   |
+| CriticalSet    | 2      | +12% Crit Chance                  | 🎯   |
+| HitSet         | 2      | +20% Effectiveness                | 🎯   |
+| DestructionSet | 4      | +40% Crit Damage                  | 💥   |
+| LifestealSet   | 4      | Heal 20% of damage dealt          | 🩸   |
+| CounterSet     | 4      | 20% chance to counterattack       | 🔄   |
+| ImmunitySet    | 2      | Grants Immunity for 1 turn        | 💪   |
+| ResistSet      | 2      | +20% Effect Resistance            | 🛡️   |
+| TorrentSet     | 2      | +10% Atk, -10% HP                 | 🌊   |
+| InjurySet      | 4      | Reduces enemy max HP              | 💀   |
+| PenetrationSet | 2      | Ignores 15% Defense               | ⚡   |
+| UnitySet       | 2      | +4% Ally Dual Attack Chance       | 🤝   |
+| RageSet        | 4      | +30% Crit Dmg vs debuffed targets | 😠   |
+| ProtectionSet  | 2      | +15% Barrier strength             | 🛡️   |
 
 ## 6. Hero Classes and Elements
 

@@ -12,42 +12,53 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { formatMainStatLabel } from "@/lib/stats";
+import { GearType, MainStatType } from "#prisma";
 
 type GearSet = { id: number; setName: string };
 type StatType = { id: number; statName: string };
-const GEAR_TYPES = ["weapon", "helm", "armor", "neck", "ring", "boot"] as const;
-const MAIN_BY_TYPE: Record<string, string[]> = {
-  weapon: ["att"],
-  helm: ["max_hp"],
-  armor: ["def"],
-  neck: [
-    "att",
-    "def",
-    "max_hp",
-    "att_rate",
-    "def_rate",
-    "max_hp_rate",
-    "cri",
-    "cri_dmg",
+
+// Use Prisma enums instead of hardcoded strings
+const GEAR_TYPES = [
+  GearType.WEAPON,
+  GearType.HELM,
+  GearType.ARMOR,
+  GearType.NECK,
+  GearType.RING,
+  GearType.BOOTS,
+] as const;
+
+const MAIN_BY_TYPE: Record<GearType, MainStatType[]> = {
+  [GearType.WEAPON]: [MainStatType.ATT],
+  [GearType.HELM]: [MainStatType.MAX_HP],
+  [GearType.ARMOR]: [MainStatType.DEF],
+  [GearType.NECK]: [
+    MainStatType.ATT,
+    MainStatType.DEF,
+    MainStatType.MAX_HP,
+    MainStatType.ATT_RATE,
+    MainStatType.DEF_RATE,
+    MainStatType.MAX_HP_RATE,
+    MainStatType.CRI,
+    MainStatType.CRI_DMG,
   ],
-  ring: [
-    "att",
-    "def",
-    "max_hp",
-    "att_rate",
-    "def_rate",
-    "max_hp_rate",
-    "acc",
-    "res",
+  [GearType.RING]: [
+    MainStatType.ATT,
+    MainStatType.DEF,
+    MainStatType.MAX_HP,
+    MainStatType.ATT_RATE,
+    MainStatType.DEF_RATE,
+    MainStatType.MAX_HP_RATE,
+    MainStatType.ACC,
+    MainStatType.RES,
   ],
-  boot: [
-    "att",
-    "def",
-    "max_hp",
-    "att_rate",
-    "def_rate",
-    "max_hp_rate",
-    "speed",
+  [GearType.BOOTS]: [
+    MainStatType.ATT,
+    MainStatType.DEF,
+    MainStatType.MAX_HP,
+    MainStatType.ATT_RATE,
+    MainStatType.DEF_RATE,
+    MainStatType.MAX_HP_RATE,
+    MainStatType.SPEED,
   ],
 };
 
@@ -174,7 +185,7 @@ export function GearPrioritiesForm({
             {/* no Any option, required */}
             {GEAR_TYPES.map((t) => (
               <SelectItem key={t} value={t}>
-                {t === "neck" ? "necklace" : t === "boot" ? "boots" : t}
+                {t === GearType.NECK ? "necklace" : t === GearType.BOOTS ? "boots" : t}
               </SelectItem>
             ))}
           </SelectContent>
@@ -219,7 +230,7 @@ export function GearPrioritiesForm({
           }}
           required
         >
-          {(form.gearType ? MAIN_BY_TYPE[form.gearType] : mainStatTypes).map(
+          {(form.gearType ? MAIN_BY_TYPE[form.gearType as GearType] : mainStatTypes).map(
             (m) => (
               <option key={m} value={m}>
                 {formatMainStatLabel(m)}
