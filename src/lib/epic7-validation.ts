@@ -285,7 +285,8 @@ export function validateGearData(rawData: Record<string, unknown>) {
     storage: safeBoolean(rawData.storage, true) || true, // Ensure storage is never null
     equipped: false, // Will be set based on equippedBy
     equippedBy: null, // Will be set during processing
-    ingameEquippedId: safeString(rawData.ingameEquippedId, null),
+    // We don't need ingameEquippedId since we have equippedBy
+    ingameEquippedId: null,
     fScore: null, // Will be calculated later
     score: null, // Will be calculated later
   };

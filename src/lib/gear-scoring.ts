@@ -9,33 +9,35 @@ import type { GearForTable } from "@/dashboard/gears/data/gears";
  */
 export const DEFAULT_SUBSTAT_WEIGHTS: Record<string, number> = {
   Speed: 2.0,
-  "Crit %": 1.5,
-  "Crit Dmg %": 1.3,
-  "Attack %": 1.2,
-  "Defense %": 0.8,
-  "Health %": 0.8,
-  "Effectiveness %": 0.7,
-  "Effect Resist %": 0.6,
-  Attack: 0.3,
-  Defense: 0.2,
-  Health: 0.2,
+  "Crit %": 1.6,
+  "Crit Dmg %": 1.4,
+  "Attack %": 1.0,
+  "Defense %": 1.0,
+  "Health %": 1.0,
+  "Effectiveness %": 0.8,
+  "Effect Resist %": 0.8,
+  Attack: 0.15,
+  Defense: 0.1,
+  Health: 0.1,
 };
 
 /**
  * Default main stat weights for scoring
+ * Note: These values are relative to substat weights
+ * A weight of 1.0 means it contributes the same as a substat roll
  */
 export const DEFAULT_MAIN_STAT_WEIGHTS: Record<string, number> = {
-  att: 0,
-  def: 0,
-  max_hp: 0,
-  att_rate: 0.5,
-  def_rate: 0.3,
-  max_hp_rate: 0.3,
-  cri: 0.6,
-  cri_dmg: 0.6,
-  speed: 1.0,
-  acc: 0.4,
-  res: 0.4,
+  att: 0.15, // Flat Attack
+  def: 0.1, // Flat Defense
+  max_hp: 0.1, // Flat Health
+  att_rate: 1.0, // Attack %
+  def_rate: 1.0, // Defense %
+  max_hp_rate: 1.0, // Health %
+  cri: 1.6, // Crit %
+  cri_dmg: 1.4, // Crit Damage %
+  speed: 2.0, // Speed
+  acc: 0.8, // Effectiveness %
+  res: 0.8, // Effect Resistance %
 };
 
 /**

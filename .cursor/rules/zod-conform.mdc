@@ -1,0 +1,14 @@
+# Zod + Conform: Validation & Form Handling
+
+## Core Principles
+- Define validation schema once, use everywhere (single source).
+- Type safety: use Zod inference for TypeScript support.
+- Progressive enhancement: server validation is primary, client enhances UX.
+- Accessibility: all validation errors must be accessible.
+
+## Best Practices
+- Use Zod coercion for form inputs.
+- Leverage Zod's built-in validators and refinements.
+- Handle all error cases, both field-level and form-level.
+- Use schema inference for type safety.
+- Avoid string literals for enums; use constants or imports.

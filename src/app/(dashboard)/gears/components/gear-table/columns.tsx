@@ -4,7 +4,6 @@
 
 import React from "react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { AlertTriangle, Trophy } from "lucide-react";
 import type { GearForTable } from "@/dashboard/gears/data/gears";
 import { getGearIcon, getRankColor } from "@/components/icons";
 import {
@@ -93,18 +92,35 @@ export function createGearTableColumns({
       cell: ({ row }) => {
         const mainStatType = row.original.mainStatType;
         const mainStatValue = Number(row.original.mainStatValue);
+        const enhance = row.original.enhance;
 
         if (!mainStatType || !mainStatValue) {
           return <span className="text-muted-foreground">-</span>;
         }
+
+        const badge = getStatBadge(
+          mainStatType,
+          mainStatValue,
+          enhance,
+          thresholds
+        );
 
         return (
           <div className="flex items-center gap-2 text-[11px] leading-4">
             <span className="text-muted-foreground capitalize">
               {stripPercent(formatMainStatLabel(mainStatType))}
             </span>
-            <span className="font-mono">
-              {formatMainStatValue(mainStatType, mainStatValue)}
+            <span
+              className={`inline-flex items-center gap-1 font-medium ${
+                badge?.className ?? "text-slate-700"
+              }`}
+            >
+              {badge?.icon === "rare" && <span className="mr-0.5">⭐</span>}
+              {badge?.icon === "good" && <span className="mr-0.5">▲</span>}
+              {badge?.icon === "bad" && <span className="mr-0.5">▼</span>}
+              <span className="tabular-nums">
+                {formatMainStatValue(mainStatType, mainStatValue)}
+              </span>
             </span>
           </div>
         );
@@ -142,25 +158,22 @@ export function createGearTableColumns({
 
           return (
             <div className="flex items-center gap-2 text-[11px] leading-4">
-                              <span className="text-muted-foreground">
-                  {stripPercent(abbreviateSubstatLabel(s.StatType.statName))}
-                </span>
-              {badge ? (
-                <span
-                  className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] ${badge.className}`}
-                >
-                  {badge.icon === "low" && (
-                    <AlertTriangle className="h-3 w-3" />
-                  )}
-                  {badge.icon === "high" && <Trophy className="h-3 w-3" />}
-                  {badge.label}
-                </span>
-              ) : (
-                <span className="font-mono tabular-nums">
+              <span className="text-muted-foreground">
+                {stripPercent(abbreviateSubstatLabel(s.StatType.statName))}
+              </span>
+              <span
+                className={`inline-flex items-center gap-1 font-medium ${
+                  badge?.className ?? "text-slate-700"
+                }`}
+              >
+                {badge?.icon === "rare" && <span className="mr-0.5">⭐</span>}
+                {badge?.icon === "good" && <span className="mr-0.5">▲</span>}
+                {badge?.icon === "bad" && <span className="mr-0.5">▼</span>}
+                <span className="tabular-nums">
                   {statValue.toString()}
                   {s.StatType.statCategory === "PERCENTAGE" ? "%" : ""}
                 </span>
-              )}
+              </span>
             </div>
           );
         },

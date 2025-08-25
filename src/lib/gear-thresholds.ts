@@ -5,7 +5,7 @@
 export interface StatBadge {
   label: string;
   className: string;
-  icon: "low" | "high" | null;
+  icon: "rare" | "good" | "bad" | null;
 }
 
 export interface StatThresholds {
@@ -80,27 +80,27 @@ export function getStatBadge(
 
   if (scaledValue >= t4) {
     return {
-      label: "Max",
-      className: "bg-yellow-100 text-yellow-800 border-yellow-300",
-      icon: "high",
+      label: "Rare",
+      className: "text-amber-400 font-semibold",
+      icon: "rare",
     };
   } else if (scaledValue >= t3) {
     return {
-      label: "High",
-      className: "bg-green-100 text-green-800 border-green-300",
-      icon: "high",
+      label: "Good",
+      className: "text-emerald-500 font-medium",
+      icon: "good",
     };
   } else if (scaledValue >= t2) {
     return {
       label: "Med",
-      className: "bg-blue-100 text-blue-800 border-blue-300",
+      className: "text-slate-600",
       icon: null,
     };
   } else if (scaledValue >= t1) {
     return {
-      label: "Low",
-      className: "bg-orange-100 text-orange-800 border-orange-300",
-      icon: "low",
+      label: "Bad",
+      className: "text-red-500",
+      icon: "bad",
     };
   }
 

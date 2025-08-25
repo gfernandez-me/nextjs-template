@@ -73,10 +73,10 @@ export function GearFilters() {
           tableStateUpdates.filters!.level = updates.level;
         if (updates.enhance !== undefined)
           tableStateUpdates.filters!.enhance = updates.enhance;
-        if (updates.main !== undefined)
-          tableStateUpdates.filters!.main = updates.main;
-        if (updates.subs !== undefined)
-          tableStateUpdates.filters!.subs = updates.subs;
+        if (updates.mainStatType !== undefined)
+          tableStateUpdates.filters!.mainStatType = updates.mainStatType;
+        if (updates.subStats !== undefined)
+          tableStateUpdates.filters!.subStats = updates.subStats;
 
         updateFilters(tableStateUpdates);
       });
@@ -93,7 +93,11 @@ export function GearFilters() {
           </Label>
           <Select
             value={searchParams.get("type") || "All"}
-            onValueChange={(value) => handleFilterUpdate({ type: value })}
+            onValueChange={(value) =>
+              handleFilterUpdate({
+                type: value === "All" ? undefined : (value as GearType),
+              })
+            }
           >
             <SelectTrigger className="h-8 w-32">
               <SelectValue />
@@ -125,7 +129,7 @@ export function GearFilters() {
                   const newRanks = isActive
                     ? currentRanks.filter((r) => r !== rank)
                     : [...currentRanks, rank];
-                  handleFilterUpdate({ rank: newRanks });
+                  handleFilterUpdate({ rank: newRanks as GearRank[] });
                 }}
               >
                 {rank}
@@ -165,8 +169,10 @@ export function GearFilters() {
             Main Stat
           </Label>
           <Select
-            value={searchParams.get("main") || "All"}
-            onValueChange={(value) => handleFilterUpdate({ main: value })}
+            value={searchParams.get("mainStatType") || "All"}
+            onValueChange={(value) =>
+              handleFilterUpdate({ mainStatType: value as MainStatType })
+            }
           >
             <SelectTrigger className="h-8 w-36">
               <SelectValue />
@@ -187,9 +193,11 @@ export function GearFilters() {
         {[0, 1, 2, 3].map((idx) => (
           <Select
             key={idx}
-            value={(searchParams.get("subs") || "").split("|")[idx] || "All"}
+            value={
+              (searchParams.get("subStats") || "").split("|")[idx] || "All"
+            }
             onValueChange={(value) => {
-              const parts = (searchParams.get("subs") || "")
+              const parts = (searchParams.get("subStats") || "")
                 .split("|")
                 .filter(Boolean);
               if (value !== "All") {
@@ -197,7 +205,7 @@ export function GearFilters() {
               } else {
                 parts.splice(idx, 1);
               }
-              handleFilterUpdate({ subs: parts });
+              handleFilterUpdate({ subStats: parts });
             }}
           >
             <SelectTrigger className="h-8 w-32">

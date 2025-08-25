@@ -1,7 +1,6 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/ui/card";
-import { Badge } from "@/ui/badge";
 
 interface HomeStats {
   total: number;
@@ -34,7 +33,10 @@ export function HomeStatistics({ stats }: HomeStatisticsProps) {
           <CardContent>
             <div className="text-3xl font-bold">{stats.equipped}</div>
             <div className="text-sm text-muted-foreground">
-              {stats.total > 0 ? Math.round((stats.equipped / stats.total) * 100) : 0}%
+              {stats.total > 0
+                ? Math.round((stats.equipped / stats.total) * 100)
+                : 0}
+              %
             </div>
           </CardContent>
         </Card>
@@ -45,7 +47,10 @@ export function HomeStatistics({ stats }: HomeStatisticsProps) {
           <CardContent>
             <div className="text-3xl font-bold">{stats.epicPlus}</div>
             <div className="text-sm text-muted-foreground">
-              {stats.total > 0 ? Math.round((stats.epicPlus / stats.total) * 100) : 0}%
+              {stats.total > 0
+                ? Math.round((stats.epicPlus / stats.total) * 100)
+                : 0}
+              %
             </div>
           </CardContent>
         </Card>
@@ -56,7 +61,10 @@ export function HomeStatistics({ stats }: HomeStatisticsProps) {
           <CardContent>
             <div className="text-3xl font-bold">{stats.maxEnhanced}</div>
             <div className="text-sm text-muted-foreground">
-              {stats.total > 0 ? Math.round((stats.maxEnhanced / stats.total) * 100) : 0}%
+              {stats.total > 0
+                ? Math.round((stats.maxEnhanced / stats.total) * 100)
+                : 0}
+              %
             </div>
           </CardContent>
         </Card>
@@ -72,7 +80,10 @@ export function HomeStatistics({ stats }: HomeStatisticsProps) {
             <div className="flex justify-between items-center">
               <span className="text-sm">Epic+ Quality</span>
               <span className="text-sm font-medium">
-                {stats.total > 0 ? Math.round((stats.epicPlus / stats.total) * 100) : 0}%
+                {stats.total > 0
+                  ? Math.round((stats.epicPlus / stats.total) * 100)
+                  : 0}
+                %
               </span>
             </div>
             <div className="w-full bg-secondary rounded-full h-2">
@@ -80,7 +91,9 @@ export function HomeStatistics({ stats }: HomeStatisticsProps) {
                 className="bg-primary h-2 rounded-full transition-all duration-300"
                 style={{
                   width: `${
-                    stats.total > 0 ? Math.round((stats.epicPlus / stats.total) * 100) : 0
+                    stats.total > 0
+                      ? Math.round((stats.epicPlus / stats.total) * 100)
+                      : 0
                   }%`,
                 }}
               ></div>
@@ -131,7 +144,10 @@ export function HomeStatistics({ stats }: HomeStatisticsProps) {
                 <div className="flex justify-between items-center">
                   <span className="text-sm">Collection Progress</span>
                   <span className="text-sm font-medium">
-                    {stats.total > 0 ? Math.round((stats.epicPlus / stats.total) * 100) : 0}%
+                    {stats.total > 0
+                      ? Math.round((stats.epicPlus / stats.total) * 100)
+                      : 0}
+                    %
                   </span>
                 </div>
                 <div className="w-full bg-secondary rounded-full h-2">
@@ -139,7 +155,9 @@ export function HomeStatistics({ stats }: HomeStatisticsProps) {
                     className="bg-primary h-2 rounded-full transition-all duration-300"
                     style={{
                       width: `${
-                        stats.total > 0 ? Math.round((stats.epicPlus / stats.total) * 100) : 0
+                        stats.total > 0
+                          ? Math.round((stats.epicPlus / stats.total) * 100)
+                          : 0
                       }%`,
                     }}
                   ></div>

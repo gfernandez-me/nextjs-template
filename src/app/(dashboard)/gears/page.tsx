@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { parseGearSearchParams } from "@/lib/url";
+import { GearType, GearRank, MainStatType } from "#prisma";
 
 /**
  * Server Component that fetches gear data based on URL search parameters
@@ -14,31 +15,74 @@ import { parseGearSearchParams } from "@/lib/url";
 export default async function GearsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  // Get current user using Better Auth
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  // Get current session and search params in parallel
+  const [session, sp] = await Promise.all([
+    auth.api.getSession({
+      headers: await headers(),
+    }),
+    searchParams,
+  ]);
 
-  if (!session?.user) {
-    redirect("/login");
-  }
+  if (!session?.user) redirect("/login");
 
   // Create data access layer for current user
   const dal = new GearsDataAccess(session.user.id);
 
+  // Create a new URLSearchParams and copy values from searchParams
+  const params = new URLSearchParams();
+
+  // Safely iterate through the awaited searchParams
+  for (const [key, value] of Object.entries(sp)) {
+    if (typeof value === "string") {
+      const values = value.split("|").filter(Boolean);
+      if (values.length > 1) {
+        params.set(key, values.join("|"));
+      } else if (value) {
+        params.set(key, value);
+      }
+    }
+  }
+
   // Parse URL parameters for server-side filtering
-  const resolvedSearchParams = await searchParams;
-  const filters = parseGearSearchParams(
-    new URLSearchParams(resolvedSearchParams as Record<string, string>)
-  );
+  const filters = parseGearSearchParams(params);
 
   // Fetch data with filters applied server-side
   const result = await dal.getGearsPage({
     page: filters.page,
     perPage: filters.size,
-    // TODO: Add sorting and filtering support to DAL
+    sortBy: filters.sort[0]?.id,
+    sortDir: filters.sort[0]?.desc ? "desc" : "asc",
+    where: {
+      ...(filters.filters.name && {
+        name: { contains: filters.filters.name, mode: "insensitive" },
+      }),
+      ...(filters.filters.type && {
+        type: filters.filters.type as GearType,
+      }),
+      ...(filters.filters.rank?.length && {
+        rank: { in: filters.filters.rank as GearRank[] },
+      }),
+      ...(filters.filters.level && {
+        level: filters.filters.level,
+      }),
+      ...(filters.filters.enhance && {
+        enhance: filters.filters.enhance,
+      }),
+      ...(filters.filters.mainStatType && {
+        mainStatType: filters.filters.mainStatType as MainStatType,
+      }),
+      ...(filters.filters.subStats?.length && {
+        GearSubStats: {
+          some: {
+            StatType: {
+              statName: { in: filters.filters.subStats },
+            },
+          },
+        },
+      }),
+    },
   });
 
   return (

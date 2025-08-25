@@ -1,13 +1,18 @@
 import type { Prisma } from "#prisma";
 import { GearType, GearRank } from "#prisma";
 import prisma from "@/lib/prisma";
+import { convertDecimals } from "@/lib/decimal";
 
 // ============================================================================
 // TYPE DEFINITIONS
 // ============================================================================
 
-// Basic gear with essential relations for table display
-export type GearForTable = Prisma.GearsGetPayload<{
+// Raw types from Prisma
+type BaseGearSubStats = Prisma.GearSubStatsGetPayload<{
+  include: { StatType: true };
+}>;
+
+type RawGear = Prisma.GearsGetPayload<{
   include: {
     Hero: true;
     GearSubStats: { include: { StatType: true } };
@@ -15,16 +20,23 @@ export type GearForTable = Prisma.GearsGetPayload<{
   };
 }>;
 
-// Gear with all possible relations for detailed views
-export type GearWithFullRelations = Prisma.GearsGetPayload<{
-  include: {
-    Hero: true;
-    GearSubStats: { include: { StatType: true } };
-    User: true;
-  };
-}>;
+// Serialized types for client components
+export type SerializedGearSubStats = Omit<
+  BaseGearSubStats,
+  "statValue" | "weight"
+> & {
+  statValue: number;
+  weight: number;
+};
 
-// Gear for optimization calculations (includes scoring data)
+export type GearForTable = Omit<RawGear, "GearSubStats"> & {
+  GearSubStats: SerializedGearSubStats[];
+};
+
+// Type aliases
+export type GearWithFullRelations = GearForTable;
+
+// Gear for optimization calculations
 export type GearForOptimization = {
   id: number;
   mainStatType: string;
@@ -32,7 +44,7 @@ export type GearForOptimization = {
   fScore: number | null;
   score: number | null;
   GearSubStats: Array<{
-    statValue: number | string | bigint | { constructor: { name: string } };
+    statValue: number;
     StatType: {
       statName: string;
     } | null;
@@ -85,14 +97,14 @@ export class GearsDataAccess {
       prisma.gears.count({ where: userScopedWhere }),
     ]);
 
-    return { rows, total };
+    return { rows: convertDecimals(rows) as unknown as GearForTable[], total };
   }
 
   /**
    * Get single gear with full relations
    */
   async getGearById(id: number): Promise<GearWithFullRelations | null> {
-    return prisma.gears.findFirst({
+    const gear = await prisma.gears.findFirst({
       where: { id, userId: this.userId },
       include: {
         Hero: true,
@@ -100,6 +112,7 @@ export class GearsDataAccess {
         User: true,
       },
     });
+    return convertDecimals(gear) as unknown as GearWithFullRelations;
   }
 
   /**
@@ -109,18 +122,13 @@ export class GearsDataAccess {
     const gears = await prisma.gears.findMany({
       where: { userId: this.userId },
       include: {
+        Hero: true,
         GearSubStats: { include: { StatType: true } },
+        User: true,
       },
     });
 
-    return gears.map((gear) => ({
-      id: gear.id,
-      mainStatType: gear.mainStatType,
-      mainStatValue: gear.mainStatValue,
-      fScore: gear.fScore,
-      score: gear.score,
-      GearSubStats: gear.GearSubStats,
-    }));
+    return convertDecimals(gears) as unknown as GearForOptimization[];
   }
 
   /**
@@ -151,7 +159,7 @@ export class GearsDataAccess {
    * Get gears by type for filtering
    */
   async getGearsByType(gearType: GearType): Promise<GearForTable[]> {
-    return prisma.gears.findMany({
+    const gears = await prisma.gears.findMany({
       where: { userId: this.userId, type: gearType },
       include: {
         Hero: true,
@@ -160,13 +168,14 @@ export class GearsDataAccess {
       },
       orderBy: { createdAt: "desc" },
     });
+    return convertDecimals(gears) as unknown as GearForTable[];
   }
 
   /**
    * Get gears by set for set management
    */
   async getGearsBySet(setName: string): Promise<GearForTable[]> {
-    return prisma.gears.findMany({
+    const gears = await prisma.gears.findMany({
       where: { userId: this.userId, set: setName },
       include: {
         Hero: true,
@@ -175,6 +184,7 @@ export class GearsDataAccess {
       },
       orderBy: { createdAt: "desc" },
     });
+    return convertDecimals(gears) as unknown as GearForTable[];
   }
 
   /**

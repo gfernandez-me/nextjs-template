@@ -1,0 +1,11 @@
+# Forms: Canonical Pattern & Guardrails
+
+## Core Principles
+- Use Conform for all new forms with Zod schemas, colocated under `lib/validation/*`.
+- Prefer Server Actions for mutations; client enhances UX only.
+- Single source of truth: one Zod schema reused for client & server validation.
+- Accessibility: every field must expose `aria-invalid`, `aria-describedby`, and error id hooks provided by Conform.
+- Errors: always render inline errors; toast notifications are optional.
+- File inputs & checkboxes: use Conform helpers for value coercion.
+- No custom `event.preventDefault()` for form submit unless necessary.
+- RHF may be used only for complex uncontrolled components, still reuse the same Zod schema via resolver.

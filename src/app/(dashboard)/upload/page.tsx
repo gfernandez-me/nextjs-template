@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import { UploadForm } from "./components/upload-form";
 import { SettingsDataAccess } from "@/dashboard/settings/data/settings";
 import { auth } from "@/lib/auth";

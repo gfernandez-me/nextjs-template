@@ -1,0 +1,14 @@
+# Tables: Server-Side Patterns & URL-Driven State
+
+## Core Principles
+- Server is the source of truth for filter/sort/page state.
+- Encode state in URL; page back/forward works.
+- TanStack Table in manual mode for server-side tables; never loop-fetch in useEffect.
+- Keep client components presentational/interactive only.
+
+## Best Practices
+- Use server components for data fetching and filtering.
+- Use client filter components to update URL only.
+- Use debounced updates for text inputs.
+- Memoize expensive filter/table components.
+- Avoid client-side fetching and complex state sync.

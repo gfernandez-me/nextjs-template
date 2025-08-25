@@ -74,8 +74,8 @@ export function clearAllGearFilters(
       rank: [],
       level: undefined,
       enhance: undefined,
-      main: undefined,
-      subs: [],
+      mainStatType: undefined,
+      subStats: [],
     },
     page: 1, // Reset to first page
   });

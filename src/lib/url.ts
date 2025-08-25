@@ -4,6 +4,8 @@
  * @see https://nextjs.org/docs/app/guides/forms
  */
 
+import { GearType, GearRank, MainStatType } from "#prisma";
+
 // Types for gear table state
 export interface GearTableState {
   page: number;
@@ -14,12 +16,12 @@ export interface GearTableState {
 
 export interface GearFilters {
   name?: string;
-  type?: string;
-  rank?: string[];
+  type?: GearType;
+  rank?: GearRank[];
   level?: number;
   enhance?: number;
-  main?: string;
-  subs?: string[];
+  mainStatType?: MainStatType;
+  subStats?: string[];
 }
 
 /**
@@ -55,16 +57,18 @@ export function parseGearSorting(sortString: string) {
 export function parseGearFilters(searchParams: URLSearchParams): GearFilters {
   return {
     name: searchParams.get("name") || undefined,
-    type: searchParams.get("type") || undefined,
-    rank: searchParams.get("rank")?.split("|").filter(Boolean) || [],
+    type: (searchParams.get("type") as GearType) || undefined,
+    rank: (searchParams.get("rank")?.split("|").filter(Boolean) ||
+      []) as GearRank[],
     level: searchParams.get("level")
       ? parseInt(searchParams.get("level")!, 10)
       : undefined,
     enhance: searchParams.get("enhance")
       ? parseInt(searchParams.get("enhance")!, 10)
       : undefined,
-    main: searchParams.get("main") || undefined,
-    subs: searchParams.get("subs")?.split("|").filter(Boolean) || [],
+    mainStatType:
+      (searchParams.get("mainStatType") as MainStatType) || undefined,
+    subStats: searchParams.get("subs")?.split("|").filter(Boolean) || [],
   };
 }
 
@@ -118,7 +122,8 @@ export function mergeGearFilters(
     ...updates,
     // Handle array filters properly
     rank: updates.rank !== undefined ? updates.rank : current.rank,
-    subs: updates.subs !== undefined ? updates.subs : current.subs,
+    subStats:
+      updates.subStats !== undefined ? updates.subStats : current.subStats,
   };
 }
 
@@ -156,7 +161,7 @@ export function getDefaultGearFilters(): GearFilters {
     rank: [],
     level: undefined,
     enhance: undefined,
-    main: undefined,
-    subs: [],
+    mainStatType: undefined,
+    subStats: [],
   };
 }

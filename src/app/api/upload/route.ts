@@ -141,17 +141,15 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     for (const item of data.items) {
       try {
         const itemObj = item as unknown as Record<string, unknown>;
-        // Determine which hero this gear is equipped by (support multiple fields)
+        // Determine which hero this gear is equipped by
         let equippedBy: bigint | null = null;
-        const rawEquipped =
-          (itemObj.equippedBy as unknown) ??
-          (itemObj.ingameEquippedId as unknown);
+        const rawEquipped = itemObj.equippedBy ?? itemObj.ingameEquippedId;
+
         if (
-          rawEquipped !== undefined &&
-          rawEquipped !== null &&
-          String(rawEquipped) !== "undefined" &&
-          String(rawEquipped) !== "null" &&
-          String(rawEquipped) !== "0"
+          rawEquipped &&
+          rawEquipped !== "0" &&
+          rawEquipped !== "undefined" &&
+          rawEquipped !== "null"
         ) {
           const heroIngameId = String(rawEquipped);
           if (heroMap.has(heroIngameId)) {
@@ -208,16 +206,75 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           });
 
           if (gearWithSubstats) {
-            const fScore = calculateFScore(gearWithSubstats);
-            const score = calculateScore(gearWithSubstats);
+            // Get user settings for score calculation
+            const userSettings = await prisma.settings.findUnique({
+              where: { userId: session.user.id },
+            });
 
-            await prisma.gears.update({
-              where: { id: gear.id },
-              data: {
+            // Prepare settings for score calculation
+            const scoreSettings = userSettings
+              ? {
+                  fScoreIncludeMainStat: userSettings.fScoreIncludeMainStat,
+                  fScoreSubstatWeights:
+                    userSettings.fScoreSubstatWeights as Record<string, number>,
+                  fScoreMainStatWeights:
+                    userSettings.fScoreMainStatWeights as Record<
+                      string,
+                      number
+                    >,
+                }
+              : null;
+
+            // Calculate scores with proper validation
+            let fScore: number | null = null;
+            let score: number | null = null;
+
+            try {
+              // Log gear data before calculation
+              console.log("Gear data for scoring:", {
+                gearId: gear.id,
+                substats: gearWithSubstats.GearSubStats.map((s) => ({
+                  statName: s.StatType?.statName,
+                  value: s.statValue,
+                })),
+              });
+
+              fScore = calculateFScore(gearWithSubstats, scoreSettings);
+              score = calculateScore(gearWithSubstats);
+
+              // If either score is NaN, set to 0 instead of null
+              if (isNaN(fScore) || fScore === null) fScore = 0;
+              if (isNaN(score) || score === null) score = 0;
+
+              // Single update with validated scores
+              await prisma.gears.update({
+                where: { id: gear.id },
+                data: {
+                  fScore,
+                  score,
+                },
+              });
+
+              console.log("Updated scores:", {
+                gearId: gear.id,
                 fScore,
                 score,
-              },
-            });
+              });
+            } catch (error) {
+              console.error(
+                "Error calculating scores:",
+                error,
+                gearWithSubstats
+              );
+              // On error, ensure we still set default scores
+              await prisma.gears.update({
+                where: { id: gear.id },
+                data: {
+                  fScore: 0,
+                  score: 0,
+                },
+              });
+            }
           }
         } catch (scoreError) {
           console.error(

@@ -1,0 +1,20 @@
+# useEffect: Modern Patterns & Anti-Patterns
+
+## Core Principles
+- Only use useEffect for real side-effects: subscriptions, timers, focus, imperative APIs, with cleanup.
+- Never use useEffect for data fetching, prop-to-state sync, simple derivations, or DOM measurements.
+- Prefer Server Components, React 19 `use(promise)`, or URL-driven state for data.
+- List all real dependencies; split unrelated concerns; avoid async directly in effect.
+- Replace effect-based DOM reads with callback refs when feasible.
+
+## Proper useEffect Usage
+- Subscriptions (WebSocket, event listeners)
+- Timers and intervals
+- Focus management
+- Imperative API calls (third-party libraries)
+- Cleanup operations
+
+## Migration Strategy
+- Identify anti-patterns: data fetching, prop sync, derivations, DOM reads.
+- Replace with Server Components, controlled components, useMemo, callback refs.
+- Optimize dependency arrays and cleanup functions.
