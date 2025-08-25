@@ -34,42 +34,34 @@ export function LoginForm({
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    setError("");
+    setLoading(true);
 
-    await authClient.signIn.email(
-      {
-        /**
-         * The user email
-         */
+    try {
+      console.log("Attempting login with:", { email });
+      const result = await authClient.signIn.email({
         email,
-        /**
-         * The user password
-         */
         password,
-        /**
-         * a url to redirect to after the user verifies their email (optional)
-         */
-        callbackURL: "/home",
-        /**
-         * remember the user session after the browser is closed.
-         * @default true
-         */
-        rememberMe: false,
-      },
-      {
-        onRequest: () => {
-          setLoading(true);
-        },
-        onSuccess: () => {
-          // redirect to the dashboard
-          router.push("/home");
-        },
-        onError: (ctx) => {
-          // display the error message
-          setError(ctx.error.message);
-          setLoading(false);
-        },
+      });
+
+      if (result.error) {
+        console.error("Login error:", result.error);
+        throw new Error(result.error.message || "Authentication failed");
       }
-    );
+
+      console.log("Login successful:", result);
+
+      // Force a hard redirect to /home
+      window.location.href = "/home";
+    } catch (err) {
+      console.error("Login error:", err);
+      setError(
+        err instanceof Error ? err.message : "Invalid email or password"
+      );
+      setLoading(false);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (

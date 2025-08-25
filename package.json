@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "dotenv -e .env -- sh -c 'next dev --turbopack -p $PORT'",
     "clean": "rm -rf .next .turbo && echo 'Cleared Next.js caches'",
     "build": "next build",
     "build:ci": "CI=1 FORCE_COLOR=0 NO_COLOR=1 next build",
@@ -72,6 +72,7 @@
     "@types/node": "^22.17.2",
     "@types/react": "19.1.8",
     "@types/react-dom": "19.1.6",
+    "dotenv-cli": "^10.0.0",
     "esbuild": "^0.23.1",
     "eslint": "^9.33.0",
     "eslint-config-next": "15.4.5",

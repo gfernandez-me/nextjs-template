@@ -20,21 +20,20 @@ export default async function DashboardLayout({
   }
 
   return (
-    <SidebarProvider>
-      <AppSidebar
-        user={{ ...session.user, image: session.user.image ?? null }}
-        variant="inset"
-      />
-      <SidebarInset>
-        <SiteHeader />
+    <div className="relative flex min-h-screen">
+      <SidebarProvider>
+        <AppSidebar
+          user={{ ...session.user, image: session.user.image ?? null }}
+          variant="inset"
+        />
         <div className="flex flex-1 flex-col">
-          <div className="@container/main flex flex-1 flex-col gap-2">
-            <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
+          <SiteHeader />
+          <main className="flex-1 overflow-y-auto bg-background">
+            <div className="container mx-auto h-full max-w-[1600px] p-6">
               {children}
             </div>
-          </div>
+          </main>
         </div>
-      </SidebarInset>
-    </SidebarProvider>
+      </SidebarProvider>
+    </div>
   );
-}
