@@ -1,0 +1,190 @@
+# React Hook Form + Zod: Complex Form Handling
+
+## When to Use React Hook Form
+- Complex forms with dynamic fields (arrays, conditional fields)
+- Forms requiring fine-grained control over validation timing
+- Forms with complex state management needs
+- When you need to integrate with third-party form libraries
+
+## Core Principles
+- Use zodResolver for schema validation
+- Leverage React Hook Form's performance optimizations
+- Maintain type safety with zod inference
+- Use controlled components when needed
+
+## Basic Setup with Zod
+```tsx
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+
+const schema = z.object({
+  name: z.string().min(1, "Name is required"),
+  email: z.string().email("Invalid email"),
+});
+
+type FormData = z.infer<typeof schema>;
+
+const {
+  register,
+  handleSubmit,
+  formState: { errors, isSubmitting },
+  control,
+} = useForm<FormData>({
+  resolver: zodResolver(schema),
+});
+```
+
+## Form Submission
+```tsx
+const onSubmit = async (data: FormData) => {
+  try {
+    // Handle form submission
+    await submitData(data);
+  } catch (error) {
+    console.error("Submission failed:", error);
+  }
+};
+
+<form onSubmit={handleSubmit(onSubmit)}>
+  {/* form fields */}
+</form>
+```
+
+## Field Registration
+```tsx
+// Basic input
+<input {...register("name")} />
+{errors.name && <p className="text-destructive">{errors.name.message}</p>}
+
+// With validation options
+<input
+  {...register("email", {
+    required: "Email is required",
+    pattern: {
+      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+      message: "Invalid email address",
+    },
+  })}
+/>
+```
+
+## Complex Fields (Arrays, Objects)
+```tsx
+import { useFieldArray } from "react-hook-form";
+
+const { fields, append, remove } = useFieldArray({
+  control,
+  name: "items",
+});
+
+// In JSX
+{fields.map((field, index) => (
+  <div key={field.id}>
+    <input {...register(`items.${index}.name`)} />
+    <button type="button" onClick={() => remove(index)}>
+      Remove
+    </button>
+  </div>
+))}
+```
+
+## Controlled Components
+```tsx
+import { Controller } from "react-hook-form";
+
+<Controller
+  name="category"
+  control={control}
+  render={({ field }) => (
+    <Select
+      value={field.value}
+      onValueChange={field.onChange}
+    >
+      {/* options */}
+    </Select>
+  )}
+/>
+```
+
+## File Inputs
+```tsx
+const schema = z.object({
+  file: z
+    .instanceof(File, { message: "Please select a file" })
+    .refine((file) => file.size > 0, "File cannot be empty"),
+});
+
+// In form
+<input
+  type="file"
+  onChange={(e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setValue("file", file);
+    }
+  }}
+/>
+{errors.file && <p className="text-destructive">{errors.file.message}</p>}
+```
+
+## Error Handling
+```tsx
+// Field-level errors
+{errors.fieldName && (
+  <p className="text-sm text-destructive">
+    {errors.fieldName.message}
+  </p>
+)}
+
+// Form-level errors
+{errors.root && (
+  <p className="text-sm text-destructive">
+    {errors.root.message}
+  </p>
+)}
+```
+
+## Performance Optimization
+```tsx
+// Use defaultValues for initial form state
+const form = useForm<FormData>({
+  resolver: zodResolver(schema),
+  defaultValues: {
+    name: "",
+    email: "",
+  },
+});
+
+// Debounce validation for better UX
+const form = useForm<FormData>({
+  resolver: zodResolver(schema),
+  mode: "onBlur", // Validate on blur instead of onChange
+});
+```
+
+## Integration with shadcn/ui
+```tsx
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
+<div className="space-y-2">
+  <Label htmlFor="name">Name</Label>
+  <Input
+    id="name"
+    {...register("name")}
+    aria-invalid={errors.name ? "true" : "false"}
+    aria-describedby={errors.name ? "name-error" : undefined}
+  />
+  {errors.name && (
+    <p id="name-error" className="text-sm text-destructive">
+      {errors.name.message}
+    </p>
+  )}
+</div>
+```
+description:
+globs:
+alwaysApply: false
+---

@@ -1,15 +1,13 @@
 model Settings {
-  id                    Int     @id @default(autoincrement())
-  fScoreIncludeMainStat Boolean @default(true)
+  id                    Int      @id @default(autoincrement())
+  fScoreIncludeMainStat Boolean  @default(true)
   fScoreSubstatWeights  Json?
   fScoreMainStatWeights Json?
   substatThresholds     Json?
-
-  userId String @unique
-  User   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  userId                String   @unique
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  User                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@map("settings")

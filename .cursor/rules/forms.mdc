@@ -9,3 +9,137 @@
 - File inputs & checkboxes: use Conform helpers for value coercion.
 - No custom `event.preventDefault()` for form submit unless necessary.
 - RHF may be used only for complex uncontrolled components, still reuse the same Zod schema via resolver.
+
+## Form Library Selection Guide
+
+### Use Conform When:
+- Simple to moderate complexity forms
+- Server-side validation is primary
+- Progressive enhancement approach
+- Standard form patterns (CRUD operations)
+- File uploads with validation
+- Accessibility is a priority
+
+### Use React Hook Form When:
+- Complex dynamic forms (arrays, conditional fields)
+- Fine-grained validation control needed
+- Third-party component integration required
+- Performance optimization is critical
+- Complex state management needed
+
+## Schema Organization
+```
+src/
+├── lib/
+│   └── validation/
+│       ├── common.ts          # Shared validation utilities
+│       ├── userSchemas.ts     # User-related schemas
+│       ├── gearSchemas.ts     # Gear-related schemas
+│       └── uploadSchemas.ts   # Upload-related schemas
+└── app/
+    └── (dashboard)/
+        └── upload/
+            └── schema.ts      # Page-specific schemas (import from lib/validation)
+```
+
+## Conform Best Practices
+```tsx
+// 1. Define schema in lib/validation/
+export const uploadSchema = z.object({
+  file: z.instanceof(File).refine(f => f.size > 0, "File required"),
+});
+
+// 2. Use in component
+const [form, fields] = useForm({
+  id: "upload-form",
+  constraint: getFieldsetConstraint(uploadSchema),
+  onValidate({ formData }) {
+    return parse(formData, { schema: uploadSchema });
+  },
+});
+
+// 3. Render with proper error handling
+<form ref={form.ref}>
+  <input {...fields.file} type="file" />
+  {fields.file.errors && (
+    <p className="text-destructive">{fields.file.errors.join(", ")}</p>
+  )}
+</form>
+```
+
+## React Hook Form Best Practices
+```tsx
+// 1. Reuse the same schema
+import { uploadSchema } from "@/lib/validation/uploadSchemas";
+
+// 2. Use zodResolver for validation
+const form = useForm({
+  resolver: zodResolver(uploadSchema),
+  defaultValues: { file: undefined },
+});
+
+// 3. Handle file inputs properly
+<input
+  type="file"
+  onChange={(e) => {
+    const file = e.target.files?.[0];
+    if (file) setValue("file", file);
+  }}
+/>
+```
+
+## Accessibility Requirements
+- Every field must have `aria-invalid` attribute
+- Every field must have `aria-describedby` pointing to error message
+- Error messages must have unique IDs
+- Form must have proper labels and descriptions
+
+## Error Handling Patterns
+```tsx
+// Conform pattern
+{fields.fieldName.errors && (
+  <p 
+    id={fields.fieldName.errorId} 
+    className="text-sm text-destructive"
+  >
+    {fields.fieldName.errors.join(", ")}
+  </p>
+)}
+
+// React Hook Form pattern
+{errors.fieldName && (
+  <p 
+    id={`${fieldName}-error`} 
+    className="text-sm text-destructive"
+  >
+    {errors.fieldName.message}
+  </p>
+)}
+```
+
+## File Upload Patterns
+```tsx
+// Conform file schema
+const fileSchema = z.object({
+  file: z
+    .instanceof(File, { message: "Please select a file" })
+    .refine((file) => file.size > 0, "File cannot be empty")
+    .refine(
+      (file) => file.size <= 10 * 1024 * 1024,
+      "File size must be less than 10MB"
+    ),
+});
+
+// React Hook Form file handling
+<input
+  type="file"
+  accept=".txt,.json"
+  onChange={(e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setValue("file", file);
+      trigger("file"); // Trigger validation
+    }
+  }}
+/>
+```

@@ -1,61 +1,56 @@
 model StatTypes {
-  id               Int          @id @default(autoincrement())
-  originalStatName String       @unique
-  statName         String       @unique
-  statCategory     StatCategory
-  weight           Decimal      @db.Decimal(5, 2)
-
+  id                      Int                      @id @default(autoincrement())
+  statName                String                   @unique
+  statCategory            StatCategory
+  weight                  Decimal                  @db.Decimal(5, 2)
   allowedMainStatFor      GearType[]
   allowedSubstatFor       GearType[]
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  originalStatName        String                   @unique
   GearRecommendationItem1 GearRecommendationItem[] @relation("StatType1")
   GearRecommendationItem2 GearRecommendationItem[] @relation("StatType2")
   GearRecommendationItem3 GearRecommendationItem[] @relation("StatType3")
   GearRecommendationItem4 GearRecommendationItem[] @relation("StatType4")
   GearSubStats            GearSubStats[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
   @@map("stat_types")
 }
 
 model GearSets {
-  id                Int     @id @default(autoincrement())
-  setName           String  @unique
+  id                Int      @id @default(autoincrement())
+  setName           String   @unique
   piecesRequired    Int
   effectDescription String
   icon              String
-  isActive          Boolean @default(true)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   @@map("gear_sets")
 }
 
 model GearSubStats {
-  id         Int     @id @default(autoincrement())
-  statValue  Decimal @db.Decimal(10, 2)
-  rolls      Int
-  weight     Decimal @db.Decimal(5, 2)
-  isModified Boolean @default(false)
-
+  id         Int       @id @default(autoincrement())
   gearId     Int
-  Gear       Gears     @relation(fields: [gearId], references: [id], onDelete: Cascade)
   statTypeId Int
-  StatType   StatTypes @relation(fields: [statTypeId], references: [id])
+  statValue  Decimal   @db.Decimal(10, 2)
+  rolls      Int
+  weight     Decimal   @db.Decimal(5, 2)
+  isModified Boolean   @default(false)
   userId     String
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  Gear       Gears     @relation(fields: [gearId], references: [id], onDelete: Cascade)
+  StatType   StatTypes @relation(fields: [statTypeId], references: [id])
   User       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 
   @@map("gear_substats")
 }
 
 model Gears {
-  id                Int          @id @default(autoincrement())
-  ingameId          BigInt       @unique
+  id                Int            @id @default(autoincrement())
+  ingameId          BigInt         @unique
   code              String?
   type              GearType
   rank              GearRank
@@ -68,19 +63,17 @@ model Gears {
   mainStatBaseValue Float
   statMultiplier    Float
   tierMultiplier    Float
-  storage           Boolean      @default(true)
-  equipped          Boolean      @default(false)
-  ingameEquippedId  BigInt?
+  storage           Boolean        @default(true)
+  equipped          Boolean        @default(false)
+  userId            String
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
   set               String
-
-  heroId       Int?
-  Hero         Heroes?        @relation(fields: [heroId], references: [id])
-  userId       String
-  User         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  GearSubStats GearSubStats[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  heroId            Int?
+  ingameEquippedId  BigInt?
+  GearSubStats      GearSubStats[]
+  Hero              Heroes?        @relation(fields: [heroId], references: [id])
+  User              User           @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([createdAt])
   @@index([rank])
@@ -92,34 +85,32 @@ model Gears {
 }
 
 model Heroes {
-  id                Int          @id @default(autoincrement())
-  ingameId          BigInt       @unique
-  name              String
-  element           HeroElement?
-  rarity            HeroRarity?
-  class             HeroClass?
-  attack            Int?
-  defense           Int?
-  health            Int?
-  speed             Int?
-  criticalHitChance Int?
-  criticalHitDamage Int?
-  effectiveness     Int?
-  effectResistance  Int?
-  weaponId          Int?
-  armorId           Int?
-  helmetId          Int?
-  necklaceId        Int?
-  ringId            Int?
-  bootId            Int?
-
+  id                  Int                  @id @default(autoincrement())
+  ingameId            BigInt               @unique
+  name                String
+  element             HeroElement?
+  rarity              HeroRarity?
+  class               HeroClass?
+  attack              Int?
+  defense             Int?
+  health              Int?
+  speed               Int?
+  criticalHitChance   Int?
+  criticalHitDamage   Int?
+  effectiveness       Int?
+  effectResistance    Int?
+  weaponId            Int?
+  armorId             Int?
+  helmetId            Int?
+  necklaceId          Int?
+  ringId              Int?
+  bootId              Int?
   userId              String
-  User                User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
   GearRecommendations GearRecommendation[]
   Gears               Gears[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  User                User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@map("heroes")

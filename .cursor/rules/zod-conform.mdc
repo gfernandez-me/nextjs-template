@@ -12,3 +12,70 @@
 - Handle all error cases, both field-level and form-level.
 - Use schema inference for type safety.
 - Avoid string literals for enums; use constants or imports.
+
+## Conform v1.8.2 API Usage
+
+### Basic Form Setup
+```tsx
+import { useForm } from "@conform-to/react";
+import { getFieldsetConstraint, parse } from "@conform-to/zod";
+
+const [form, fields] = useForm({
+  id: "form-id",
+  constraint: getFieldsetConstraint(schema),
+  onValidate({ formData }) {
+    return parse(formData, { schema });
+  },
+  onSubmit: async (event, { submission }) => {
+    event.preventDefault();
+    
+    if (submission?.status !== "success") return;
+    
+    // Handle successful submission
+    const data = submission.value;
+  },
+});
+```
+
+### Form Element
+```tsx
+<form ref={form.ref}>
+  <input {...fields.fieldName} />
+  {fields.fieldName.errors && (
+    <p className="text-destructive">
+      {fields.fieldName.errors.join(", ")}
+    </p>
+  )}
+</form>
+```
+
+### Form Status
+- `form.status`: "success" | "error" | undefined
+- `submission.status`: "success" | "error" | undefined
+- `submission.value`: Validated form data when status is "success"
+- `submission.error`: Validation errors when status is "error"
+
+## File Input Handling
+```tsx
+const uploadSchema = z.object({
+  file: z
+    .instanceof(File, { message: "Please select a file" })
+    .refine((file) => file.size > 0, "File cannot be empty")
+    .refine(
+      (file) => file.name.endsWith(".txt"),
+      "Only .txt files are supported"
+    ),
+});
+
+// In form
+<input {...fields.file} type="file" accept=".txt" />
+```
+
+## Error Display
+```tsx
+{fields.fieldName.errors && (
+  <p className="text-sm text-destructive">
+    {fields.fieldName.errors.join(", ")}
+  </p>
+)}
+```

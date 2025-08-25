@@ -1,37 +1,33 @@
 model GearRecommendation {
-  id   Int    @id @default(autoincrement())
-  name String
-
-  heroId                 Int?
-  Hero                   Heroes?                  @relation(fields: [heroId], references: [id], onDelete: Cascade)
+  id                     Int                      @id @default(autoincrement())
   userId                 String
-  User                   User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt              DateTime                 @default(now())
+  updatedAt              DateTime                 @updatedAt
+  name                   String
+  heroId                 Int?
   GearRecommendationItem GearRecommendationItem[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  Hero                   Heroes?                  @relation(fields: [heroId], references: [id], onDelete: Cascade)
+  User                   User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("gear_recommendations")
 }
 
 model GearRecommendationItem {
-  id           Int          @id @default(autoincrement())
-  type         GearType
-  mainStatType MainStatType
-
+  id                   Int                @id @default(autoincrement())
   gearRecommendationId Int
-  GearRecommendation   GearRecommendation @relation(fields: [gearRecommendationId], references: [id], onDelete: Cascade)
+  type                 GearType
+  mainStatType         MainStatType
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
   statType1Id          Int
-  StatType1            StatTypes          @relation("StatType1", fields: [statType1Id], references: [id])
   statType2Id          Int?
-  StatType2            StatTypes?         @relation("StatType2", fields: [statType2Id], references: [id])
   statType3Id          Int?
-  StatType3            StatTypes?         @relation("StatType3", fields: [statType3Id], references: [id])
   statType4Id          Int?
+  GearRecommendation   GearRecommendation @relation(fields: [gearRecommendationId], references: [id], onDelete: Cascade)
+  StatType1            StatTypes          @relation("StatType1", fields: [statType1Id], references: [id])
+  StatType2            StatTypes?         @relation("StatType2", fields: [statType2Id], references: [id])
+  StatType3            StatTypes?         @relation("StatType3", fields: [statType3Id], references: [id])
   StatType4            StatTypes?         @relation("StatType4", fields: [statType4Id], references: [id])
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 
   @@map("gear_recommendation_items")
 }
