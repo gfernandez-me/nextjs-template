@@ -133,7 +133,7 @@ prisma/schema/
 ├── main.prisma          # Generator and datasource only
 ├── auth.prisma          # User, Account, Session, Verification
 ├── gears.prisma         # All Epic 7 enums, gear and hero models
-├── recommendation.prisma # GearPriorities, recommendations
+├── recommendation.prisma # Gear recommendations for heroes, or for general use if heroId is null
 └── settings.prisma      # User settings and scoring
 ```
 

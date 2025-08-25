@@ -19,10 +19,12 @@
     "db:migrate:new": "prisma migrate dev --create-only=false",
     "db:migrate:dev": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
-    "db:reset": "prisma migrate reset",
+    "db:reset": "prisma migrate reset --force",
     "db:seed": "npx tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@conform-to/react": "^1.8.2",
+    "@conform-to/zod": "^1.8.2",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/modifiers": "^9.0.0",
     "@dnd-kit/sortable": "^10.0.0",

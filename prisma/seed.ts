@@ -118,6 +118,7 @@ async function main() {
     // Based on Epic 7 game rules from .cursor/rules/stat-rules.mdc
     const statTypes = [
       {
+        originalStatName: "Speed",
         statName: "Speed",
         statCategory: StatCategory.FLAT,
         weight: 2.0,
@@ -132,6 +133,7 @@ async function main() {
         ], // Speed can be substat on any gear
       },
       {
+        originalStatName: "Attack",
         statName: "Attack",
         statCategory: StatCategory.FLAT,
         weight: 0.3,
@@ -151,6 +153,7 @@ async function main() {
         ], // Attack can be substat on any gear
       },
       {
+        originalStatName: "AttackPercent",
         statName: "Attack %",
         statCategory: StatCategory.PERCENTAGE,
         weight: 1.2,
@@ -165,6 +168,7 @@ async function main() {
         ], // Attack % can be substat on any gear
       },
       {
+        originalStatName: "Defense",
         statName: "Defense",
         statCategory: StatCategory.FLAT,
         weight: 0.2,
@@ -179,6 +183,7 @@ async function main() {
         ], // Defense can be substat on any gear
       },
       {
+        originalStatName: "DefensePercent",
         statName: "Defense %",
         statCategory: StatCategory.PERCENTAGE,
         weight: 0.8,
@@ -193,6 +198,7 @@ async function main() {
         ], // Defense % can be substat on any gear
       },
       {
+        originalStatName: "Health",
         statName: "Health",
         statCategory: StatCategory.FLAT,
         weight: 0.2,
@@ -212,6 +218,7 @@ async function main() {
         ], // Health can be substat on any gear
       },
       {
+        originalStatName: "HealthPercent",
         statName: "Health %",
         statCategory: StatCategory.PERCENTAGE,
         weight: 0.8,
@@ -226,6 +233,7 @@ async function main() {
         ], // Health % can be substat on any gear
       },
       {
+        originalStatName: "CriticalHitChancePercent",
         statName: "Crit %",
         statCategory: StatCategory.PERCENTAGE,
         weight: 1.5,
@@ -240,6 +248,7 @@ async function main() {
         ], // Crit % can be substat on any gear
       },
       {
+        originalStatName: "CriticalHitDamagePercent",
         statName: "Crit Dmg %",
         statCategory: StatCategory.PERCENTAGE,
         weight: 1.3,
@@ -254,6 +263,7 @@ async function main() {
         ], // Crit Dmg % can be substat on any gear
       },
       {
+        originalStatName: "EffectivenessPercent",
         statName: "Effectiveness %",
         statCategory: StatCategory.PERCENTAGE,
         weight: 0.7,
@@ -268,6 +278,7 @@ async function main() {
         ], // Effectiveness % can be substat on any gear
       },
       {
+        originalStatName: "EffectResistancePercent",
         statName: "Effect Resist %",
         statCategory: StatCategory.PERCENTAGE,
         weight: 0.6,

@@ -10,7 +10,7 @@ import prisma from "@/lib/prisma";
 export type HeroForList = Prisma.HeroesGetPayload<{
   include: {
     User: true;
-    GearPriorities: true;
+    GearRecommendations: true;
   };
 }>;
 
@@ -18,23 +18,16 @@ export type HeroForList = Prisma.HeroesGetPayload<{
 export type HeroWithEquipment = Prisma.HeroesGetPayload<{
   include: {
     User: true;
-    GearPriorities: true;
+    GearRecommendations: true;
     Gears: true;
   };
 }>;
 
-// Hero with gear priorities for optimization
-export type HeroWithPriorities = Prisma.HeroesGetPayload<{
+// Hero with gear recommendations
+export type HeroWithRecommendations = Prisma.HeroesGetPayload<{
   include: {
-    GearPriorities: {
-      include: {
-        gearSet: true;
-        PrioritySub1: true;
-        PrioritySub2: true;
-        PrioritySub3: true;
-        PrioritySub4: true;
-      };
-    };
+    User: true;
+    GearRecommendations: true;
   };
 }>;
 
@@ -53,7 +46,7 @@ export class HeroesDataAccess {
       where: { userId: this.userId },
       include: {
         User: true,
-        GearPriorities: true,
+        GearRecommendations: true,
       },
       orderBy: { name: "asc" },
     });
@@ -67,7 +60,7 @@ export class HeroesDataAccess {
       where: { id, userId: this.userId },
       include: {
         User: true,
-        GearPriorities: true,
+        GearRecommendations: true,
         Gears: true,
       },
     });
@@ -81,7 +74,7 @@ export class HeroesDataAccess {
       where: { ingameId, userId: this.userId },
       include: {
         User: true,
-        GearPriorities: true,
+        GearRecommendations: true,
         Gears: true,
       },
     });
@@ -95,7 +88,7 @@ export class HeroesDataAccess {
       where: { userId: this.userId, element },
       include: {
         User: true,
-        GearPriorities: true,
+        GearRecommendations: true,
       },
       orderBy: { name: "asc" },
     });
@@ -109,7 +102,7 @@ export class HeroesDataAccess {
       where: { userId: this.userId, class: heroClass },
       include: {
         User: true,
-        GearPriorities: true,
+        GearRecommendations: true,
       },
       orderBy: { name: "asc" },
     });
@@ -123,28 +116,33 @@ export class HeroesDataAccess {
       where: { userId: this.userId, rarity },
       include: {
         User: true,
-        GearPriorities: true,
+        GearRecommendations: true,
       },
       orderBy: { name: "asc" },
     });
   }
 
   /**
-   * Get heroes with gear priorities for optimization
+   * Get heroes with gear recommendations for optimization
    */
-  async getHeroesWithPriorities(): Promise<HeroWithPriorities[]> {
+  async getHeroesWithPriorities(): Promise<HeroWithEquipment[]> {
     return prisma.heroes.findMany({
       where: { userId: this.userId },
       include: {
-        GearPriorities: {
+        User: true,
+        GearRecommendations: {
           include: {
-            gearSet: true,
-            PrioritySub1: true,
-            PrioritySub2: true,
-            PrioritySub3: true,
-            PrioritySub4: true,
+            GearRecommendationItem: {
+              include: {
+                StatType1: true,
+                StatType2: true,
+                StatType3: true,
+                StatType4: true,
+              },
+            },
           },
         },
+        Gears: true,
       },
       orderBy: { name: "asc" },
     });
@@ -168,7 +166,7 @@ export class HeroesDataAccess {
       data: { ...data, userId: this.userId },
       include: {
         User: true,
-        GearPriorities: true,
+        GearRecommendations: true,
       },
     });
   }
@@ -191,7 +189,7 @@ export class HeroesDataAccess {
       data,
       include: {
         User: true,
-        GearPriorities: true,
+        GearRecommendations: true,
       },
     });
   }
@@ -202,8 +200,8 @@ export class HeroesDataAccess {
   async deleteHero(id: number): Promise<void> {
     // First, clear any gear that references this hero
     await prisma.gears.updateMany({
-      where: { equippedBy: { not: null }, userId: this.userId },
-      data: { equippedBy: null, equipped: false },
+      where: { heroId: id, userId: this.userId },
+      data: { heroId: null, equipped: false },
     });
 
     // Then delete the hero

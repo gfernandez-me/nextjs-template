@@ -32,21 +32,22 @@ model Session {
 }
 
 model User {
-  id                  String               @id @default(cuid())
-  name                String
-  email               String               @unique
-  emailVerified       Boolean              @default(false)
-  image               String?
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @updatedAt
+  id            String  @id @default(cuid())
+  name          String
+  email         String  @unique
+  emailVerified Boolean @default(false)
+  image         String?
+
   Account             Account[]
-  GearPriorities      GearPriorities[]
   GearRecommendations GearRecommendation[]
   GearSubStats        GearSubStats[]
   Gears               Gears[]
   Heroes              Heroes[]
   Session             Session[]
   Settings            Settings?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("users")
 }

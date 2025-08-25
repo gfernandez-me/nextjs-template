@@ -1,4 +1,3 @@
-import { GearPrioritiesForm } from "@/dashboard/gear-priorities/components/gear-priorities-form";
 import { getEpic7Data } from "@/lib/epic7-data";
 
 export default async function HeroesPage() {
@@ -9,16 +8,10 @@ export default async function HeroesPage() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Heroes</h1>
         <p className="text-muted-foreground">
-          Manage your Epic 7 heroes and their gear priorities. Configure
+          Manage your Epic 7 heroes and their gear recommendations. Configure
           optimization settings for each character.
         </p>
       </div>
-
-      <GearPrioritiesForm
-        gearSets={gearSets}
-        substats={substats}
-        mainStatTypes={mainStatTypes}
-      />
     </div>
   );
 }

@@ -34,12 +34,5 @@
         5432,
         6379
     ],
-    "containerEnv": {
-        "DEBIAN_FRONTEND": "noninteractive",
-        "CI": "1",
-        "FORCE_COLOR": "0",
-        "NO_COLOR": "1",
-        "TERM": "xterm"
-    },
     "postStartCommand": "npm install --no-color --no-audit --no-fund"
 }

@@ -1,0 +1,32 @@
+
+> nextjs_template@0.1.0 build
+> next build
+
+   ▲ Next.js 15.3.4
+   - Environments: .env.local, .env
+
+   Creating an optimized production build ...
+Failed to compile.
+
+./src/app/(dashboard)/recommendations/edit/components/recommendation-form.tsx
+Error:   [31mx[0m Unexpected token `SelectValue`. Expected jsx identifier
+     ,-[[36;1;4m/workspace/src/app/(dashboard)/recommendations/edit/components/recommendation-form.tsx[0m:280:1]
+ [2m277[0m |     </form>
+ [2m278[0m |   );
+ [2m279[0m | }
+ [2m280[0m |                         <SelectValue placeholder="Select main stat" />
+     : [35;1m                         ^^^^^^^^^^^[0m
+ [2m281[0m |                       </SelectTrigger>
+ [2m282[0m |                       <SelectContent>
+ [2m283[0m |                         {Object.values(MainStatType).map((type) => (
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/app/(dashboard)/recommendations/edit/components/recommendation-form.tsx
+./src/app/(dashboard)/recommendations/edit/page.tsx
+
+
+> Build failed because of webpack errors

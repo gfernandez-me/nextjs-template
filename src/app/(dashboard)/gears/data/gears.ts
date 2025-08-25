@@ -192,11 +192,14 @@ export class GearsDataAccess {
    */
   async updateGearEquipment(
     gearId: number,
-    heroIngameId: bigint | null
+    heroId: number | null
   ): Promise<void> {
     await prisma.gears.update({
       where: { id: gearId, userId: this.userId },
-      data: { equipped: !!heroIngameId, equippedBy: heroIngameId },
+      data: {
+        equipped: !!heroId,
+        heroId,
+      },
     });
   }
 

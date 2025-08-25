@@ -15,9 +15,9 @@ const routes = [
     description: "Upload gear data from Fribbels optimizer",
   },
   {
-    href: "/gear-priorities",
-    label: "Gear Priorities",
-    description: "Configure set, main stat, and substat priorities",
+    href: "/gear-recommendations",
+    label: "Gear Recommendations",
+    description: "Configure gear optimization preferences",
   },
   {
     href: "/settings",

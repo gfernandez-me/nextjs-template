@@ -81,10 +81,6 @@ model StatTypes {
 
   // Relationships
   GearSubStats     GearSubStats[]
-  GearPrioritySub1 GearPriorities[] @relation("PrioritySub1")
-  GearPrioritySub2 GearPriorities[] @relation("PrioritySub2")
-  GearPrioritySub3 GearPriorities[] @relation("PrioritySub3")
-  GearPrioritySub4 GearPriorities[] @relation("PrioritySub4")
 }
 ```
 

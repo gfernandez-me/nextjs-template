@@ -56,8 +56,8 @@ const data = {
       icon: IconFileUpload,
     },
     {
-      title: "Gear Priorities",
-      url: "/gear-priorities",
+      title: "Gear Recommendations",
+      url: "/gear-recommendations",
       icon: IconListDetails,
     },
     {
@@ -88,7 +88,7 @@ const data = {
         },
         {
           title: "Configure Priorities",
-          url: "/gear-priorities",
+          url: "/gear-recommendations",
         },
       ],
     },

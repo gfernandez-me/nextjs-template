@@ -38,7 +38,6 @@ export function LoginForm({
     setLoading(true);
 
     try {
-      console.log("Attempting login with:", { email });
       const result = await authClient.signIn.email({
         email,
         password,
@@ -48,9 +47,6 @@ export function LoginForm({
         console.error("Login error:", result.error);
         throw new Error(result.error.message || "Authentication failed");
       }
-
-      console.log("Login successful:", result);
-
       // Force a hard redirect to /home
       window.location.href = "/home";
     } catch (err) {

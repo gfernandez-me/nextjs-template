@@ -197,14 +197,6 @@ export function calculateScore(gear: GearForOptimization): number {
     // Convert Decimal to number if needed
     const value = Number(substat.statValue.toString());
 
-    console.log("Processing substat:", {
-      statName,
-      value,
-      weight,
-      isPercentage,
-      currentScore: score,
-    });
-
     if (!isNaN(value) && !isNaN(weight)) {
       score += value * weight;
     }

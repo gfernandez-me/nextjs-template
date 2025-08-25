@@ -66,7 +66,6 @@ if (!isAdmin) {
 
 **Relationships:**
 
-- **GearPriorities**: One-to-many with gear priority configurations
 - **Gears**: Indirect relationship through gear.set field
 
 ### 3.2 Data Validation Rules
@@ -154,7 +153,7 @@ interface CreateGearSetResponse {
 **Data Access:**
 
 - Include all gear set fields
-- Include relationship counts (gear priorities, gears)
+- Include relationship counts (gear recommendations, gears)
 - Support for eager loading of related data
 
 ### 4.3 Update Operation
@@ -194,13 +193,13 @@ interface UpdateGearSetRequest {
 
 - **Soft Delete**: Mark as inactive instead of hard delete
 - **Dependency Check**: Verify no gears are using this set
-- **Cascade Handling**: Handle related gear priority configurations
+- **Cascade Handling**: Handle related gear recommendation configurations
 - **Audit Trail**: Log deletion for administrative purposes
 
 **Deletion Restrictions:**
 
 - Cannot delete if gears are using the set
-- Cannot delete if gear priorities reference it
+- Cannot delete if gear recommendations reference it
 - Cannot delete system-critical sets (SpeedSet, AttackSet, etc.)
 
 ## 5. User Interface
@@ -330,7 +329,7 @@ interface ErrorResponse {
 
 **Priority Relationships:**
 
-- Update gear priority configurations
+- Update gear recommendation configurations
 - Handle set deactivation gracefully
 - Maintain optimization calculations
 

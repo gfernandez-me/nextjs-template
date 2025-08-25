@@ -39,10 +39,7 @@ export function isBoolean(value: unknown): value is boolean {
 /**
  * Safely cast to number with fallback
  */
-export function safeNumber(
-  value: unknown,
-  fallback: number | null = 0
-): number | null {
+export function safeNumber(value: unknown, fallback: number = 0): number {
   if (isNumber(value)) return value;
   if (isString(value)) {
     const parsed = parseFloat(value);
@@ -54,10 +51,7 @@ export function safeNumber(
 /**
  * Safely cast to string with fallback
  */
-export function safeString(
-  value: unknown,
-  fallback: string | null = ""
-): string | null {
+export function safeString(value: unknown, fallback: string = ""): string {
   if (isString(value)) return value.trim();
   if (isNumber(value)) return String(value);
   return fallback;
@@ -145,31 +139,33 @@ export function validateGearRank(value: unknown): GearRank {
 /**
  * Validate and cast main stat type
  */
-export function validateMainStatType(value: unknown): MainStatType {
-  if (isString(value)) {
-    const normalized = value.toLowerCase().replace(/[^a-z_]/g, "");
-
-    // Try exact match first
-    const exactMatch = Object.values(MainStatType).find(
-      (type) => type.toLowerCase() === normalized
-    );
-    if (exactMatch) return exactMatch;
-
-    // Try partial matches for common variations
-    if (normalized.includes("att") && normalized.includes("rate"))
+export function validateMainStatType(type: string): MainStatType {
+  switch (type) {
+    case "EffectivenessPercent":
+      return MainStatType.ACC;
+    case "Defense":
+      return MainStatType.DEF;
+    case "AttackPercent":
       return MainStatType.ATT_RATE;
-    if (normalized.includes("def") && normalized.includes("rate"))
-      return MainStatType.DEF_RATE;
-    if (
-      normalized.includes("max") &&
-      normalized.includes("hp") &&
-      normalized.includes("rate")
-    )
+    case "HealthPercent":
       return MainStatType.MAX_HP_RATE;
-    if (normalized.includes("cri") && normalized.includes("dmg"))
+    case "CriticalHitDamagePercent":
       return MainStatType.CRI_DMG;
+    case "Attack":
+      return MainStatType.ATT;
+    case "Speed":
+      return MainStatType.SPEED;
+    case "Health":
+      return MainStatType.MAX_HP;
+    case "DefensePercent":
+      return MainStatType.DEF_RATE;
+    case "CriticalHitChancePercent":
+      return MainStatType.CRI;
+    case "EffectResistancePercent":
+      return MainStatType.RES;
+    default:
+      throw new Error(`Unknown main stat type: ${type}`);
   }
-  return MainStatType.ATT;
 }
 
 /**
@@ -249,20 +245,20 @@ export function validateHeroData(rawData: Record<string, unknown>) {
     element: validateHeroElement(rawData.element),
     rarity: validateHeroRarity(rawData.rarity),
     class: validateHeroClass(rawData.class),
-    attack: safeNumber(rawData.attack, null),
-    defense: safeNumber(rawData.defense, null),
-    health: safeNumber(rawData.health, null),
-    speed: safeNumber(rawData.speed, null),
-    criticalHitChance: safeNumber(rawData.criticalHitChance, null),
-    criticalHitDamage: safeNumber(rawData.criticalHitDamage, null),
-    effectiveness: safeNumber(rawData.effectiveness, null),
-    effectResistance: safeNumber(rawData.effectResistance, null),
-    weaponId: safeNumber(rawData.weaponId, null),
-    armorId: safeNumber(rawData.armorId, null),
-    helmetId: safeNumber(rawData.helmetId, null),
-    necklaceId: safeNumber(rawData.necklaceId, null),
-    ringId: safeNumber(rawData.ringId, null),
-    bootId: safeNumber(rawData.bootId, null),
+    attack: safeNumber(rawData.attack),
+    defense: safeNumber(rawData.defense),
+    health: safeNumber(rawData.health),
+    speed: safeNumber(rawData.speed),
+    criticalHitChance: safeNumber(rawData.criticalHitChance),
+    criticalHitDamage: safeNumber(rawData.criticalHitDamage),
+    effectiveness: safeNumber(rawData.effectiveness),
+    effectResistance: safeNumber(rawData.effectResistance),
+    weaponId: safeNumber(rawData.weaponId),
+    armorId: safeNumber(rawData.armorId),
+    helmetId: safeNumber(rawData.helmetId),
+    necklaceId: safeNumber(rawData.necklaceId),
+    ringId: safeNumber(rawData.ringId),
+    bootId: safeNumber(rawData.bootId),
   };
 }
 
@@ -272,21 +268,21 @@ export function validateHeroData(rawData: Record<string, unknown>) {
 export function validateGearData(rawData: Record<string, unknown>) {
   return {
     ingameId: safeBigInt(rawData.id || rawData.ingameId),
-    code: safeString(rawData.code, "unknown") || "unknown", // Ensure code is never null
+    code: safeString(rawData.code), // code is nullable
     type: validateGearType(rawData.type),
     rank: validateGearRank(rawData.rank),
-    level: safeNumber(rawData.level, 1) || 1, // Ensure level is never null
-    enhance: safeNumber(rawData.enhance, 0) || 0, // Ensure enhance is never null
-    mainStatType: validateMainStatType(rawData.mainStatType),
-    mainStatValue: safeNumber(rawData.mainStatValue, 0) || 0, // Ensure mainStatValue is never null
-    mainStatBaseValue: safeNumber(rawData.mainStatBaseValue, 0) || 0, // Ensure mainStatBaseValue is never null
-    statMultiplier: safeNumber(rawData.statMultiplier, 1) || 1, // Ensure statMultiplier is never null
-    tierMultiplier: safeNumber(rawData.tierMultiplier, 1) || 1, // Ensure tierMultiplier is never null
-    storage: safeBoolean(rawData.storage, true) || true, // Ensure storage is never null
-    equipped: false, // Will be set based on equippedBy
-    equippedBy: null, // Will be set during processing
-    // We don't need ingameEquippedId since we have equippedBy
-    ingameEquippedId: null,
+    set: safeString(rawData.set), // set is required, default to empty string as fallback
+    level: safeNumber(rawData.level, 1), // Ensure level is never null
+    enhance: safeNumber(rawData.enhance, 0), // Ensure enhance is never null
+    mainStatType: null, // will be linked later
+    mainStatValue: safeNumber(rawData.mainStatValue, 0), // Ensure mainStatValue is never null
+    mainStatBaseValue: safeNumber(rawData.mainStatBaseValue, 0), // Ensure mainStatBaseValue is never null
+    statMultiplier: safeNumber(rawData.statMultiplier, 1), // Ensure statMultiplier is never null
+    tierMultiplier: safeNumber(rawData.tierMultiplier, 1), // Ensure tierMultiplier is never null
+    storage: safeBoolean(rawData.storage, true), // Ensure storage is never null
+    equipped: safeBoolean(rawData.equipped, false), // Whether gear is equipped
+    ingameEquippedId: safeBigInt(rawData.ingameEquippedId), // Keep track of equipped hero ID from the game
+    heroId: null, // Will be linked based on ingameEquippedId
     fScore: null, // Will be calculated later
     score: null, // Will be calculated later
   };
@@ -302,25 +298,4 @@ export function validateSubstatData(rawData: Record<string, unknown>) {
     weight: 1.0, // Default weight
     isModified: false, // Default to not modified
   };
-}
-
-/**
- * Map Fribbels stat names to database stat names
- */
-export function mapStatName(statName: string): string {
-  const statNameMap: Record<string, string> = {
-    CriticalHitChancePercent: "Crit %",
-    CriticalHitDamagePercent: "Crit Dmg %",
-    AttackPercent: "Attack %",
-    DefensePercent: "Defense %",
-    HealthPercent: "Health %",
-    EffectivenessPercent: "Effectiveness %",
-    EffectResistancePercent: "Effect Resist %",
-    Speed: "Speed",
-    Attack: "Attack",
-    Defense: "Defense",
-    Health: "Health",
-  };
-
-  return statNameMap[statName] || statName;
 }

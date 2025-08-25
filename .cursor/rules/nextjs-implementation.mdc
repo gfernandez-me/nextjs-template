@@ -34,7 +34,7 @@ src/
 │   │   │   ├── components/ # Page-specific components
 │   │   │   │   ├── gear-table/ # Gear table components
 │   │   │   │   ├── GearFilters.tsx
-│   │   │   │   └── gear-priorities-form.tsx
+│   │   │   │   └── gear-recommendations-form.tsx
 │   │   │   ├── data/      # Page-specific data access
 │   │   │   │   └── gears.ts # GearsDataAccess class
 │   │   │   └── page.tsx   # Main page component

@@ -20,7 +20,7 @@ This folder contains all the rules, context, and documentation for the Epic 7 Ge
 - **`pages/home.mdc`** - Home dashboard business rules and requirements
 - **`pages/gears.mdc`** - Gear management page business rules
 - **`pages/heroes.mdc`** - Hero management page business rules
-- **`pages/gear-priorities.mdc`** - Gear optimization preferences business rules
+- **`pages/gear-recommendations.mdc`** - Gear optimization preferences business rules
 - **`pages/settings.mdc`** - User settings and scoring configuration business rules
 - **`pages/upload.mdc`** - File upload and Fribbels integration business rules
 - **`pages/auth.mdc`** - Authentication pages business rules
@@ -112,15 +112,6 @@ For complex commands, use the non-interactive wrapper:
 .devcontainer/run-noninteractive.sh 'npm run build && npm run lint'
 ```
 
-### Environment Variables
-
-The devcontainer automatically sets:
-
-- `CI=1` - Non-interactive mode
-- `FORCE_COLOR=0` - No colors
-- `NO_COLOR=1` - Disable colors
-- `DEBIAN_FRONTEND=noninteractive` - No prompts
-
 ### What NOT to Run in Chat
 
 - **Development servers** (`npm run dev`) - Use terminal
@@ -159,7 +150,7 @@ When adding new rules:
 - ✅ **Home Dashboard** - Basic structure created, content needed
 - ✅ **Gears Management** - Basic structure created, content needed
 - ✅ **Heroes Management** - Basic structure created, content needed
-- ✅ **Gear Priorities** - Basic structure created, content needed
+- ✅ **Gear Recommendations** - Basic structure created, content needed
 - ✅ **Settings** - Basic structure + scoring rules added, other content needed
 - ✅ **Upload** - Basic structure + Fribbels integration added, other content needed
 - ✅ **Authentication** - Basic structure created, content needed

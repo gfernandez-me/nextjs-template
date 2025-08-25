@@ -6,9 +6,10 @@ import {
   validateHeroData,
   validateGearData,
   validateSubstatData,
-  mapStatName,
+  validateMainStatType,
 } from "@/lib/epic7-validation";
 import { calculateFScore, calculateScore } from "@/lib/calculate-scores";
+import { MainStatType } from "#prisma/generated/client";
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
@@ -43,6 +44,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       type: string;
       value: number | string;
       rolls?: number;
+    }
+
+    interface MainStat {
+      type: string;
+      value: number;
     }
     interface FribbelsItem {
       id: number | string;
@@ -112,7 +118,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const errors: string[] = [];
 
     // STEP 1: Import heroes first if present
-    const heroMap: Map<string, bigint> = new Map(); // ingameId -> database id mapping
+    const heroMap: Map<bigint, number> = new Map(); // ingameId -> database id mapping
 
     if (data.heroes && Array.isArray(data.heroes)) {
       for (const hero of data.heroes) {
@@ -126,7 +132,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           };
 
           const createdHero = await prisma.heroes.create({ data: heroData });
-          heroMap.set(createdHero.ingameId.toString(), createdHero.ingameId);
+          heroMap.set(validatedHeroData.ingameId, createdHero.id);
         } catch (error) {
           errors.push(
             `Failed to import hero ${
@@ -138,31 +144,26 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     // STEP 2: Process each gear item
+    // get all stat types once to minimize DB calls
+    const statTypes = await prisma.statTypes.findMany();
+    const statTypeMap: Map<string, number> = new Map();
+    for (const statType of statTypes) {
+      statTypeMap.set(statType.originalStatName, statType.id);
+    }
     for (const item of data.items) {
       try {
         const itemObj = item as unknown as Record<string, unknown>;
-        // Determine which hero this gear is equipped by
-        let equippedBy: bigint | null = null;
-        const rawEquipped = itemObj.equippedBy ?? itemObj.ingameEquippedId;
-
-        if (
-          rawEquipped &&
-          rawEquipped !== "0" &&
-          rawEquipped !== "undefined" &&
-          rawEquipped !== "null"
-        ) {
-          const heroIngameId = String(rawEquipped);
-          if (heroMap.has(heroIngameId)) {
-            equippedBy = heroMap.get(heroIngameId)!;
-          }
-        }
+        const mainStat = itemObj.main as MainStat;
 
         // Validate and cast gear data
         const validatedGearData = validateGearData(itemObj);
         const gearData = {
           ...validatedGearData,
-          equipped: equippedBy !== null, // Set equipped based on whether we have a hero
-          equippedBy: equippedBy,
+          mainStatType: validateMainStatType(mainStat.type),
+          equipped: validatedGearData.ingameEquippedId !== null,
+          heroId: validatedGearData.ingameEquippedId
+            ? heroMap.get(validatedGearData.ingameEquippedId)
+            : null,
           userId: session.user.id,
         };
 
@@ -176,7 +177,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         ) {
           for (const substat of (item as FribbelsItem).substats!) {
             const substatObj = substat as unknown as Record<string, unknown>;
-            const statTypeId = await getStatTypeId(substatObj.type as string);
+            const statTypeId = statTypeMap.get(substatObj.type as string);
             if (statTypeId) {
               // Validate and cast substat data
               const validatedSubstatData = validateSubstatData(substatObj);
@@ -230,15 +231,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             let score: number | null = null;
 
             try {
-              // Log gear data before calculation
-              console.log("Gear data for scoring:", {
-                gearId: gear.id,
-                substats: gearWithSubstats.GearSubStats.map((s) => ({
-                  statName: s.StatType?.statName,
-                  value: s.statValue,
-                })),
-              });
-
               fScore = calculateFScore(gearWithSubstats, scoreSettings);
               score = calculateScore(gearWithSubstats);
 
@@ -254,34 +246,16 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
                   score,
                 },
               });
-
-              console.log("Updated scores:", {
-                gearId: gear.id,
-                fScore,
-                score,
-              });
             } catch (error) {
               console.error(
                 "Error calculating scores:",
                 error,
                 gearWithSubstats
               );
-              // On error, ensure we still set default scores
-              await prisma.gears.update({
-                where: { id: gear.id },
-                data: {
-                  fScore: 0,
-                  score: 0,
-                },
-              });
             }
           }
         } catch (scoreError) {
-          console.error(
-            `Error calculating scores for gear ${gear.id}:`,
-            scoreError
-          );
-          // Don't fail the import if score calculation fails
+          console.error(`Error saving substats ${gear.id}:`, scoreError);
         }
 
         importedCount++;
@@ -306,27 +280,5 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       { message: "Internal server error" },
       { status: 500 }
     );
-  }
-}
-
-// Helper functions moved to @/lib/epic7-mapping.ts
-
-// Mapping functions moved to @/lib/epic7-mapping.ts
-
-async function getStatTypeId(statName: string): Promise<number | null> {
-  try {
-    // Use the validation utility for stat name mapping
-    const mappedName = mapStatName(statName);
-
-    // Find the stat type in the database
-    const statType = await prisma.statTypes.findFirst({
-      where: { statName: mappedName },
-      select: { id: true },
-    });
-
-    return statType?.id || null;
-  } catch (error) {
-    console.error(`Error finding stat type for ${statName}:`, error);
-    return null;
   }
 }

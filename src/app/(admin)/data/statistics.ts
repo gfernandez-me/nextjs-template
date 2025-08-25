@@ -445,7 +445,6 @@ export class StatisticsDataAccess {
     const totalGearsWithSets = await prisma.gears.count({
       where: {
         userId: this.userId,
-        set: { not: null },
       },
     });
 

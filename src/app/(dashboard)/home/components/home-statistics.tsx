@@ -120,7 +120,9 @@ export function HomeStatistics({ stats }: HomeStatisticsProps) {
                 </div>
                 <div className="flex items-center space-x-2">
                   <span className="text-sm text-muted-foreground">•</span>
-                  <span className="text-sm">Configure gear priorities</span>
+                  <span className="text-sm">
+                    Configure gear recommendations
+                  </span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <span className="text-sm text-muted-foreground">•</span>
