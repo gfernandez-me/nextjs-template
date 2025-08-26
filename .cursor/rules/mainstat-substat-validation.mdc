@@ -1,0 +1,210 @@
+# Main Stat and Substat Validation Rules
+
+## Overview
+
+This document defines the validation rules for preventing conflicts between main stats and substats on the same gear piece.
+
+## Core Rule
+
+**A gear piece cannot have a substat that is the same as its main stat.**
+
+## Gear-Specific Restrictions
+
+### Fixed Main Stats (Cannot be substats on same gear)
+
+| Gear Type | Main Stat            | Cannot Have as Substat |
+| --------- | -------------------- | ---------------------- |
+| Weapon    | ATT (Flat Attack)    | ATT (Flat Attack)      |
+| Helm      | MAX_HP (Flat Health) | MAX_HP (Flat Health)   |
+| Armor     | DEF (Flat Defense)   | DEF (Flat Defense)     |
+
+### Variable Main Stats (Cannot be substats on same gear)
+
+| Gear Type | Main Stat Options                                           | Cannot Have as Substat |
+| --------- | ----------------------------------------------------------- | ---------------------- |
+| Necklace  | ATT, DEF, MAX_HP, ATT_RATE, HP_RATE, DEF_RATE, CRI, CRI_DMG | Same stat type as main |
+| Ring      | ATT, DEF, MAX_HP, ATT_RATE, HP_RATE, DEF_RATE, ACC, RES     | Same stat type as main |
+| Boots     | ATT, DEF, MAX_HP, ATT_RATE, HP_RATE, DEF_RATE, SPEED        | Same stat type as main |
+
+## Implementation Examples
+
+### Valid Combinations
+
+```typescript
+// Weapon with ATT main stat
+{
+  type: GearType.WEAPON,
+  mainStatType: MainStatType.ATT,        // Flat Attack (fixed)
+  substats: [
+    { statType: "speed", value: 4 },     // ✅ Speed substat
+    { statType: "att_rate", value: 8 },  // ✅ Attack % substat
+    { statType: "cri", value: 4 },       // ✅ Crit % substat
+  ]
+}
+
+// Boots with SPEED main stat
+{
+  type: GearType.BOOTS,
+  mainStatType: MainStatType.SPEED,      // Speed main stat
+  substats: [
+    { statType: "att", value: 20 },      // ✅ Flat Attack substat
+    { statType: "att_rate", value: 8 },  // ✅ Attack % substat
+    { statType: "cri", value: 4 },       // ✅ Crit % substat
+  ]
+}
+```
+
+### Invalid Combinations
+
+```typescript
+// ❌ Weapon with ATT main stat and ATT substat
+{
+  type: GearType.WEAPON,
+  mainStatType: MainStatType.ATT,        // Flat Attack main
+  substats: [
+    { statType: "att", value: 20 },      // ❌ Cannot have ATT as substat
+    { statType: "speed", value: 4 },     // ✅ Speed substat
+  ]
+}
+
+// ❌ Boots with SPEED main stat and SPEED substat
+{
+  type: GearType.BOOTS,
+  mainStatType: MainStatType.SPEED,      // Speed main stat
+  substats: [
+    { statType: "speed", value: 4 },     // ❌ Cannot have speed as substat
+    { statType: "att", value: 20 },      // ✅ Flat Attack substat
+  ]
+}
+```
+
+## Stat Type Mapping
+
+### Main Stat Types to Substat Restrictions
+
+```typescript
+// When a gear has these main stats, these substats are forbidden:
+const forbiddenSubstatMap = {
+  [MainStatType.ATT]: [MainStatType.ATT], // Flat Attack
+  [MainStatType.DEF]: [MainStatType.DEF], // Flat Defense
+  [MainStatType.MAX_HP]: [MainStatType.MAX_HP], // Flat Health
+  [MainStatType.ATT_RATE]: [MainStatType.ATT_RATE], // Attack %
+  [MainStatType.DEF_RATE]: [MainStatType.DEF_RATE], // Defense %
+  [MainStatType.MAX_HP_RATE]: [MainStatType.MAX_HP_RATE], // Health %
+  [MainStatType.CRI]: [MainStatType.CRI], // Crit Rate %
+  [MainStatType.CRI_DMG]: [MainStatType.CRI_DMG], // Crit Damage %
+  [MainStatType.SPEED]: [MainStatType.SPEED], // Speed
+  [MainStatType.ACC]: [MainStatType.ACC], // Effectiveness
+  [MainStatType.RES]: [MainStatType.RES], // Effect Resistance
+};
+```
+
+## UI Implementation
+
+### Form Validation
+
+1. **Main Stat Selection**: When user selects a main stat, filter out that stat from substat options
+2. **Substat Selection**: Disable or hide substat options that conflict with the selected main stat
+3. **Real-time Feedback**: Show clear error messages when conflicts are detected
+
+### Component Logic
+
+```typescript
+// Filter out forbidden substats based on main stat
+const getAvailableSubstats = (
+  mainStatType: MainStatType,
+  allStatTypes: StatType[]
+) => {
+  const forbiddenStats = forbiddenSubstatMap[mainStatType] || [];
+  return allStatTypes.filter(
+    (stat) => !forbiddenStats.includes(stat.mainStatType)
+  );
+};
+
+// Validate gear item before submission
+const validateGearItem = (item: GearItem) => {
+  const forbiddenStats = forbiddenSubstatMap[item.mainStatType] || [];
+  const hasConflict = item.substats.some((substat) =>
+    forbiddenStats.includes(substat.statType)
+  );
+
+  if (hasConflict) {
+    throw new Error(
+      `Cannot have ${item.mainStatType} as substat when it's the main stat`
+    );
+  }
+};
+```
+
+## Database Constraints
+
+### Current Schema Support
+
+The current Prisma schema supports this validation through:
+
+1. **StatTypes.allowedMainStatFor**: Array of gear types that can have this stat as main
+2. **StatTypes.allowedSubstatFor**: Array of gear types that can have this stat as substat
+3. **GearRecommendationItem**: Separate fields for main stat and substats
+
+### Validation at Database Level
+
+Consider adding database constraints to prevent invalid combinations:
+
+```sql
+-- Example constraint (if needed)
+ALTER TABLE gear_recommendation_items
+ADD CONSTRAINT check_main_substat_conflict
+CHECK (
+  NOT (
+    main_stat_type = stat_type1_id OR
+    main_stat_type = stat_type2_id OR
+    main_stat_type = stat_type3_id OR
+    main_stat_type = stat_type4_id
+  )
+);
+```
+
+## Testing Scenarios
+
+### Test Cases
+
+1. **Valid Gear Creation**: Create gear with non-conflicting main stat and substats
+2. **Invalid Gear Creation**: Attempt to create gear with conflicting main stat and substat
+3. **Edge Cases**: Test with all substat slots filled
+4. **UI Behavior**: Verify form validation prevents invalid selections
+
+### Test Data
+
+```typescript
+const testCases = [
+  {
+    name: "Valid Weapon",
+    gear: {
+      type: GearType.WEAPON,
+      mainStatType: MainStatType.ATT,
+      substats: [MainStatType.SPEED, MainStatType.CRI],
+    },
+    expected: "valid",
+  },
+  {
+    name: "Invalid Weapon - ATT conflict",
+    gear: {
+      type: GearType.WEAPON,
+      mainStatType: MainStatType.ATT,
+      substats: [MainStatType.ATT, MainStatType.SPEED],
+    },
+    expected: "invalid",
+  },
+];
+```
+
+## Related Rules
+
+- **Stat Rules**: See `.cursor/rules/stat-rules.mdc`
+- **Business Rules**: See `.cursor/rules/business-rules.mdc`
+- **Gear Types**: See `.cursor/rules/business-rules.mdc` for gear type definitions
+  description:
+  globs:
+  alwaysApply: true
+
+---

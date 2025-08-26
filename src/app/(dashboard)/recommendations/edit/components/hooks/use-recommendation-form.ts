@@ -2,13 +2,30 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { toast } from "sonner";
-import { GearType, MainStatType, StatTypes } from "#prisma";
+import {
+  GearType,
+  MainStatType,
+  StatTypes,
+  GearRecommendation,
+  GearRecommendationItem,
+  StatTypes as StatTypesModel,
+} from "#prisma";
 import type { HeroForRecommendation } from "../../data/actions";
-import { createRecommendation } from "../../data/actions";
+import { hasMainSubstatConflict } from "@/lib/stat-validation";
 import {
   DEFAULT_FORM_VALUES,
   FORM_MESSAGES,
 } from "../constants/form-constants";
+
+// Type for recommendation with included relations (with serialized decimals)
+type RecommendationWithItems = GearRecommendation & {
+  GearRecommendationItem: (GearRecommendationItem & {
+    StatType1: Omit<StatTypesModel, "weight"> & { weight: number };
+    StatType2: (Omit<StatTypesModel, "weight"> & { weight: number }) | null;
+    StatType3: (Omit<StatTypesModel, "weight"> & { weight: number }) | null;
+    StatType4: (Omit<StatTypesModel, "weight"> & { weight: number }) | null;
+  })[];
+};
 
 // ============================================================================
 // FORM SCHEMAS AND TYPES
@@ -39,11 +56,29 @@ export type FormValues = z.infer<typeof schema>;
 export function useRecommendationForm(
   heroes: HeroForRecommendation[],
   statTypes: StatTypes[],
-  userId: string
+  recommendation?: RecommendationWithItems
 ) {
   const router = useRouter();
 
-  const [values, setValues] = React.useState<FormValues>(DEFAULT_FORM_VALUES);
+  // Initialize form with existing data if editing
+  const initialValues = React.useMemo(() => {
+    if (!recommendation) return DEFAULT_FORM_VALUES;
+
+    return {
+      name: recommendation.name,
+      heroName: recommendation.heroName || "",
+      items: recommendation.GearRecommendationItem.map((item) => ({
+        type: item.type,
+        mainStatType: item.mainStatType,
+        statType1Id: item.statType1Id.toString(),
+        statType2Id: item.statType2Id?.toString() || "",
+        statType3Id: item.statType3Id?.toString() || "",
+        statType4Id: item.statType4Id?.toString() || "",
+      })),
+    };
+  }, [recommendation]);
+
+  const [values, setValues] = React.useState<FormValues>(initialValues);
   const [errors, setErrors] = React.useState<Record<string, string[]>>({});
   const [submitting, setSubmitting] = React.useState(false);
 
@@ -101,27 +136,72 @@ export function useRecommendationForm(
       return;
     }
 
+    // Validate main stat and substat conflicts
+    const validationErrors: Record<string, string[]> = {};
+    for (let i = 0; i < parsed.data.items.length; i++) {
+      const item = parsed.data.items[i];
+      const substatIds = [
+        item.statType1Id,
+        item.statType2Id,
+        item.statType3Id,
+        item.statType4Id,
+      ];
+
+      if (hasMainSubstatConflict(item.mainStatType, substatIds, statTypes)) {
+        validationErrors[`items.${i}.mainStatType`] = [
+          "Cannot have main stat as substat on the same gear",
+        ];
+        break;
+      }
+    }
+
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      setSubmitting(false);
+      return;
+    }
+
     try {
-      await createRecommendation({
-        name: parsed.data.name,
-        userId: userId,
-        heroName: parsed.data.heroName || undefined,
-        items: parsed.data.items.map((it) => ({
-          type: it.type,
-          mainStatType: it.mainStatType,
-          statType1Id: parseInt(it.statType1Id),
-          statType2Id: it.statType2Id ? parseInt(it.statType2Id) : undefined,
-          statType3Id: it.statType3Id ? parseInt(it.statType3Id) : undefined,
-          statType4Id: it.statType4Id ? parseInt(it.statType4Id) : undefined,
-        })),
+      const response = await fetch("/api/recommendations", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: recommendation?.id, // Include ID for updates
+          name: parsed.data.name,
+          heroName: parsed.data.heroName || undefined,
+          items: parsed.data.items.map((it) => ({
+            type: it.type,
+            mainStatType: it.mainStatType,
+            statType1Id: parseInt(it.statType1Id),
+            statType2Id: it.statType2Id ? parseInt(it.statType2Id) : undefined,
+            statType3Id: it.statType3Id ? parseInt(it.statType3Id) : undefined,
+            statType4Id: it.statType4Id ? parseInt(it.statType4Id) : undefined,
+          })),
+        }),
       });
 
-      toast.success(FORM_MESSAGES.CREATE_SUCCESS);
+      if (!response.ok) {
+        throw new Error(
+          recommendation
+            ? "Failed to update recommendation"
+            : "Failed to create recommendation"
+        );
+      }
+
+      const successMessage = recommendation
+        ? FORM_MESSAGES.UPDATE_SUCCESS
+        : FORM_MESSAGES.CREATE_SUCCESS;
+      toast.success(successMessage);
       router.push("/recommendations");
       router.refresh();
     } catch (err) {
       console.error(err);
-      toast.error(FORM_MESSAGES.CREATE_ERROR);
+      const errorMessage = recommendation
+        ? FORM_MESSAGES.UPDATE_ERROR
+        : FORM_MESSAGES.CREATE_ERROR;
+      toast.error(errorMessage);
     } finally {
       setSubmitting(false);
     }

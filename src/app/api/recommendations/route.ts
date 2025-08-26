@@ -1,54 +1,162 @@
-import { type NextRequest } from "next/server";
-import { z } from "zod";
+import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import prisma from "@/lib/prisma";
 import { headers } from "next/headers";
-import { GearType, MainStatType } from "#prisma";
+import prisma from "@/lib/prisma";
+import { convertDecimals } from "@/lib/decimal";
 
-// Validation schema for the request body
-const createRecommendationSchema = z.object({
-  name: z.string().min(1),
-  description: z.string().optional(),
-  heroIngameIds: z.array(z.string()),
-  items: z.array(
-    z.object({
-      type: z.nativeEnum(GearType),
-      mainStatType: z.nativeEnum(MainStatType),
-      setIds: z.array(z.number()),
-    })
-  ),
-  isActive: z.boolean(),
-});
+export const dynamic = "force-dynamic";
 
-export async function POST(request: NextRequest) {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session?.user?.id) {
-    return new Response("Unauthorized", { status: 401 });
-  }
-
+export async function GET() {
   try {
-    const body = await request.json();
-    const data = createRecommendationSchema.parse(body);
+    // Get current user using Better Auth
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
 
-    // Create the recommendation
-    const recommendation = await prisma.gearRecommendation.create({
-      data: {
-        name: data.name,
-        userId: session.user.id,
+    if (!session?.user) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+
+    // Get all recommendations for the current user
+    const recommendations = await prisma.gearRecommendation.findMany({
+      where: { userId: session.user.id },
+      include: {
+        GearRecommendationItem: {
+          include: {
+            StatType1: true,
+            StatType2: true,
+            StatType3: true,
+            StatType4: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
       },
     });
 
-    return Response.json({ id: recommendation.id });
+    // Convert Decimal types to numbers for client component compatibility
+    const serializedRecommendations = convertDecimals(recommendations);
+
+    return NextResponse.json(serializedRecommendations);
   } catch (error) {
-    console.error("Failed to create recommendation:", error);
-    return new Response(
-      error instanceof z.ZodError
-        ? JSON.stringify(error.errors)
-        : "Internal Server Error",
-      { status: error instanceof z.ZodError ? 400 : 500 }
+    console.error("Get recommendations error:", error);
+    return NextResponse.json(
+      { message: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    // Get current user using Better Auth
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session?.user) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const isUpdate = body.id && typeof body.id === "number";
+
+    if (isUpdate) {
+      // Update existing recommendation
+      const recommendation = await prisma.gearRecommendation.update({
+        where: {
+          id: body.id,
+          userId: session.user.id, // Ensure user owns this recommendation
+        },
+        data: {
+          name: body.name,
+          heroName: body.heroName || null,
+          // Delete existing items and recreate them
+          GearRecommendationItem: {
+            deleteMany: {},
+            create: body.items.map(
+              (item: {
+                type: string;
+                mainStatType: string;
+                statType1Id: number;
+                statType2Id?: number;
+                statType3Id?: number;
+                statType4Id?: number;
+              }) => ({
+                type: item.type,
+                mainStatType: item.mainStatType,
+                statType1Id: item.statType1Id,
+                statType2Id: item.statType2Id || null,
+                statType3Id: item.statType3Id || null,
+                statType4Id: item.statType4Id || null,
+              })
+            ),
+          },
+        },
+        include: {
+          GearRecommendationItem: {
+            include: {
+              StatType1: true,
+              StatType2: true,
+              StatType3: true,
+              StatType4: true,
+            },
+          },
+        },
+      });
+
+      // Convert Decimal types to numbers for client component compatibility
+      const serializedRecommendation = convertDecimals(recommendation);
+      return NextResponse.json(serializedRecommendation);
+    } else {
+      // Create new recommendation
+      const recommendation = await prisma.gearRecommendation.create({
+        data: {
+          name: body.name,
+          userId: session.user.id,
+          heroName: body.heroName || null,
+          GearRecommendationItem: {
+            create: body.items.map(
+              (item: {
+                type: string;
+                mainStatType: string;
+                statType1Id: number;
+                statType2Id?: number;
+                statType3Id?: number;
+                statType4Id?: number;
+              }) => ({
+                type: item.type,
+                mainStatType: item.mainStatType,
+                statType1Id: item.statType1Id,
+                statType2Id: item.statType2Id || null,
+                statType3Id: item.statType3Id || null,
+                statType4Id: item.statType4Id || null,
+              })
+            ),
+          },
+        },
+        include: {
+          GearRecommendationItem: {
+            include: {
+              StatType1: true,
+              StatType2: true,
+              StatType3: true,
+              StatType4: true,
+            },
+          },
+        },
+      });
+
+      // Convert Decimal types to numbers for client component compatibility
+      const serializedRecommendation = convertDecimals(recommendation);
+      return NextResponse.json(serializedRecommendation);
+    }
+  } catch (error) {
+    console.error("Create/Update recommendation error:", error);
+    return NextResponse.json(
+      { message: "Internal server error" },
+      { status: 500 }
     );
   }
 }

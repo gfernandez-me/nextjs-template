@@ -28,6 +28,10 @@ export const FORM_MESSAGES = {
   CREATE_ERROR: "Failed to create recommendation",
   CREATING: "Creating…",
   CREATE: "Create Recommendation",
+  UPDATE_SUCCESS: "Recommendation updated successfully",
+  UPDATE_ERROR: "Failed to update recommendation",
+  UPDATING: "Updating…",
+  UPDATE: "Update Recommendation",
 } as const;
 
 // Substat field labels

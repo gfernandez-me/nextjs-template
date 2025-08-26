@@ -1,50 +1,6 @@
-import { GearType, MainStatType, HeroElement, HeroClass } from "#prisma";
+import { HeroElement, HeroClass } from "#prisma";
 import prisma from "@/lib/prisma";
 import { convertDecimals } from "@/lib/decimal";
-
-export interface CreateRecommendationInput {
-  name: string;
-  userId: string;
-  heroName?: string;
-  items: {
-    type: GearType;
-    mainStatType: MainStatType;
-    statType1Id: number;
-    statType2Id?: number;
-    statType3Id?: number;
-    statType4Id?: number;
-  }[];
-}
-
-export async function createRecommendation(data: CreateRecommendationInput) {
-  return prisma.gearRecommendation.create({
-    data: {
-      name: data.name,
-      userId: data.userId,
-      heroName: data.heroName,
-      GearRecommendationItem: {
-        create: data.items.map((item) => ({
-          type: item.type,
-          mainStatType: item.mainStatType,
-          statType1Id: item.statType1Id,
-          statType2Id: item.statType2Id,
-          statType3Id: item.statType3Id,
-          statType4Id: item.statType4Id,
-        })),
-      },
-    },
-    include: {
-      GearRecommendationItem: {
-        include: {
-          StatType1: true,
-          StatType2: true,
-          StatType3: true,
-          StatType4: true,
-        },
-      },
-    },
-  });
-}
 
 export type HeroForRecommendation = {
   id: number;
@@ -54,7 +10,7 @@ export type HeroForRecommendation = {
 };
 
 export async function getHeroes(): Promise<HeroForRecommendation[]> {
-  return prisma.heroes.findMany({
+  const heroes = await prisma.heroes.findMany({
     select: {
       id: true,
       name: true,
@@ -65,6 +21,13 @@ export async function getHeroes(): Promise<HeroForRecommendation[]> {
       name: "asc",
     },
   });
+
+  // Return distinct heroes by name (keep the first occurrence)
+  const distinctHeroes = heroes.filter(
+    (hero, index, self) => index === self.findIndex((h) => h.name === hero.name)
+  );
+
+  return distinctHeroes;
 }
 
 export async function getStatTypes() {

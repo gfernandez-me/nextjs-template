@@ -3,7 +3,6 @@ import {
   FormItem,
   FormLabel,
   FormControl,
-  FormMessage,
 } from "@/components/ui/form";
 import {
   Select,
@@ -18,6 +17,7 @@ import {
   getGearTypeLabel,
   getMainStatOptionsForGearType,
 } from "@/lib/stat-labels";
+import { getAvailableSubstats } from "@/lib/stat-validation";
 import type { Item } from "../hooks/use-recommendation-form";
 import { SUBSTAT_LABELS } from "../constants/form-constants";
 
@@ -115,7 +115,7 @@ export function GearItemFields({
           const key = `statType${subStatNum}Id` as keyof Item;
           return (
             <FormField
-              key={subStatNum}
+              key={`${subStatNum}-${item.mainStatType}`}
               control={{
                 value: (item as Record<string, string>)[key] || "",
                 onChange: (v) =>
@@ -141,11 +141,16 @@ export function GearItemFields({
                         />
                       </SelectTrigger>
                       <SelectContent>
-                        {statTypes.map((stat) => (
-                          <SelectItem key={stat.id} value={stat.id.toString()}>
-                            {stat.statName}
-                          </SelectItem>
-                        ))}
+                        {getAvailableSubstats(item.mainStatType, statTypes).map(
+                          (stat) => (
+                            <SelectItem
+                              key={stat.id}
+                              value={stat.id.toString()}
+                            >
+                              {stat.statName}
+                            </SelectItem>
+                          )
+                        )}
                       </SelectContent>
                     </Select>
                   </FormControl>

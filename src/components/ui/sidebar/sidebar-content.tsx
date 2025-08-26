@@ -182,7 +182,9 @@ export function SidebarInset({
         className
       )}
       {...props}
-    />
+    >
+      {children}
+    </main>
   );
 }
 

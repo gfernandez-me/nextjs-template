@@ -21,7 +21,7 @@ export default async function RecommendationEditPage() {
       <RecommendationForm
         heroes={heroes}
         statTypes={statTypes}
-        userId={session.user.id}
+        recommendation={undefined}
       />
     </div>
   );

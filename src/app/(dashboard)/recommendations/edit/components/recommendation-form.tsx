@@ -9,6 +9,38 @@ import { HeroField } from "./form-fields/hero-field";
 import { ItemsManagement } from "./items-management/items-management";
 import { FORM_MESSAGES } from "./constants/form-constants";
 
+// Type for recommendation with included relations (with serialized decimals)
+type RecommendationWithItems = {
+  id: number;
+  name: string;
+  heroName: string | null;
+  userId: string;
+  createdAt: Date;
+  updatedAt: Date;
+  GearRecommendationItem: Array<{
+    id: number;
+    createdAt: Date;
+    updatedAt: Date;
+    type: import("#prisma").GearType;
+    mainStatType: import("#prisma").MainStatType;
+    statType1Id: number;
+    statType2Id: number | null;
+    statType3Id: number | null;
+    statType4Id: number | null;
+    gearRecommendationId: number;
+    StatType1: Omit<import("#prisma").StatTypes, "weight"> & { weight: number };
+    StatType2:
+      | (Omit<import("#prisma").StatTypes, "weight"> & { weight: number })
+      | null;
+    StatType3:
+      | (Omit<import("#prisma").StatTypes, "weight"> & { weight: number })
+      | null;
+    StatType4:
+      | (Omit<import("#prisma").StatTypes, "weight"> & { weight: number })
+      | null;
+  }>;
+};
+
 // ============================================================================
 // RECOMMENDATION FORM COMPONENT
 // ============================================================================
@@ -16,13 +48,13 @@ import { FORM_MESSAGES } from "./constants/form-constants";
 interface RecommendationFormProps {
   heroes: HeroForRecommendation[];
   statTypes: StatTypes[];
-  userId: string;
+  recommendation?: RecommendationWithItems;
 }
 
 export function RecommendationForm({
   heroes,
   statTypes,
-  userId,
+  recommendation,
 }: RecommendationFormProps) {
   const {
     values,
@@ -35,7 +67,7 @@ export function RecommendationForm({
     addItem,
     removeItem,
     handleHeroChange,
-  } = useRecommendationForm(heroes, statTypes, userId);
+  } = useRecommendationForm(heroes, statTypes, recommendation);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
@@ -63,7 +95,13 @@ export function RecommendationForm({
 
       <div className="pt-4">
         <Button type="submit" disabled={submitting}>
-          {submitting ? FORM_MESSAGES.CREATING : FORM_MESSAGES.CREATE}
+          {submitting
+            ? recommendation
+              ? FORM_MESSAGES.UPDATING
+              : FORM_MESSAGES.CREATING
+            : recommendation
+            ? FORM_MESSAGES.UPDATE
+            : FORM_MESSAGES.CREATE}
         </Button>
       </div>
     </form>
