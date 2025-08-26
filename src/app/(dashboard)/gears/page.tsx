@@ -1,11 +1,13 @@
 import { GearTable } from "./components/gear-table";
 import { GearFilters } from "./components/GearFilters";
 import { GearsDataAccess } from "./data/gears";
+import { SettingsDataAccess } from "@/dashboard/settings/data/settings";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { parseGearSearchParams } from "@/lib/url";
 import { GearType, GearRank, MainStatType } from "#prisma";
+import { fetchStatThresholds } from "@/lib/gear-thresholds";
 
 /**
  * Server Component that fetches gear data based on URL search parameters
@@ -30,6 +32,9 @@ export default async function GearsPage({
   // Create data access layer for current user
   const dal = new GearsDataAccess(session.user.id);
 
+  // Debug: Test database queries
+  await dal.debugDatabaseQuery();
+
   // Create a new URLSearchParams and copy values from searchParams
   const params = new URLSearchParams();
 
@@ -52,18 +57,16 @@ export default async function GearsPage({
   const result = await dal.getGearsPage({
     page: filters.page,
     perPage: filters.size,
-    sortBy: filters.sort[0]?.id,
-    sortDir: filters.sort[0]?.desc ? "desc" : "asc",
+    sortField: filters.sort,
+    sortDirection: filters.dir,
     where: {
-      ...(filters.filters.name && {
-        name: { contains: filters.filters.name, mode: "insensitive" },
-      }),
       ...(filters.filters.type?.length && {
         type: { in: filters.filters.type as GearType[] },
       }),
-      ...(filters.filters.rank?.length && {
-        rank: { in: filters.filters.rank as GearRank[] },
-      }),
+      ...(filters.filters.rank &&
+        filters.filters.rank.length > 0 && {
+          rank: { in: filters.filters.rank as GearRank[] },
+        }),
       ...(filters.filters.level && {
         level: filters.filters.level,
       }),
@@ -92,6 +95,19 @@ export default async function GearsPage({
     },
   });
 
+  // Get user's score thresholds from settings
+  const settingsDal = new SettingsDataAccess(session.user.id);
+  const userSettings = await settingsDal.getScoringSettings();
+  const thresholds = await fetchStatThresholds();
+  const scoreThresholds = userSettings
+    ? {
+        minScore: userSettings.minScore,
+        maxScore: userSettings.maxScore,
+        minFScore: userSettings.minFScore,
+        maxFScore: userSettings.maxFScore,
+      }
+    : undefined;
+
   return (
     <div className="space-y-6">
       <div>
@@ -109,6 +125,8 @@ export default async function GearsPage({
         pageCount={Math.ceil(result.total / filters.size)}
         currentPage={filters.page}
         pageSize={filters.size}
+        scoreThresholds={scoreThresholds}
+        thresholds={thresholds}
       />
     </div>
   );

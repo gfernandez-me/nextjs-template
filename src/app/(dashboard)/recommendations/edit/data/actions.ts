@@ -1,4 +1,10 @@
-import { GearType, MainStatType, StatTypes } from "#prisma";
+import {
+  GearType,
+  MainStatType,
+  StatTypes,
+  HeroElement,
+  HeroClass,
+} from "#prisma";
 import prisma from "@/lib/prisma";
 
 export interface CreateRecommendationInput {
@@ -46,7 +52,14 @@ export async function createRecommendation(data: CreateRecommendationInput) {
   });
 }
 
-export async function getHeroes() {
+export type HeroForRecommendation = {
+  id: number;
+  name: string;
+  element: HeroElement | null;
+  class: HeroClass | null;
+};
+
+export async function getHeroes(): Promise<HeroForRecommendation[]> {
   return prisma.heroes.findMany({
     select: {
       id: true,

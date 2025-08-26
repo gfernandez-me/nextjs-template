@@ -63,9 +63,9 @@ export function getStatBadge(
   statName: string,
   statValue: number,
   enhance: number,
-  thresholds: StatThresholds
+  thresholds?: StatThresholds
 ): StatBadge | null {
-  const t = thresholds[statName];
+  const t = thresholds?.[statName];
   if (!t || t.length !== 4) return null;
 
   const [t1, t2, t3, t4] = t;

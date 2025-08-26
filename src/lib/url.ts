@@ -32,24 +32,10 @@ export function parseGearSearchParams(searchParams: URLSearchParams) {
   return {
     page: parseInt(searchParams.get("page") || "1", 10),
     size: parseInt(searchParams.get("size") || "10", 10),
-    sort: parseGearSorting(searchParams.get("sort") || ""),
+    sort: searchParams.get("sort") || "",
+    dir: searchParams.get("dir") || "",
     filters: parseGearFilters(searchParams),
   };
-}
-
-/**
- * Parse sorting string from URL into array format for gear table
- */
-export function parseGearSorting(sortString: string) {
-  if (!sortString) return [];
-
-  return sortString.split(",").map((sort) => {
-    const [id, direction] = sort.split(":");
-    return {
-      id,
-      desc: direction === "desc",
-    };
-  });
 }
 
 /**
@@ -57,13 +43,10 @@ export function parseGearSorting(sortString: string) {
  */
 export function parseGearFilters(searchParams: URLSearchParams): GearFilters {
   return {
-    name: searchParams.get("name") || undefined,
     type: (searchParams.get("type")?.split("|").filter(Boolean) ||
       []) as GearType[],
-    rank: (searchParams.get("rank")?.split("|").filter(Boolean) || [
-      GearRank.EPIC,
-      GearRank.HEROIC,
-    ]) as GearRank[],
+    rank: (searchParams.get("rank")?.split("|").filter(Boolean) ||
+      []) as GearRank[],
     level: searchParams.get("level")
       ? parseInt(searchParams.get("level")!, 10)
       : undefined,

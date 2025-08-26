@@ -58,10 +58,12 @@ export function MultiSelect({
   };
 
   const handleRemove = (value: string) => {
+    console.log("handleRemove called with:", value);
     onSelectionChange(selected.filter((item) => item !== value));
   };
 
   const handleClearAll = () => {
+    console.log("handleClearAll called");
     onSelectionChange([]);
   };
 
@@ -72,58 +74,68 @@ export function MultiSelect({
   return (
     <div className={cn("relative", className)}>
       <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="outline"
-            role="combobox"
-            aria-expanded={isOpen}
-            className="w-full justify-between"
-            disabled={disabled}
-          >
-            <div className="flex flex-wrap gap-1 max-w-[calc(100%-20px)]">
-              {displayCount === 0 ? (
-                <span className="text-muted-foreground">{placeholder}</span>
-              ) : (
-                <>
-                  {displayOptions.map((value) => {
-                    const option = options.find((opt) => opt.value === value);
-                    return (
-                      <Badge
-                        key={value}
-                        variant="secondary"
-                        className="mr-1 px-1 py-0.5 text-xs"
-                      >
-                        {option?.label || value}
-                        <button
-                          type="button"
-                          className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              handleRemove(value);
-                            }
-                          }}
-                          onMouseDown={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                          }}
-                          onClick={() => handleRemove(value)}
+        <div className="flex items-center gap-2">
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              role="combobox"
+              aria-expanded={isOpen}
+              className="flex-1 justify-between"
+              disabled={disabled}
+            >
+              <div className="flex flex-wrap gap-1 max-w-[calc(100%-20px)]">
+                {displayCount === 0 ? (
+                  <span className="text-muted-foreground">{placeholder}</span>
+                ) : (
+                  <>
+                    {displayOptions.map((value) => {
+                      const option = options.find((opt) => opt.value === value);
+                      return (
+                        <Badge
+                          key={value}
+                          variant="secondary"
+                          className="mr-1 px-1 py-0.5 text-xs"
                         >
-                          <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
-                        </button>
+                          {option?.label || value}
+                        </Badge>
+                      );
+                    })}
+                    {remainingCount > 0 && (
+                      <Badge
+                        variant="secondary"
+                        className="px-1 py-0.5 text-xs"
+                      >
+                        +{remainingCount} more
                       </Badge>
-                    );
-                  })}
-                  {remainingCount > 0 && (
-                    <Badge variant="secondary" className="px-1 py-0.5 text-xs">
-                      +{remainingCount} more
-                    </Badge>
-                  )}
-                </>
-              )}
-            </div>
-            <ChevronDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-          </Button>
-        </DropdownMenuTrigger>
+                    )}
+                  </>
+                )}
+              </div>
+              <ChevronDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </DropdownMenuTrigger>
+
+          {/* Separate remove buttons outside dropdown trigger */}
+          {displayOptions.map((value) => {
+            const option = options.find((opt) => opt.value === value);
+            return (
+              <Button
+                key={`remove-${value}`}
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0 hover:bg-muted"
+                onClick={() => {
+                  console.log("Remove button clicked for:", value);
+                  handleRemove(value);
+                }}
+                title={`Remove ${option?.label || value}`}
+              >
+                <X className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+              </Button>
+            );
+          })}
+        </div>
         <DropdownMenuContent className="w-full min-w-[200px] p-2">
           {searchable && (
             <div className="mb-2">
@@ -155,8 +167,14 @@ export function MultiSelect({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={handleClearAll}
-                className="w-full text-xs text-muted-foreground hover:text-foreground"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log("Clear all button clicked");
+                  handleClearAll();
+                }}
+                className="w-full text-xs text-muted-foreground hover:text-foreground hover:bg-muted"
+                type="button"
               >
                 Clear all
               </Button>

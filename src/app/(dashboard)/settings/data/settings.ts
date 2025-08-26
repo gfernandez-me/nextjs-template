@@ -18,6 +18,10 @@ export type ScoringSettings = {
   fScoreSubstatWeights: Record<string, number>;
   fScoreMainStatWeights: Record<string, number>;
   substatThresholds: Record<string, { plus15: number[] }>;
+  minScore: number;
+  maxScore: number;
+  minFScore: number;
+  maxFScore: number;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -33,10 +37,24 @@ export class SettingsDataAccess {
    * Get user settings with user information
    */
   async getSettings(): Promise<SettingsWithUser | null> {
-    return prisma.settings.findFirst({
+    let settings = await prisma.settings.findFirst({
       where: { userId: this.userId },
       include: { User: true },
     });
+
+    // If no settings exist, create default ones with calculated thresholds
+    if (!settings) {
+      const defaultThresholds = await this.calculateDefaultScoreThresholds();
+      settings = await this.upsertSettings({
+        fScoreIncludeMainStat: true,
+        fScoreSubstatWeights: {},
+        fScoreMainStatWeights: {},
+        substatThresholds: {},
+        ...defaultThresholds,
+      });
+    }
+
+    return settings;
   }
 
   /**
@@ -52,6 +70,10 @@ export class SettingsDataAccess {
         fScoreSubstatWeights: true,
         fScoreMainStatWeights: true,
         substatThresholds: true,
+        minScore: true,
+        maxScore: true,
+        minFScore: true,
+        maxFScore: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -74,6 +96,10 @@ export class SettingsDataAccess {
         string,
         { plus15: number[] }
       >,
+      minScore: settings.minScore ?? 0,
+      maxScore: settings.maxScore ?? 100,
+      minFScore: settings.minFScore ?? 0,
+      maxFScore: settings.maxFScore ?? 100,
     };
   }
 
@@ -85,6 +111,10 @@ export class SettingsDataAccess {
     fScoreSubstatWeights: Record<string, number>;
     fScoreMainStatWeights: Record<string, number>;
     substatThresholds: Record<string, { plus15: number[] }>;
+    minScore: number;
+    maxScore: number;
+    minFScore: number;
+    maxFScore: number;
   }): Promise<SettingsWithUser> {
     return prisma.settings.upsert({
       where: { userId: this.userId },
@@ -92,6 +122,51 @@ export class SettingsDataAccess {
       create: { ...data, userId: this.userId },
       include: { User: true },
     });
+  }
+
+  /**
+   * Calculate default score thresholds based on user's gear data
+   */
+  async calculateDefaultScoreThresholds(): Promise<{
+    minScore: number;
+    maxScore: number;
+    minFScore: number;
+    maxFScore: number;
+  }> {
+    // Get average scores from user's gear
+    const scoreStats = await prisma.gears.aggregate({
+      where: { userId: this.userId },
+      _avg: {
+        score: true,
+        fScore: true,
+      },
+      _min: {
+        score: true,
+        fScore: true,
+      },
+      _max: {
+        score: true,
+        fScore: true,
+      },
+    });
+
+    const avgScore = scoreStats._avg.score ?? 50;
+    const avgFScore = scoreStats._avg.fScore ?? 50;
+    const minScore = scoreStats._min.score ?? 0;
+    const maxScore = scoreStats._max.score ?? 100;
+    const minFScore = scoreStats._min.fScore ?? 0;
+    const maxFScore = scoreStats._max.fScore ?? 100;
+
+    // Calculate thresholds: 20% below average for min, 20% above average for expected
+    const scoreRange = maxScore - minScore;
+    const fScoreRange = maxFScore - minFScore;
+
+    return {
+      minScore: Math.max(0, avgScore - scoreRange * 0.2),
+      maxScore: Math.min(100, avgScore + scoreRange * 0.2),
+      minFScore: Math.max(0, avgFScore - fScoreRange * 0.2),
+      maxFScore: Math.min(100, avgFScore + fScoreRange * 0.2),
+    };
   }
 
   /**
@@ -103,6 +178,10 @@ export class SettingsDataAccess {
       fScoreSubstatWeights: Record<string, number>;
       fScoreMainStatWeights: Record<string, number>;
       substatThresholds: Record<string, { plus15: number[] }>;
+      minScore: number;
+      maxScore: number;
+      minFScore: number;
+      maxFScore: number;
     }>
   ): Promise<SettingsWithUser> {
     const existing = await prisma.settings.findFirst({
@@ -116,6 +195,10 @@ export class SettingsDataAccess {
         fScoreSubstatWeights: data.fScoreSubstatWeights ?? {},
         fScoreMainStatWeights: data.fScoreMainStatWeights ?? {},
         substatThresholds: data.substatThresholds ?? {},
+        minScore: data.minScore ?? 0,
+        maxScore: data.maxScore ?? 100,
+        minFScore: data.minFScore ?? 0,
+        maxFScore: data.maxFScore ?? 100,
       });
     }
 
@@ -173,7 +256,13 @@ export class SettingsDataAccess {
       },
     };
 
-    return this.upsertSettings(defaultSettings);
+    return this.upsertSettings({
+      ...defaultSettings,
+      minScore: 0,
+      maxScore: 100,
+      minFScore: 0,
+      maxFScore: 100,
+    });
   }
 
   /**

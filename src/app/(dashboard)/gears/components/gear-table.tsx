@@ -17,17 +17,37 @@ import {
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
-  getSortedRowModel,
-  SortingState,
   useReactTable,
   ColumnFiltersState,
   VisibilityState,
 } from "@tanstack/react-table";
-import { usePathname, useRouter } from "next/navigation";
 import type { GearForTable } from "@/dashboard/gears/data/gears";
 import { HeroFilter } from "./gear-table/hero-filter";
 import { Pagination } from "./gear-table/pagination";
 import { createGearTableColumns } from "./gear-table/columns";
+
+// Client-side component for showing sort indicators
+function SortIndicator({ columnId }: { columnId: string }) {
+  const [sortInfo, setSortInfo] = React.useState<{
+    sort: string | null;
+    dir: string | null;
+  }>({ sort: null, dir: null });
+
+  React.useEffect(() => {
+    // Only run in browser
+    if (typeof window !== "undefined") {
+      const currentUrl = new URL(window.location.href);
+      const currentSort = currentUrl.searchParams.get("sort");
+      const currentDir = currentUrl.searchParams.get("dir");
+      setSortInfo({ sort: currentSort, dir: currentDir });
+    }
+  }, []);
+
+  if (sortInfo.sort === columnId) {
+    return <span>{sortInfo.dir === "asc" ? " ▲" : " ▼"}</span>;
+  }
+  return null;
+}
 import {
   fetchStatThresholds,
   type StatThresholds,
@@ -40,97 +60,50 @@ export function GearTable({
   pageCount,
   currentPage,
   pageSize,
+  thresholds,
+  scoreThresholds,
 }: {
   gears: GearForTable[];
   totalCount: number;
   pageCount: number;
   currentPage: number;
   pageSize: number;
+  thresholds?: StatThresholds;
+  scoreThresholds?: {
+    minScore: number;
+    maxScore: number;
+    minFScore: number;
+    maxFScore: number;
+  };
 }) {
-  const router = useRouter();
-  const pathname = usePathname();
   const { updateSearchParams } = useGearSearchParams();
-  const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
   );
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
 
-  const [thresholds, setThresholds] = React.useState<StatThresholds>({});
-
-  // Load stat thresholds from server
-  React.useEffect(() => {
-    fetchStatThresholds().then(setThresholds);
-  }, []);
-
   // Create columns with thresholds
   const columns = React.useMemo(
-    () => createGearTableColumns({ thresholds }),
-    [thresholds]
+    () => createGearTableColumns({ thresholds, scoreThresholds }),
+    [thresholds, scoreThresholds]
   );
 
   const table = useReactTable({
     data: gears,
     columns,
     state: {
-      sorting,
       columnFilters,
       columnVisibility,
     },
-    onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
     // no global text filter
     getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
   });
 
-  // Initialize sorting from URL on mount
-  React.useEffect(() => {
-    try {
-      const url = new URL(window.location.href);
-      const sort = url.searchParams.get("sort");
-      const dir = url.searchParams.get("dir");
-      if (sort) {
-        const reverseMap: Record<string, string> = {
-          gear: "type",
-          heroName: "equipped",
-          score: "score",
-          fScore: "fScore",
-        };
-        const id = reverseMap[sort] ?? sort;
-        setSorting([{ id, desc: dir !== "asc" }]);
-      }
-    } catch {}
-  }, []);
-
-  // Sync sorting to URL for server-side sorting (including score columns)
-  React.useEffect(() => {
-    const s = sorting[0];
-    const url = new URL(window.location.href);
-    if (!s) {
-      url.searchParams.delete("sort");
-      url.searchParams.delete("dir");
-      router.replace(`${pathname}?${url.searchParams.toString()}`);
-      return;
-    }
-    const map: Record<string, string> = {
-      gear: "gear",
-      level: "level",
-      enhance: "enhance",
-      mainStatValue: "mainStatValue",
-      fScore: "fScore",
-      score: "score",
-      equipped: "heroName",
-    };
-    const sortBy = map[s.id] || s.id;
-    if (!sortBy) return;
-    url.searchParams.set("sort", sortBy);
-    url.searchParams.set("dir", s.desc ? "desc" : "asc");
-    router.replace(`${pathname}?${url.searchParams.toString()}`);
-  }, [sorting, router, pathname]);
+  // No client-side sorting - all sorting is handled server-side
 
   // Handle page change
   const handlePageChange = (page: number) => {
@@ -151,8 +124,27 @@ export function GearTable({
                 {headerGroup.headers.map((header) => (
                   <TableHead
                     key={header.id}
-                    className="whitespace-nowrap p-2 cursor-pointer select-none"
-                    onClick={header.column.getToggleSortingHandler()}
+                    className="whitespace-nowrap p-2 cursor-pointer select-none hover:bg-muted/50"
+                    onClick={() => {
+                      // Only run in browser
+                      if (typeof window !== "undefined") {
+                        const currentUrl = new URL(window.location.href);
+                        const currentSort = currentUrl.searchParams.get("sort");
+                        const currentDir = currentUrl.searchParams.get("dir");
+
+                        // Toggle sorting direction if same column, otherwise start with asc
+                        let newDir = "asc";
+                        if (currentSort === header.id) {
+                          newDir = currentDir === "asc" ? "desc" : "asc";
+                        }
+
+                        currentUrl.searchParams.set("sort", header.id);
+                        currentUrl.searchParams.set("dir", newDir);
+                        currentUrl.searchParams.set("page", "1"); // Reset to first page when sorting
+
+                        window.location.href = currentUrl.toString();
+                      }
+                    }}
                   >
                     {header.isPlaceholder
                       ? null
@@ -160,8 +152,8 @@ export function GearTable({
                           header.column.columnDef.header,
                           header.getContext()
                         )}
-                    {header.column.getIsSorted() === "asc" ? " ▲" : ""}
-                    {header.column.getIsSorted() === "desc" ? " ▼" : ""}
+                    {/* Show current sort indicator */}
+                    <SortIndicator columnId={header.id} />
                   </TableHead>
                 ))}
               </TableRow>

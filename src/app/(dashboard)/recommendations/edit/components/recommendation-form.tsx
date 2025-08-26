@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { toast } from "sonner";
 
-import { GearType, MainStatType, Heroes, StatTypes } from "#prisma";
+import { GearType, MainStatType, StatTypes } from "#prisma";
+import type { HeroForRecommendation } from "../data/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -45,7 +46,7 @@ type Item = z.infer<typeof itemSchema>;
 type FormValues = z.infer<typeof schema>;
 
 interface RecommendationFormProps {
-  heroes: Heroes[];
+  heroes: HeroForRecommendation[];
   statTypes: StatTypes[];
 }
 
@@ -346,8 +347,12 @@ export function RecommendationForm({
       {[1, 2, 3, 4].map((subStatNum) => (
         <FormField
           key={subStatNum}
-          control={form.control}
-          name={`items.${index}.statType${subStatNum}Id` as const}
+          control={{
+            value: values.items[0].statType1Id,
+            onChange: (v) => updateItem(0, { statType1Id: String(v) }),
+            name: `items.0.statType${subStatNum}Id`,
+            errors: [],
+          }}
           render={({ field }) => (
             <FormItem>
               <FormLabel>Sub Stat {subStatNum}</FormLabel>

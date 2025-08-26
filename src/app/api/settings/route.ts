@@ -54,6 +54,10 @@ export async function POST(request: NextRequest) {
       fScoreSubstatWeights: body.fScoreSubstatWeights,
       fScoreMainStatWeights: body.fScoreMainStatWeights,
       substatThresholds: body.substatThresholds,
+      minScore: body.minScore ?? 0,
+      maxScore: body.maxScore ?? 100,
+      minFScore: body.minFScore ?? 0,
+      maxFScore: body.maxFScore ?? 100,
     });
 
     return NextResponse.json(settings);

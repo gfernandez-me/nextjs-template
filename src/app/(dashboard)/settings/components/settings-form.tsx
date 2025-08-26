@@ -24,6 +24,10 @@ type SettingsDto = {
   fScoreSubstatWeights?: Record<string, number> | null;
   fScoreMainStatWeights?: Record<string, number> | null;
   substatThresholds?: Record<string, { plus15?: number[] }> | null;
+  minScore: number;
+  maxScore: number;
+  minFScore: number;
+  maxFScore: number;
 };
 
 const DEFAULT_SUB_WEIGHTS: Record<string, number> = {
@@ -79,6 +83,10 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
     useState<Record<string, number>>(DEFAULT_MAIN_WEIGHTS);
   const [thresholds, setThresholds] =
     useState<Record<string, { plus15: number[] }>>(DEFAULT_THRESHOLDS);
+  const [minScore, setMinScore] = useState(0);
+  const [maxScore, setMaxScore] = useState(100);
+  const [minFScore, setMinFScore] = useState(0);
+  const [maxFScore, setMaxFScore] = useState(100);
 
   useEffect(() => {
     if (initialSettings) {
@@ -112,6 +120,16 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
         }
         setThresholds(next);
       }
+
+      // Load score thresholds
+      if (initialSettings.minScore !== null)
+        setMinScore(initialSettings.minScore);
+      if (initialSettings.maxScore !== null)
+        setMaxScore(initialSettings.maxScore);
+      if (initialSettings.minFScore !== null)
+        setMinFScore(initialSettings.minFScore);
+      if (initialSettings.maxFScore !== null)
+        setMaxFScore(initialSettings.maxFScore);
     }
   }, [initialSettings]);
 
@@ -126,6 +144,10 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
         fScoreSubstatWeights: subWeights,
         fScoreMainStatWeights: mainWeights,
         substatThresholds: thresholds,
+        minScore,
+        maxScore,
+        minFScore,
+        maxFScore,
       };
 
       const res = await fetch("/api/settings", {
@@ -201,9 +223,10 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
       </Card>
 
       <Tabs defaultValue="weights" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="weights">Weights</TabsTrigger>
           <TabsTrigger value="thresholds">Thresholds</TabsTrigger>
+          <TabsTrigger value="score-thresholds">Score Thresholds</TabsTrigger>
         </TabsList>
 
         <TabsContent value="weights" className="space-y-4">
@@ -221,10 +244,82 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
         </TabsContent>
 
         <TabsContent value="thresholds">
-          <ThresholdEditor 
-            thresholds={thresholds} 
-            onThresholdsChange={setThresholds} 
+          <ThresholdEditor
+            thresholds={thresholds}
+            onThresholdsChange={setThresholds}
           />
+        </TabsContent>
+
+        <TabsContent value="score-thresholds" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Score Thresholds</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="minScore">Minimum Score</Label>
+                  <input
+                    type="number"
+                    id="minScore"
+                    value={minScore}
+                    onChange={(e) =>
+                      setMinScore(parseFloat(e.target.value) || 0)
+                    }
+                    className="w-full px-3 py-2 border rounded-md"
+                    min="0"
+                    max="100"
+                    step="0.1"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="maxScore">Expected Score</Label>
+                  <input
+                    type="number"
+                    id="maxScore"
+                    value={maxScore}
+                    onChange={(e) =>
+                      setMaxScore(parseFloat(e.target.value) || 100)
+                    }
+                    className="w-full px-3 py-2 border rounded-md"
+                    min="0"
+                    max="100"
+                    step="0.1"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="minFScore">Minimum F-Score</Label>
+                  <input
+                    type="number"
+                    id="minFScore"
+                    value={minFScore}
+                    onChange={(e) =>
+                      setMinFScore(parseFloat(e.target.value) || 0)
+                    }
+                    className="w-full px-3 py-2 border rounded-md"
+                    min="0"
+                    max="100"
+                    step="0.1"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="maxFScore">Expected F-Score</Label>
+                  <input
+                    type="number"
+                    id="maxFScore"
+                    value={maxFScore}
+                    onChange={(e) =>
+                      setMaxFScore(parseFloat(e.target.value) || 100)
+                    }
+                    className="w-full px-3 py-2 border rounded-md"
+                    min="0"
+                    max="100"
+                    step="0.1"
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
 

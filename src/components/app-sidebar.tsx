@@ -17,7 +17,6 @@ import {
   IconShield,
 } from "@tabler/icons-react";
 
-import { NavDocuments } from "@/components/nav-documents";
 import { NavMain } from "@/components/nav-main";
 import { NavSecondary } from "@/components/nav-secondary";
 import { NavUser } from "@/components/nav-user";
@@ -65,64 +64,10 @@ const data = {
       url: "/settings",
       icon: IconSettings,
     },
-    {
-      title: "Account",
-      url: "/profile",
-      icon: IconUserCircle,
-    },
-  ],
-  navClouds: [
-    {
-      title: "Gear Management",
-      icon: IconDatabase,
-      isActive: true,
-      url: "#",
-      items: [
-        {
-          title: "View All Gears",
-          url: "/gears",
-        },
-        {
-          title: "Upload New Data",
-          url: "/upload",
-        },
-        {
-          title: "Configure Priorities",
-          url: "/gear-recommendations",
-        },
-      ],
-    },
-    {
-      title: "Analysis",
-      icon: IconGauge,
-      url: "#",
-      items: [
-        {
-          title: "Gear Statistics",
-          url: "/statistics",
-        },
-        {
-          title: "Optimization Settings",
-          url: "/settings",
-        },
-      ],
-    },
-  ],
-  navSecondary: [
-    {
-      title: "Dashboard",
-      url: "/home",
-      icon: IconHome,
-    },
-    {
-      title: "Epic 7 Optimizer",
-      url: "https://github.com/fribbels/Fribbels-Epic-7-Optimizer",
-      icon: IconCopy,
-    },
   ],
   navAdmin: [
     {
-      title: "Admin Panel",
+      title: "Gear Sets",
       icon: IconShield,
       url: "/admin/gear-sets",
       items: [
@@ -131,18 +76,6 @@ const data = {
           url: "/admin/gear-sets",
         },
       ],
-    },
-  ],
-  documents: [
-    {
-      name: "Gear Database",
-      url: "/gears",
-      icon: IconDatabase,
-    },
-    {
-      name: "Hero Database",
-      url: "/heroes",
-      icon: IconUsers,
     },
   ],
 };
@@ -176,11 +109,9 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        <NavDocuments items={data.documents} />
         {user.email === "admin@epic7optimizer.com" && (
           <NavSecondary items={data.navAdmin} className="mt-4" />
         )}
-        <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={user} />

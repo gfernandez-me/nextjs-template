@@ -25,7 +25,7 @@ export function NavSecondary({
 }) {
   return (
     <SidebarGroup className={className}>
-      <SidebarGroupLabel>External</SidebarGroupLabel>
+      <SidebarGroupLabel>Admin</SidebarGroupLabel>
       <SidebarGroupContent>
         <SidebarMenu>
           {items.map((item) => (

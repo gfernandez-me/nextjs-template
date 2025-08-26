@@ -15,11 +15,18 @@ import { stripPercent } from "@/lib/string-utils";
 import { getStatBadge, type StatThresholds } from "@/lib/gear-thresholds";
 
 interface CreateColumnsOptions {
-  thresholds: StatThresholds;
+  thresholds?: StatThresholds;
+  scoreThresholds?: {
+    minScore: number;
+    maxScore: number;
+    minFScore: number;
+    maxFScore: number;
+  };
 }
 
 export function createGearTableColumns({
   thresholds,
+  scoreThresholds,
 }: CreateColumnsOptions): ColumnDef<GearForTable>[] {
   const getStatBadgeWithThresholds = (
     statName: string,
@@ -50,28 +57,72 @@ export function createGearTableColumns({
     {
       accessorKey: "fScore",
       header: () => <span>F Score</span>,
-      cell: ({ getValue }) => {
+      cell: ({ getValue, row }) => {
         const value = getValue<number | null>();
         if (value === null) {
           return <span className="text-muted-foreground">-</span>;
         }
-        return <span className="font-mono text-xs">{value}</span>;
+
+        let scoreIcon = "";
+        if (scoreThresholds) {
+          if (value >= scoreThresholds.maxFScore) {
+            scoreIcon = "⭐"; // Over expected
+          } else if (value < scoreThresholds.minFScore) {
+            scoreIcon = "⚠️"; // Under minimum
+          }
+        }
+
+        return (
+          <div className="flex items-center gap-1">
+            <span className="font-mono text-xs">{value.toFixed(1)}</span>
+            {scoreIcon && <span className="text-sm">{scoreIcon}</span>}
+          </div>
+        );
       },
       enableSorting: true,
-      sortingFn: "basic",
+      sortingFn: (a, b) => {
+        const aVal = a.original.fScore;
+        const bVal = b.original.fScore;
+        if (aVal === null && bVal === null) return 0;
+        if (aVal === null) return 1;
+        if (bVal === null) return -1;
+        return aVal - bVal;
+      },
     },
     {
       accessorKey: "score",
       header: () => <span>Score</span>,
-      cell: ({ getValue }) => {
+      cell: ({ getValue, row }) => {
         const value = getValue<number | null>();
         if (value === null) {
           return <span className="text-muted-foreground">-</span>;
         }
-        return <span className="font-mono text-xs">{value}</span>;
+
+        let scoreIcon = "";
+        if (scoreThresholds) {
+          if (value >= scoreThresholds.maxScore) {
+            scoreIcon = "⭐"; // Over expected
+          } else if (value < scoreThresholds.minScore) {
+            scoreIcon = "⚠️"; // Under minimum
+          }
+        }
+
+        return (
+          <div className="flex items-center gap-1">
+            <span className="font-mono text-xs">{value.toFixed(1)}</span>
+            {scoreIcon && <span className="text-sm">{scoreIcon}</span>}
+          </div>
+        );
       },
       enableSorting: true,
-      sortingFn: "basic",
+      sortingFn: (a, b) => {
+        const aVal = a.original.score;
+        const bVal = b.original.score;
+        if (aVal === null && bVal === null) return 0;
+        if (aVal === null) return 1;
+        if (bVal === null) return -1;
+        return aVal - bVal;
+      },
     },
     {
       accessorKey: "level",

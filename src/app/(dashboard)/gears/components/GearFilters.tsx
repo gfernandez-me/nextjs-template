@@ -124,10 +124,8 @@ export function GearFilters() {
         <div className="flex items-center gap-2">
           <Label className="text-sm whitespace-nowrap">Rank</Label>
           {[GearRank.EPIC, GearRank.HEROIC].map((rank) => {
-            const currentRanks = searchParams
-              .get("rank")
-              ?.split("|")
-              .filter(Boolean) || [GearRank.EPIC, GearRank.HEROIC];
+            const currentRanks =
+              searchParams.get("rank")?.split("|").filter(Boolean) || [];
             const isActive = currentRanks.includes(rank);
 
             return (
@@ -141,11 +139,13 @@ export function GearFilters() {
                   const newRanks = isActive
                     ? currentRanks.filter((r) => r !== rank)
                     : [...currentRanks, rank];
-                  // If all ranks are deselected, default to both
-                  if (newRanks.length === 0) {
-                    newRanks.push(GearRank.EPIC, GearRank.HEROIC);
-                  }
-                  handleFilterUpdate({ rank: newRanks as GearRank[] });
+                  // If all ranks are deselected, show all ranks (no filter)
+                  handleFilterUpdate({
+                    rank:
+                      newRanks.length > 0
+                        ? (newRanks as GearRank[])
+                        : undefined,
+                  });
                 }}
               >
                 {rank}
@@ -224,9 +224,28 @@ export function GearFilters() {
         />
       </div>
 
-      {isPending && (
-        <div className="text-sm text-muted-foreground">Updating filters...</div>
-      )}
+      <div className="flex items-center justify-between">
+        {isPending && (
+          <div className="text-sm text-muted-foreground">
+            Updating filters...
+          </div>
+        )}
+
+        {/* Clear all filters button */}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            // Clear all filters by navigating to the base URL
+            const url = new URL(window.location.href);
+            url.search = "";
+            window.location.href = url.toString();
+          }}
+          className="ml-auto"
+        >
+          Clear all filters
+        </Button>
+      </div>
     </div>
   );
 }

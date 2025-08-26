@@ -4,6 +4,10 @@ model Settings {
   fScoreSubstatWeights  Json?
   fScoreMainStatWeights Json?
   substatThresholds     Json?
+  minScore              Float?   @default(0)
+  maxScore              Float?   @default(100)
+  minFScore             Float?   @default(0)
+  maxFScore             Float?   @default(100)
   userId                String   @unique
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt

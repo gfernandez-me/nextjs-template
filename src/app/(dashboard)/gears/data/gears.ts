@@ -65,21 +65,18 @@ export class GearsDataAccess {
     page: number;
     perPage: number;
     where?: Prisma.GearsWhereInput;
-    orderBy?: Prisma.GearsOrderByWithRelationInput[];
-    sortBy?: string;
-    sortDir?: "asc" | "desc";
+    sortField?: string;
+    sortDirection?: string;
   }): Promise<{ rows: GearForTable[]; total: number }> {
-    const { page, perPage, where = {}, orderBy, sortBy, sortDir } = params;
+    const { page, perPage, where = {}, sortField, sortDirection } = params;
 
     // Always scope to current user
     const userScopedWhere = { ...where, userId: this.userId };
 
-    // Build orderBy from sortBy and sortDir if not provided
-    let finalOrderBy = orderBy;
-    if (!finalOrderBy && sortBy && sortDir) {
-      finalOrderBy = [
-        { [sortBy]: sortDir } as Prisma.GearsOrderByWithRelationInput,
-      ];
+    // Build orderBy from sortField and sortDirection
+    let orderBy;
+    if (sortField && sortDirection) {
+      orderBy = [{ [sortField]: sortDirection }];
     }
 
     const [rows, total] = await Promise.all([
@@ -87,7 +84,7 @@ export class GearsDataAccess {
         skip: (page - 1) * perPage,
         take: perPage,
         where: userScopedWhere,
-        orderBy: finalOrderBy?.length ? finalOrderBy : [{ createdAt: "desc" }],
+        orderBy,
         include: {
           Hero: true,
           GearSubStats: { include: { StatType: true } },
@@ -153,6 +150,100 @@ export class GearsDataAccess {
     ]);
 
     return { total, equipped, epicPlus, maxEnhanced };
+  }
+
+  /**
+   * Debug method to test database queries without filters
+   */
+  async debugDatabaseQuery() {
+    console.log("=== DEBUG DATABASE QUERY ===");
+
+    // Test 1: Get all gears for user without any filters
+    const allGears = await prisma.gears.findMany({
+      where: { userId: this.userId },
+      take: 5,
+      orderBy: { fScore: "desc" },
+      select: {
+        id: true,
+        fScore: true,
+        score: true,
+        type: true,
+        rank: true,
+        level: true,
+        enhance: true,
+        userId: true,
+      },
+    });
+
+    console.log("All gears (top 5 by fScore):", allGears);
+
+    // Test 2: Get gears with enhance=15 filter
+    const enhancedGears = await prisma.gears.findMany({
+      where: {
+        userId: this.userId,
+        enhance: 15,
+      },
+      take: 5,
+      orderBy: { fScore: "desc" },
+      select: {
+        id: true,
+        fScore: true,
+        score: true,
+        type: true,
+        rank: true,
+        level: true,
+        enhance: true,
+        userId: true,
+      },
+    });
+
+    console.log("Enhanced gears (top 5 by fScore):", enhancedGears);
+
+    // Test 3: Get gears with rank filter (EPIC + HEROIC only)
+    const rankFilteredGears = await prisma.gears.findMany({
+      where: {
+        userId: this.userId,
+        enhance: 15,
+        rank: { in: ["EPIC", "HEROIC"] },
+      },
+      take: 5,
+      orderBy: { fScore: "desc" },
+      select: {
+        id: true,
+        fScore: true,
+        score: true,
+        type: true,
+        rank: true,
+        level: true,
+        enhance: true,
+        userId: true,
+      },
+    });
+
+    console.log(
+      "Rank filtered gears (EPIC+HEROIC, top 5 by fScore):",
+      rankFilteredGears
+    );
+
+    // Test 4: Get total counts
+    const totalCount = await prisma.gears.count({
+      where: { userId: this.userId },
+    });
+    const enhancedCount = await prisma.gears.count({
+      where: { userId: this.userId, enhance: 15 },
+    });
+    const rankFilteredCount = await prisma.gears.count({
+      where: {
+        userId: this.userId,
+        enhance: 15,
+        rank: { in: ["EPIC", "HEROIC"] },
+      },
+    });
+
+    console.log("Total gears:", totalCount);
+    console.log("Enhanced gears:", enhancedCount);
+    console.log("Rank filtered gears (EPIC+HEROIC):", rankFilteredCount);
+    console.log("=== END DEBUG ===");
   }
 
   /**
