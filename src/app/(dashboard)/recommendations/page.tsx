@@ -1,27 +1,16 @@
-import prisma from "@/lib/prisma";
 import { DataTable } from "@/components/data-table";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { GearRecommendation } from "#prisma";
 import { ColumnDef } from "@tanstack/react-table";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+import { RecommendationsDataAccess } from "./data/recommendations";
 
-async function getRecommendations() {
-  return prisma.gearRecommendation.findMany({
-    include: {
-      Hero: true,
-      GearRecommendationItem: {
-        include: {
-          StatType1: true,
-          StatType2: true,
-          StatType3: true,
-          StatType4: true,
-        },
-      },
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-  });
+async function getRecommendations(userId: string) {
+  const dal = new RecommendationsDataAccess(userId);
+  return dal.getAllRecommendations();
 }
 
 const columns: ColumnDef<GearRecommendation>[] = [
@@ -30,20 +19,21 @@ const columns: ColumnDef<GearRecommendation>[] = [
     header: "Name",
   },
   {
-    accessorKey: "Hero.name",
+    accessorKey: "heroName",
     header: "Hero",
-  },
-  {
-    accessorKey: "createdAt",
-    header: "Created",
-    cell: ({ row }) => {
-      return new Date(row.getValue("createdAt")).toLocaleDateString();
-    },
   },
 ];
 
 export default async function RecommendationsPage() {
-  const recommendations = await getRecommendations();
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session?.user) {
+    redirect("/login?reason=auth");
+  }
+
+  const recommendations = await getRecommendations(session.user.id);
 
   return (
     <div className="container mx-auto py-10">

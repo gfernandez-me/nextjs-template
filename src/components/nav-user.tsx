@@ -19,11 +19,11 @@ import {
 import {
   SidebarMenu,
   SidebarMenuItem,
-  useSidebar,
-} from "@/components/ui/sidebar";
+} from "@/components/ui/sidebar/sidebar-menu"; // /workspace/src/components/ui/sidebar/sidebar-menu.tsx
 import { User } from "#prisma";
 import LogoutButton from "./auth/logout-button";
 import { Button } from "@/components/ui/button";
+import { useSidebar } from "@/components/ui/sidebar/sidebar-context";
 
 export function NavUser({ user }: { user: User }) {
   const { isMobile } = useSidebar();
@@ -33,10 +33,7 @@ export function NavUser({ user }: { user: User }) {
       <SidebarMenuItem>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              className="w-full min-w-56 rounded-lg"
-            >
+            <Button variant="ghost" className="w-full min-w-56 rounded-lg">
               <Avatar className="h-8 w-8 rounded-lg grayscale">
                 {/* <AvatarImage src={user.avatar} alt={user.name} /> */}
                 <AvatarFallback className="rounded-lg">CN</AvatarFallback>

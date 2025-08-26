@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useAuth } from "@/hooks/useAuth";
 import {
   Card,
   CardContent,
@@ -13,9 +12,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { User } from "better-auth";
+import { authClient } from "@/lib/auth-client";
+import { useRouter } from "next/navigation";
 
 export function ProfileForm({ user }: { user: User }) {
-  const { signOut } = useAuth();
+  const router = useRouter();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -158,7 +159,18 @@ export function ProfileForm({ user }: { user: User }) {
 
       <Card>
         <CardContent className="pt-6">
-          <Button variant="outline" onClick={() => signOut()}>
+          <Button
+            variant="outline"
+            onClick={async () => {
+              await authClient.signOut({
+                fetchOptions: {
+                  onSuccess: () => {
+                    router.push("/login");
+                  },
+                },
+              });
+            }}
+          >
             Sign Out
           </Button>
         </CardContent>

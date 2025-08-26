@@ -4,9 +4,8 @@ model GearRecommendation {
   createdAt              DateTime                 @default(now())
   updatedAt              DateTime                 @updatedAt
   name                   String
-  heroId                 Int?
+  heroName               String?
   GearRecommendationItem GearRecommendationItem[]
-  Hero                   Heroes?                  @relation(fields: [heroId], references: [id], onDelete: Cascade)
   User                   User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("gear_recommendations")

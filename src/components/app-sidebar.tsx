@@ -2,17 +2,12 @@
 
 import * as React from "react";
 import {
-  IconCopy,
   IconDashboard,
-  IconDatabase,
   IconFileUpload,
-  IconGauge,
-  IconHome,
   IconInnerShadowTop,
   IconListDetails,
   IconSettings,
   IconSword,
-  IconUserCircle,
   IconUsers,
   IconShield,
 } from "@tabler/icons-react";
@@ -21,16 +16,18 @@ import { NavMain } from "@/components/nav-main";
 import { NavSecondary } from "@/components/nav-secondary";
 import { NavUser } from "@/components/nav-user";
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar";
+} from "@/components/ui/sidebar/sidebar-menu";
+import { Sidebar } from "@/components/ui/sidebar/sidebar";
 import { User } from "#prisma";
 import Link from "next/link";
+import {
+  SidebarHeader,
+  SidebarContent,
+  SidebarFooter,
+} from "@/components/ui/sidebar/sidebar-content";
 
 const data = {
   navMain: [
@@ -56,7 +53,7 @@ const data = {
     },
     {
       title: "Gear Recommendations",
-      url: "/gear-recommendations",
+      url: "/recommendations",
       icon: IconListDetails,
     },
     {

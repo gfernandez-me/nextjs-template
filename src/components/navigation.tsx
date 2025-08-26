@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "@/components/mode-toggle";
+import { useRouter } from "next/navigation";
+import { authClient } from "@/lib/auth-client";
 
 const routes = [
   { href: "/gears", label: "Gears", description: "View all gear data" },
@@ -15,7 +16,7 @@ const routes = [
     description: "Upload gear data from Fribbels optimizer",
   },
   {
-    href: "/gear-recommendations",
+    href: "/recommendations",
     label: "Gear Recommendations",
     description: "Configure gear optimization preferences",
   },
@@ -33,49 +34,7 @@ const routes = [
 
 export function Navigation() {
   const pathname = usePathname();
-  const { user, signOut, loading } = useAuth({
-    suppressInitialFetch: pathname === "/signin",
-  });
-
-  if (loading) {
-    return (
-      <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-14 items-center">
-          <div className="mr-4 hidden md:flex">
-            <Link href="/" className="mr-6 flex items-center space-x-2">
-              <span className="hidden font-bold sm:inline-block">
-                Epic 7 Gear Optimizer
-              </span>
-            </Link>
-          </div>
-          <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
-            <div className="text-sm text-muted-foreground">Loading...</div>
-          </div>
-        </div>
-      </nav>
-    );
-  }
-
-  if (!user) {
-    return (
-      <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-14 items-center">
-          <div className="mr-4 hidden md:flex">
-            <Link href="/" className="mr-6 flex items-center space-x-2">
-              <span className="hidden font-bold sm:inline-block">
-                Epic 7 Gear Optimizer
-              </span>
-            </Link>
-          </div>
-          <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
-            <div className="text-sm text-muted-foreground">
-              Please sign in to continue
-            </div>
-          </div>
-        </div>
-      </nav>
-    );
-  }
+  const router = useRouter();
 
   return (
     <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -111,7 +70,19 @@ export function Navigation() {
                 Profile
               </Button>
             </Link>
-            <Button variant="outline" size="sm" onClick={() => signOut()}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={async () => {
+                await authClient.signOut({
+                  fetchOptions: {
+                    onSuccess: () => {
+                      router.push("/login");
+                    },
+                  },
+                });
+              }}
+            >
               Sign Out
             </Button>
           </div>

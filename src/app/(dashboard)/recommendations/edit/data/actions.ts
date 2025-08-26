@@ -1,16 +1,11 @@
-import {
-  GearType,
-  MainStatType,
-  StatTypes,
-  HeroElement,
-  HeroClass,
-} from "#prisma";
+import { GearType, MainStatType, HeroElement, HeroClass } from "#prisma";
 import prisma from "@/lib/prisma";
+import { convertDecimals } from "@/lib/decimal";
 
 export interface CreateRecommendationInput {
   name: string;
   userId: string;
-  heroId?: number;
+  heroName?: string;
   items: {
     type: GearType;
     mainStatType: MainStatType;
@@ -26,7 +21,7 @@ export async function createRecommendation(data: CreateRecommendationInput) {
     data: {
       name: data.name,
       userId: data.userId,
-      heroId: data.heroId,
+      heroName: data.heroName,
       GearRecommendationItem: {
         create: data.items.map((item) => ({
           type: item.type,
@@ -39,7 +34,6 @@ export async function createRecommendation(data: CreateRecommendationInput) {
       },
     },
     include: {
-      Hero: true,
       GearRecommendationItem: {
         include: {
           StatType1: true,
@@ -74,9 +68,11 @@ export async function getHeroes(): Promise<HeroForRecommendation[]> {
 }
 
 export async function getStatTypes() {
-  return prisma.statTypes.findMany({
+  const statTypes = await prisma.statTypes.findMany({
     orderBy: {
       statName: "asc",
     },
   });
+
+  return convertDecimals(statTypes);
 }

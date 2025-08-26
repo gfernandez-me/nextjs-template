@@ -5,11 +5,13 @@ import { type Icon } from "@tabler/icons-react";
 import {
   SidebarGroup,
   SidebarGroupContent,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from "@/components/ui/sidebar";
+} from "@/components/ui/sidebar/sidebar-content";
 import Link from "next/link";
+import {
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+} from "@/components/ui/sidebar/sidebar-menu";
 
 export function NavMain({
   items,

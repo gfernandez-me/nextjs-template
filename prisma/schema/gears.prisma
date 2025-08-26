@@ -108,7 +108,7 @@ model Heroes {
   userId              String
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
-  GearRecommendations GearRecommendation[]
+
   Gears               Gears[]
   User                User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
 

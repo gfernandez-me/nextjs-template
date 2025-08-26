@@ -1,8 +1,4 @@
-import { getEpic7Data } from "@/lib/epic7-data";
-
 export default async function HeroesPage() {
-  const { gearSets, substats, mainStatTypes } = await getEpic7Data();
-
   return (
     <div className="space-y-6">
       <div>

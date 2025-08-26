@@ -48,10 +48,7 @@ function SortIndicator({ columnId }: { columnId: string }) {
   }
   return null;
 }
-import {
-  fetchStatThresholds,
-  type StatThresholds,
-} from "@/lib/gear-thresholds";
+import { type StatThresholds } from "@/lib/gear-thresholds";
 import { useGearSearchParams } from "@/lib/url-hooks";
 
 export function GearTable({

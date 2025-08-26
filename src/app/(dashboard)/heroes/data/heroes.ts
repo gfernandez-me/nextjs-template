@@ -10,7 +10,6 @@ import prisma from "@/lib/prisma";
 export type HeroForList = Prisma.HeroesGetPayload<{
   include: {
     User: true;
-    GearRecommendations: true;
   };
 }>;
 
@@ -18,7 +17,6 @@ export type HeroForList = Prisma.HeroesGetPayload<{
 export type HeroWithEquipment = Prisma.HeroesGetPayload<{
   include: {
     User: true;
-    GearRecommendations: true;
     Gears: true;
   };
 }>;
@@ -27,7 +25,6 @@ export type HeroWithEquipment = Prisma.HeroesGetPayload<{
 export type HeroWithRecommendations = Prisma.HeroesGetPayload<{
   include: {
     User: true;
-    GearRecommendations: true;
   };
 }>;
 
@@ -46,7 +43,6 @@ export class HeroesDataAccess {
       where: { userId: this.userId },
       include: {
         User: true,
-        GearRecommendations: true,
       },
       orderBy: { name: "asc" },
     });
@@ -60,7 +56,6 @@ export class HeroesDataAccess {
       where: { id, userId: this.userId },
       include: {
         User: true,
-        GearRecommendations: true,
         Gears: true,
       },
     });
@@ -74,7 +69,6 @@ export class HeroesDataAccess {
       where: { ingameId, userId: this.userId },
       include: {
         User: true,
-        GearRecommendations: true,
         Gears: true,
       },
     });
@@ -88,7 +82,6 @@ export class HeroesDataAccess {
       where: { userId: this.userId, element },
       include: {
         User: true,
-        GearRecommendations: true,
       },
       orderBy: { name: "asc" },
     });
@@ -102,7 +95,6 @@ export class HeroesDataAccess {
       where: { userId: this.userId, class: heroClass },
       include: {
         User: true,
-        GearRecommendations: true,
       },
       orderBy: { name: "asc" },
     });
@@ -116,7 +108,6 @@ export class HeroesDataAccess {
       where: { userId: this.userId, rarity },
       include: {
         User: true,
-        GearRecommendations: true,
       },
       orderBy: { name: "asc" },
     });
@@ -130,18 +121,6 @@ export class HeroesDataAccess {
       where: { userId: this.userId },
       include: {
         User: true,
-        GearRecommendations: {
-          include: {
-            GearRecommendationItem: {
-              include: {
-                StatType1: true,
-                StatType2: true,
-                StatType3: true,
-                StatType4: true,
-              },
-            },
-          },
-        },
         Gears: true,
       },
       orderBy: { name: "asc" },
@@ -166,7 +145,6 @@ export class HeroesDataAccess {
       data: { ...data, userId: this.userId },
       include: {
         User: true,
-        GearRecommendations: true,
       },
     });
   }
@@ -189,7 +167,6 @@ export class HeroesDataAccess {
       data,
       include: {
         User: true,
-        GearRecommendations: true,
       },
     });
   }

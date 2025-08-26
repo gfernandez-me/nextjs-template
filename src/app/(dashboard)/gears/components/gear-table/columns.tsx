@@ -57,7 +57,7 @@ export function createGearTableColumns({
     {
       accessorKey: "fScore",
       header: () => <span>F Score</span>,
-      cell: ({ getValue, row }) => {
+      cell: ({ getValue }) => {
         const value = getValue<number | null>();
         if (value === null) {
           return <span className="text-muted-foreground">-</span>;
@@ -92,7 +92,7 @@ export function createGearTableColumns({
     {
       accessorKey: "score",
       header: () => <span>Score</span>,
-      cell: ({ getValue, row }) => {
+      cell: ({ getValue }) => {
         const value = getValue<number | null>();
         if (value === null) {
           return <span className="text-muted-foreground">-</span>;

@@ -12,8 +12,6 @@ import {
 import { Input } from "@/ui/input";
 import { Label } from "@/ui/label";
 
-import { useRouter } from "next/navigation";
-
 import { authClient } from "@/lib/auth-client";
 import { Alert, AlertDescription } from "@/ui/alert";
 import { Terminal } from "lucide-react";
@@ -24,8 +22,6 @@ export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
-  const router = useRouter();
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 

@@ -1,0 +1,113 @@
+# Gear Recommendations Business Rules
+
+## Overview
+
+The Gear Recommendations page allows users to configure optimization preferences for different gear types and hero combinations, defining which substats are most important for optimization calculations.
+
+## Business Rules
+
+### Hero Relationship
+
+- **Hero Linking**: Recommendations are linked to heroes by name (string) rather than hero ID
+- **Multiple Copies**: This allows recommendations to apply to all copies of the same hero in the game
+- **Flexibility**: Users can create recommendations for hero types without needing specific hero instances
+
+### Gear Item Structure
+
+- **Single Item per Recommendation**: Each recommendation contains one gear item configuration
+- **Expandable**: Users can add multiple gear items to a single recommendation
+- **Gear Type Constraints**: Each gear type has specific valid main stat options
+
+### Main Stat Validation
+
+- **Weapon**: Fixed to Attack (ATT)
+- **Helm**: Fixed to Health (MAX_HP)
+- **Armor**: Fixed to Defense (DEF)
+- **Necklace**: Variable (Attack, Defense, Health, Attack%, Health%, Defense%, Crit Rate, Crit Damage)
+- **Ring**: Variable (Attack, Defense, Health, Attack%, Health%, Defense%, Effectiveness, Effect Resistance)
+- **Boots**: Variable (Attack, Defense, Health, Attack%, Health%, Defense%, Speed)
+
+### Substat Configuration
+
+- **Required**: First substat is mandatory
+- **Optional**: Substats 2-4 are optional
+- **Flexible**: Users can configure 1-4 substats per gear item
+
+## Page-Specific Requirements
+
+### Data Structure
+
+- **Recommendation Name**: User-defined name for the recommendation
+- **Hero Name**: Optional hero association (string-based)
+- **Gear Items**: Array of gear configurations with type, main stat, and substats
+
+### User Experience
+
+- **Hero Selection**: Searchable hero filter with type-to-search functionality
+- **Gear Type Selection**: Dropdown with human-readable labels (Weapon, Helm, Armor, etc.)
+- **Main Stat Selection**: Dynamic dropdown based on gear type with proper labels
+- **Substat Selection**: Grid layout for easy substat configuration
+
+### Form Validation
+
+- **Required Fields**: Name and first substat are mandatory
+- **Gear Type Logic**: Main stat options are filtered based on selected gear type
+- **User Scoping**: All recommendations are scoped to the authenticated user
+
+## Data Flow
+
+### Creation Flow
+
+1. User enters recommendation name
+2. User optionally selects a hero (by name)
+3. User configures gear item(s):
+   - Select gear type
+   - Select main stat (filtered by gear type)
+   - Configure substats (1-4)
+4. Form validation ensures data integrity
+5. Recommendation is saved to database with user ID and hero name
+
+### Data Storage
+
+- **GearRecommendation**: Core recommendation with name, heroName, and userId
+- **GearRecommendationItem**: Individual gear configurations with type, main stat, and substat references
+- **StatTypes**: Reference table for substat definitions and weights
+
+### Retrieval Flow
+
+1. Recommendations are fetched by user ID
+2. Decimal values are converted to numbers for client compatibility
+3. Data is displayed in table format with proper formatting
+
+## User Experience
+
+### Interface Design
+
+- **Clean Layout**: Single form without duplication
+- **Progressive Disclosure**: Add/remove gear items as needed
+- **Visual Feedback**: Clear validation messages and success states
+- **Responsive Design**: Works on both desktop and mobile devices
+
+### Hero Selection
+
+- **Search Functionality**: Type to search through hero names
+- **Unique Keys**: Handles duplicate hero names with index-based keys
+- **Clear Selection**: Easy to clear and reselect heroes
+
+### Form Management
+
+- **Dynamic Validation**: Real-time validation feedback
+- **Error Handling**: Clear error messages for validation failures
+- **Success Flow**: Automatic redirect after successful creation
+
+### Accessibility
+
+- **Keyboard Navigation**: Full keyboard support for form elements
+- **Screen Reader**: Proper ARIA labels and descriptions
+- **Focus Management**: Logical tab order and focus indicators
+
+description: Gear recommendations business rules and implementation patterns
+globs: ["src/app/(dashboard)/recommendations/**/*"]
+alwaysApply: false
+
+---

@@ -10,8 +10,8 @@ type FormFieldContextValue = {
   name: string;
   id?: string;
   error?: string;
-  value?: any;
-  onChange?: (value: any) => void;
+  value?: string;
+  onChange?: (value?: string) => void;
 };
 
 const FormFieldContext = React.createContext<FormFieldContextValue>(
@@ -20,15 +20,15 @@ const FormFieldContext = React.createContext<FormFieldContextValue>(
 
 type FormFieldProps = {
   control: {
-    value: any;
+    value?: string;
     name: string;
     errors?: string[];
-    onChange: (value: any) => void;
+    onChange: (value?: string) => void;
   };
   render: (props: {
     field: {
-      value: any;
-      onChange: (value: any) => void;
+      value?: string;
+      onChange: (value?: string) => void;
       name: string;
     };
   }) => React.ReactElement;

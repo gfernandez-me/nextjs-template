@@ -76,7 +76,7 @@ Reference: Better Auth users & accounts [docs](https://www.better-auth.com/docs/
 
 - `POST /api/auth/signin` - User sign in
 - `POST /api/auth/signout` - User sign out
-- `GET /api/auth/me` - Get current user info
+- `GET /api/auth/me` - **DEPRECATED** - Use better-auth session instead
 - `POST /api/auth/change-password` - Change user password
 
 ### 9. Dependencies Added
@@ -103,7 +103,7 @@ Reference: Better Auth users & accounts [docs](https://www.better-auth.com/docs/
 
 ### 11. Client-Side Authentication
 
-- Custom `useAuth` hook for state management
+- Better Auth for session management and authentication
 - Automatic token refresh on page load
 - Loading states during authentication
 - Automatic redirects based on auth status

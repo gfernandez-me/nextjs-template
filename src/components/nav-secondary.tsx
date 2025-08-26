@@ -3,14 +3,16 @@
 import { type Icon } from "@tabler/icons-react";
 
 import {
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar";
+} from "@/components/ui/sidebar/sidebar-menu";
 import Link from "next/link";
+import {
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarGroupContent,
+} from "@/components/ui/sidebar/sidebar-content";
 
 export function NavSecondary({
   items,
