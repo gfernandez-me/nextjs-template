@@ -32,6 +32,7 @@ import {
   fetchStatThresholds,
   type StatThresholds,
 } from "@/lib/gear-thresholds";
+import { useGearSearchParams } from "@/lib/url-hooks";
 
 export function GearTable({
   gears,
@@ -48,6 +49,7 @@ export function GearTable({
 }) {
   const router = useRouter();
   const pathname = usePathname();
+  const { updateSearchParams } = useGearSearchParams();
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
@@ -130,6 +132,11 @@ export function GearTable({
     router.replace(`${pathname}?${url.searchParams.toString()}`);
   }, [sorting, router, pathname]);
 
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    updateSearchParams({ page });
+  };
+
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2">
@@ -193,6 +200,7 @@ export function GearTable({
         pageCount={pageCount}
         currentPage={currentPage}
         pageSize={pageSize}
+        onPageChange={handlePageChange}
       />
     </div>
   );

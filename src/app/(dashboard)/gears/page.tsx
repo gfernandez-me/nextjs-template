@@ -58,8 +58,8 @@ export default async function GearsPage({
       ...(filters.filters.name && {
         name: { contains: filters.filters.name, mode: "insensitive" },
       }),
-      ...(filters.filters.type && {
-        type: filters.filters.type as GearType,
+      ...(filters.filters.type?.length && {
+        type: { in: filters.filters.type as GearType[] },
       }),
       ...(filters.filters.rank?.length && {
         rank: { in: filters.filters.rank as GearRank[] },
@@ -70,16 +70,23 @@ export default async function GearsPage({
       ...(filters.filters.enhance && {
         enhance: filters.filters.enhance,
       }),
-      ...(filters.filters.mainStatType && {
-        mainStatType: filters.filters.mainStatType as MainStatType,
+      ...(filters.filters.mainStatType?.length && {
+        mainStatType: { in: filters.filters.mainStatType as MainStatType[] },
       }),
       ...(filters.filters.subStats?.length && {
-        GearSubStats: {
-          some: {
-            StatType: {
-              statName: { in: filters.filters.subStats },
+        AND: filters.filters.subStats.map((subStat) => ({
+          GearSubStats: {
+            some: {
+              StatType: {
+                statName: subStat,
+              },
             },
           },
+        })),
+      }),
+      ...(filters.filters.hero && {
+        Hero: {
+          name: { contains: filters.filters.hero, mode: "insensitive" },
         },
       }),
     },

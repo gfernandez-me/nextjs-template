@@ -9,6 +9,7 @@ interface GearTablePaginationProps {
   pageCount: number;
   currentPage: number;
   pageSize: number;
+  onPageChange?: (page: number) => void;
 }
 
 export function Pagination({
@@ -16,6 +17,7 @@ export function Pagination({
   pageCount,
   currentPage,
   pageSize,
+  onPageChange,
 }: GearTablePaginationProps) {
   return (
     <GenericPagination
@@ -23,6 +25,7 @@ export function Pagination({
       pageCount={pageCount}
       currentPage={currentPage}
       pageSize={pageSize}
+      onPageChange={onPageChange}
       className="text-xs"
     />
   );

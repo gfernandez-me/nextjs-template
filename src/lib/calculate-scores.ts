@@ -202,8 +202,6 @@ export function calculateScore(gear: GearForOptimization): number {
     }
   }
 
-  console.log("Final score:", score);
-
   return Math.round(score * 100) / 100;
 }
 

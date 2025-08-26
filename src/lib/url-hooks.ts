@@ -26,8 +26,22 @@ export function useDebouncedGearSearchParams(delay: number = 300) {
       }
 
       timeoutRef.current = setTimeout(() => {
-        const params = buildGearSearchParams(updates);
-        router.replace(`?${params.toString()}`, { scroll: false });
+        // Get current URL parameters
+        const currentUrl = new URL(window.location.href);
+        const currentParams = new URLSearchParams(currentUrl.search);
+
+        // Build new parameters, preserving existing ones
+        const newParams = buildGearSearchParams(updates);
+
+        // Merge current and new parameters
+        for (const [key, value] of currentParams.entries()) {
+          if (!newParams.has(key)) {
+            newParams.set(key, value);
+          }
+        }
+
+        // Update URL with merged parameters
+        router.replace(`?${newParams.toString()}`, { scroll: false });
       }, delay);
     },
     [router, delay]
@@ -52,8 +66,22 @@ export function useGearSearchParams() {
 
   const updateSearchParams = useCallback(
     (updates: Partial<GearTableState>) => {
-      const params = buildGearSearchParams(updates);
-      router.replace(`?${params.toString()}`, { scroll: false });
+      // Get current URL parameters
+      const currentUrl = new URL(window.location.href);
+      const currentParams = new URLSearchParams(currentUrl.search);
+
+      // Build new parameters, preserving existing ones
+      const newParams = buildGearSearchParams(updates);
+
+      // Merge current and new parameters
+      for (const [key, value] of currentParams.entries()) {
+        if (!newParams.has(key)) {
+          newParams.set(key, value);
+        }
+      }
+
+      // Update URL with merged parameters
+      router.replace(`?${newParams.toString()}`, { scroll: false });
     },
     [router]
   );

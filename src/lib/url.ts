@@ -16,12 +16,13 @@ export interface GearTableState {
 
 export interface GearFilters {
   name?: string;
-  type?: GearType;
+  type?: GearType[];
   rank?: GearRank[];
   level?: number;
   enhance?: number;
-  mainStatType?: MainStatType;
+  mainStatType?: MainStatType[];
   subStats?: string[];
+  hero?: string;
 }
 
 /**
@@ -57,18 +58,24 @@ export function parseGearSorting(sortString: string) {
 export function parseGearFilters(searchParams: URLSearchParams): GearFilters {
   return {
     name: searchParams.get("name") || undefined,
-    type: (searchParams.get("type") as GearType) || undefined,
-    rank: (searchParams.get("rank")?.split("|").filter(Boolean) ||
-      []) as GearRank[],
+    type: (searchParams.get("type")?.split("|").filter(Boolean) ||
+      []) as GearType[],
+    rank: (searchParams.get("rank")?.split("|").filter(Boolean) || [
+      GearRank.EPIC,
+      GearRank.HEROIC,
+    ]) as GearRank[],
     level: searchParams.get("level")
       ? parseInt(searchParams.get("level")!, 10)
       : undefined,
     enhance: searchParams.get("enhance")
       ? parseInt(searchParams.get("enhance")!, 10)
-      : undefined,
-    mainStatType:
-      (searchParams.get("mainStatType") as MainStatType) || undefined,
-    subStats: searchParams.get("subs")?.split("|").filter(Boolean) || [],
+      : 15, // Default to enhance=15 if not specified
+    mainStatType: (searchParams
+      .get("mainStatType")
+      ?.split("|")
+      .filter(Boolean) || []) as MainStatType[],
+    subStats: searchParams.get("subStats")?.split("|").filter(Boolean) || [],
+    hero: searchParams.get("hero") || undefined,
   };
 }
 

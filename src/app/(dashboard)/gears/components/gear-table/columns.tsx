@@ -77,6 +77,12 @@ export function createGearTableColumns({
       accessorKey: "level",
       header: () => <span>Level</span>,
       enableSorting: true,
+      sortingFn: (a, b) => {
+        const aVal = Number(a.original.level);
+        const bVal = Number(b.original.level);
+        if (!aVal || !bVal) return 0;
+        return aVal - bVal;
+      },
     },
     {
       accessorKey: "enhance",

@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "dotenv -e .env -- sh -c 'next dev --turbopack -p $PORT'",
+    "dev": "dotenv -e .env -- sh -c 'next dev --turbopack'",
     "clean": "rm -rf .next .turbo && echo 'Cleared Next.js caches'",
     "build": "next build",
     "build:ci": "CI=1 FORCE_COLOR=0 NO_COLOR=1 next build",

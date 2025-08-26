@@ -6,25 +6,19 @@
 
 "use client";
 
-import { useTransition, useCallback } from "react";
+import { useTransition, useCallback, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { useDebouncedGearSearchParams } from "@/lib/url-hooks";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+
+import { MultiSelect } from "@/components/ui/multi-select";
 import { GearTableState, type GearFilters } from "@/lib/url";
-import { GearType, MainStatType, GearRank } from "#prisma";
+import { GearType, MainStatType, GearRank, StatTypes } from "#prisma";
 
 // Use Prisma enums instead of hardcoded strings
 const gearTypes = [
-  { value: "All", label: "Any" },
   { value: GearType.WEAPON, label: "Weapon" },
   { value: GearType.HELM, label: "Helm" },
   { value: GearType.ARMOR, label: "Armor" },
@@ -34,7 +28,6 @@ const gearTypes = [
 ];
 
 const mainStats = [
-  { value: "All", label: "Any" },
   { value: MainStatType.ATT, label: "Attack" },
   { value: MainStatType.DEF, label: "Defense" },
   { value: MainStatType.MAX_HP, label: "Health" },
@@ -50,8 +43,26 @@ const mainStats = [
 
 export function GearFilters() {
   const [isPending, startTransition] = useTransition();
+  const [substatTypes, setSubstatTypes] = useState<StatTypes[]>([]);
   const updateFilters = useDebouncedGearSearchParams(300);
   const searchParams = useSearchParams();
+
+  // Fetch substat types from database
+  useEffect(() => {
+    const fetchSubstatTypes = async () => {
+      try {
+        const response = await fetch("/api/stat-types");
+        if (response.ok) {
+          const data = await response.json();
+          setSubstatTypes(data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch substat types:", error);
+      }
+    };
+
+    fetchSubstatTypes();
+  }, []);
 
   const handleFilterUpdate = useCallback(
     (updates: Partial<GearFilters>) => {
@@ -91,31 +102,32 @@ export function GearFilters() {
           <Label htmlFor="type-filter" className="text-sm whitespace-nowrap">
             Gear Type
           </Label>
-          <Select
-            value={searchParams.get("type") || "All"}
-            onValueChange={(value) =>
+          <MultiSelect
+            options={gearTypes.map((type) => ({
+              value: type.value,
+              label: type.label,
+            }))}
+            selected={(searchParams.get("type") || "")
+              .split("|")
+              .filter(Boolean)}
+            onSelectionChange={(selected) => {
               handleFilterUpdate({
-                type: value === "All" ? undefined : (value as GearType),
-              })
-            }
-          >
-            <SelectTrigger className="h-8 w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {gearTypes.map((type) => (
-                <SelectItem key={type.value} value={type.value}>
-                  {type.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+                type:
+                  selected.length > 0 ? (selected as GearType[]) : undefined,
+              });
+            }}
+            placeholder="Select gear types"
+            searchable={true}
+          />
         </div>
 
         <div className="flex items-center gap-2">
           <Label className="text-sm whitespace-nowrap">Rank</Label>
           {[GearRank.EPIC, GearRank.HEROIC].map((rank) => {
-            const currentRanks = searchParams.get("rank")?.split("|") || [];
+            const currentRanks = searchParams
+              .get("rank")
+              ?.split("|")
+              .filter(Boolean) || [GearRank.EPIC, GearRank.HEROIC];
             const isActive = currentRanks.includes(rank);
 
             return (
@@ -129,6 +141,10 @@ export function GearFilters() {
                   const newRanks = isActive
                     ? currentRanks.filter((r) => r !== rank)
                     : [...currentRanks, rank];
+                  // If all ranks are deselected, default to both
+                  if (newRanks.length === 0) {
+                    newRanks.push(GearRank.EPIC, GearRank.HEROIC);
+                  }
                   handleFilterUpdate({ rank: newRanks as GearRank[] });
                 }}
               >
@@ -147,7 +163,7 @@ export function GearFilters() {
             type="number"
             min={0}
             max={15}
-            defaultValue={searchParams.get("enhance") || ""}
+            value={searchParams.get("enhance") || "15"}
             onChange={(e) => {
               const value = e.target.value;
               if (value) {
@@ -156,7 +172,7 @@ export function GearFilters() {
                   handleFilterUpdate({ enhance: numValue });
                 }
               } else {
-                handleFilterUpdate({ enhance: undefined });
+                handleFilterUpdate({ enhance: 15 }); // Default to 15
               }
             }}
             className="h-8 w-20"
@@ -168,58 +184,44 @@ export function GearFilters() {
           <Label htmlFor="main-filter" className="text-sm whitespace-nowrap">
             Main Stat
           </Label>
-          <Select
-            value={searchParams.get("mainStatType") || "All"}
-            onValueChange={(value) =>
-              handleFilterUpdate({ mainStatType: value as MainStatType })
-            }
-          >
-            <SelectTrigger className="h-8 w-36">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {mainStats.map((stat) => (
-                <SelectItem key={stat.value} value={stat.value}>
-                  {stat.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <MultiSelect
+            options={mainStats.map((stat) => ({
+              value: stat.value,
+              label: stat.label,
+            }))}
+            selected={(searchParams.get("mainStatType") || "")
+              .split("|")
+              .filter(Boolean)}
+            onSelectionChange={(selected) => {
+              handleFilterUpdate({
+                mainStatType:
+                  selected.length > 0
+                    ? (selected as MainStatType[])
+                    : undefined,
+              });
+            }}
+            placeholder="Select main stats"
+            searchable={true}
+          />
         </div>
       </div>
 
       <div className="flex items-center gap-4">
         <Label className="text-sm whitespace-nowrap">Substats</Label>
-        {[0, 1, 2, 3].map((idx) => (
-          <Select
-            key={idx}
-            value={
-              (searchParams.get("subStats") || "").split("|")[idx] || "All"
-            }
-            onValueChange={(value) => {
-              const parts = (searchParams.get("subStats") || "")
-                .split("|")
-                .filter(Boolean);
-              if (value !== "All") {
-                parts[idx] = value;
-              } else {
-                parts.splice(idx, 1);
-              }
-              handleFilterUpdate({ subStats: parts });
-            }}
-          >
-            <SelectTrigger className="h-8 w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {mainStats.map((stat) => (
-                <SelectItem key={`${idx}-${stat.value}`} value={stat.value}>
-                  {stat.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        ))}
+        <MultiSelect
+          options={substatTypes.map((stat) => ({
+            value: stat.statName,
+            label: stat.statName,
+          }))}
+          selected={(searchParams.get("subStats") || "")
+            .split("|")
+            .filter(Boolean)}
+          onSelectionChange={(selected) => {
+            handleFilterUpdate({ subStats: selected });
+          }}
+          placeholder="Select substats"
+          searchable={true}
+        />
       </div>
 
       {isPending && (
