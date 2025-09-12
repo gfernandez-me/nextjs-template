@@ -50,7 +50,7 @@ model GearSubStats {
 
 model Gears {
   id                Int            @id @default(autoincrement())
-  ingameId          BigInt         @unique
+  ingameId          BigInt
   code              String?
   type              GearType
   rank              GearRank
@@ -75,6 +75,7 @@ model Gears {
   Hero              Heroes?        @relation(fields: [heroId], references: [id])
   User              User           @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@unique([ingameId, userId])
   @@index([createdAt])
   @@index([rank])
   @@index([enhance])
@@ -85,34 +86,37 @@ model Gears {
 }
 
 model Heroes {
-  id                  Int                  @id @default(autoincrement())
-  ingameId            BigInt               @unique
-  name                String
-  element             HeroElement?
-  rarity              HeroRarity?
-  class               HeroClass?
-  attack              Int?
-  defense             Int?
-  health              Int?
-  speed               Int?
-  criticalHitChance   Int?
-  criticalHitDamage   Int?
-  effectiveness       Int?
-  effectResistance    Int?
-  weaponId            Int?
-  armorId             Int?
-  helmetId            Int?
-  necklaceId          Int?
-  ringId              Int?
-  bootId              Int?
-  userId              String
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @updatedAt
+  id                Int          @id @default(autoincrement())
+  ingameId          BigInt
+  name              String
+  count             Int          @default(1) // Track duplicate instances
+  element           HeroElement?
+  rarity            HeroRarity?
+  class             HeroClass?
+  attack            Int?
+  defense           Int?
+  health            Int?
+  speed             Int?
+  criticalHitChance Int?
+  criticalHitDamage Int?
+  effectiveness     Int?
+  effectResistance  Int?
+  weaponId          Int?
+  armorId           Int?
+  helmetId          Int?
+  necklaceId        Int?
+  ringId            Int?
+  bootId            Int?
+  userId            String
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
 
-  Gears               Gears[]
-  User                User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Gears Gears[]
+  User  User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@unique([ingameId, userId])
   @@index([userId])
+  @@index([ingameId, userId])
   @@map("heroes")
 }
 

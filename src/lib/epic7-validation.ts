@@ -242,6 +242,7 @@ export function validateHeroData(rawData: Record<string, unknown>) {
   return {
     ingameId: safeBigInt(rawData.id || rawData.ingameId),
     name: safeString(rawData.name, "Unknown Hero") || "Unknown Hero", // Ensure name is never null
+    count: 1, // Will be calculated during upload process
     element: validateHeroElement(rawData.element),
     rarity: validateHeroRarity(rawData.rarity),
     class: validateHeroClass(rawData.class),

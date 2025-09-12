@@ -9,6 +9,7 @@ import {
   validateSubstatData,
   validateMainStatType,
 } from "@/lib/epic7-validation";
+import { calculateFScore, calculateScore } from "@/lib/calculate-scores";
 
 // ============================================================================
 // DATA ACCESS CLASS
@@ -37,10 +38,21 @@ export class UploadDataAccess {
         for (const hero of data.heroes) {
           try {
             const heroObj = hero as Record<string, unknown>;
-            // Validate and cast hero data
-            const validatedHeroData = this.validateHeroData(heroObj);
+
+            const validatedHeroData = validateHeroData(heroObj);
+
+            // Calculate duplicate count by checking existing heroes in database
+            const existingHeroesWithSameName = await prisma.heroes.count({
+              where: {
+                name: validatedHeroData.name,
+                userId: this.userId,
+              },
+            });
+            const count = existingHeroesWithSameName + 1;
+
             const heroData = {
               ...validatedHeroData,
+              count,
               userId: this.userId,
             };
 
@@ -66,14 +78,14 @@ export class UploadDataAccess {
 
       for (const item of data.items) {
         try {
-          const itemObj = item as unknown as Record<string, unknown>;
+          const itemObj = item as Record<string, unknown>;
           const mainStat = itemObj.main as { type: string };
 
           // Validate and cast gear data
-          const validatedGearData = this.validateGearData(itemObj);
+          const validatedGearData = validateGearData(itemObj);
           const gearData = {
             ...validatedGearData,
-            mainStatType: this.validateMainStatType(mainStat.type),
+            mainStatType: validateMainStatType(mainStat.type),
             equipped: validatedGearData.ingameEquippedId !== null,
             heroId: validatedGearData.ingameEquippedId
               ? heroMap.get(validatedGearData.ingameEquippedId)
@@ -92,8 +104,7 @@ export class UploadDataAccess {
               const statTypeId = statTypeMap.get(substatObj.type as string);
               if (statTypeId) {
                 // Validate and cast substat data
-                const validatedSubstatData =
-                  this.validateSubstatData(substatObj);
+                const validatedSubstatData = validateSubstatData(substatObj);
                 const substatData = {
                   ...validatedSubstatData,
                   gearId: gear.id,
@@ -147,11 +158,6 @@ export class UploadDataAccess {
               let score: number | null = null;
 
               try {
-                // Import score calculation functions
-                const { calculateFScore, calculateScore } = await import(
-                  "@/lib/calculate-scores"
-                );
-
                 fScore = calculateFScore(gearWithSubstats, scoreSettings);
                 score = calculateScore(gearWithSubstats);
 
@@ -182,8 +188,8 @@ export class UploadDataAccess {
           importedCount++;
         } catch (error) {
           const badId =
-            (item as unknown as { id?: unknown; ingameId?: unknown })?.id ??
-            (item as unknown as { id?: unknown; ingameId?: unknown })?.ingameId;
+            (item as { id?: string; ingameId?: string })?.id ??
+            (item as { id?: string; ingameId?: string })?.ingameId;
           errors.push(
             `Failed to import item ${String(badId ?? "unknown")}: ${error}`
           );
@@ -205,25 +211,5 @@ export class UploadDataAccess {
         message: "Internal server error",
       };
     }
-  }
-
-  // ============================================================================
-  // VALIDATION METHODS
-  // ============================================================================
-
-  private validateHeroData(hero: Record<string, unknown>) {
-    return validateHeroData(hero);
-  }
-
-  private validateGearData(item: Record<string, unknown>) {
-    return validateGearData(item);
-  }
-
-  private validateSubstatData(substat: Record<string, unknown>) {
-    return validateSubstatData(substat);
-  }
-
-  private validateMainStatType(type: string) {
-    return validateMainStatType(type);
   }
 }

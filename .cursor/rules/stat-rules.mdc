@@ -161,8 +161,8 @@ When seeding stat types:
 }
 ```
 
-description:
-globs:
+description: Stat rules and validation business rules and implementation patterns for Epic 7 stat management
+globs: ["src/lib/stat-validation.ts", "src/lib/epic7-validation.ts", "src/app/(dashboard)/recommendations/**/*"]
 alwaysApply: false
 
 ---

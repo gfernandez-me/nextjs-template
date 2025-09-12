@@ -321,7 +321,6 @@ npm run lint         # ESLint code quality checks
 - DATABASE_URL for Prisma connection
 - Next.js automatic environment handling
 - Production database configuration
-  \- `.env.example` is copied to `.env` on install (postinstall script)
 
 ### Build Optimization
 

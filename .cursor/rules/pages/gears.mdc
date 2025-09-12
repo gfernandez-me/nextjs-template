@@ -19,8 +19,8 @@ _[Content to be provided by user]_
 ## User Experience
 
 _[Content to be provided by user]_
-description:
-globs:
+description: Gears management business rules and implementation patterns for gear inventory management
+globs: ["src/app/(dashboard)/gears/**/*", "src/app/api/upload/**/*"]
 alwaysApply: false
 
 ---

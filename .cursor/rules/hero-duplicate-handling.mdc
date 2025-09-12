@@ -1,0 +1,243 @@
+# Hero Duplicate Handling Business Rules
+
+## Overview
+
+This document outlines the business rules for handling hero duplicates in the Epic 7 Gear Optimizer application.
+
+## Problem Statement
+
+Epic 7 allows players to have multiple instances of the same hero (e.g., multiple "Rinak" heroes). This creates challenges in:
+
+- **Identification**: Distinguishing between different instances of the same hero
+- **Filtering**: Accurately filtering gear by specific hero instances
+- **User Experience**: Providing clear visual indicators for duplicate heroes
+
+## Solution Implementation
+
+### 1. Database Schema Changes
+
+#### Heroes Table Enhancement
+
+```sql
+model Heroes {
+  id                Int          @id @default(autoincrement())
+  ingameId          BigInt       @unique
+  name              String
+  count    Int          @default(1) // Track duplicate instances
+  // ... other fields
+
+  @@unique([ingameId, userId])
+  @@index([name, userId]) // Index for efficient duplicate counting
+}
+```
+
+#### Key Features:
+
+- **count**: Tracks the instance number (1, 2, 3, etc.)
+- **name**: Original hero name (unchanged)
+- **ingameId**: Unique identifier from Epic 7
+- **Index**: Efficient querying by name and user
+
+### 2. Upload Process Enhancement
+
+#### Duplicate Detection Logic
+
+```typescript
+// During upload, track duplicates by name
+const heroNameCounts: Map<string, number> = new Map();
+
+for (const hero of data.heroes) {
+  const heroName = validatedHeroData.name;
+  const currentCount = heroNameCounts.get(heroName) || 0;
+  const count = currentCount + 1;
+  heroNameCounts.set(heroName, count);
+
+  const heroData = {
+    ...validatedHeroData,
+    count,
+    userId: this.userId,
+  };
+}
+```
+
+#### Process Flow:
+
+1. **Parse Hero Data**: Extract hero information from Fribbels export
+2. **Count Duplicates**: Track occurrences of each hero name
+3. **Assign Count**: Set count for each hero instance
+4. **Create Records**: Insert heroes with proper duplicate counts
+
+### 3. User Interface Enhancements
+
+#### Hero Filter Display
+
+```typescript
+// Show duplicate count in filter options
+<span>
+  {hero.name}
+  {hero.count > 1 ? ` (${hero.count})` : ""}
+</span>
+```
+
+#### Display Examples:
+
+- **Single Instance**: "Rinak"
+- **Multiple Instances**: "Rinak (1)", "Rinak (2)", "Rinak (3)"
+
+#### Hero Table Display
+
+```typescript
+// Show duplicate count as badge
+<span className="font-medium">
+  {hero.name}
+  {hero.count > 1 && (
+    <Badge variant="secondary" className="ml-2 text-xs">
+      {hero.count}
+    </Badge>
+  )}
+</span>
+```
+
+### 4. Filtering Logic
+
+#### Hero Filter Component
+
+- **Display**: Show hero name with duplicate count
+- **Selection**: Use hero ID for precise filtering
+- **URL**: Store hero ID in URL parameters
+- **Fallback**: Handle missing heroes gracefully
+
+#### Filter Flow:
+
+1. **User Selection**: User selects "Rinak (2)" from dropdown
+2. **ID Storage**: Store hero ID in URL (`?hero=123`)
+3. **Database Query**: Filter gear by specific hero ID
+4. **Results**: Show only gear for that specific hero instance
+
+### 5. Data Integrity
+
+#### Constraints:
+
+- **Unique ingameId**: Each hero instance has unique Epic 7 ID
+- **User Scoping**: Heroes are scoped to specific users
+- **Cascade Deletes**: Deleting hero removes associated gear references
+
+#### Validation:
+
+- **Duplicate Count**: Always >= 1
+- **Name Consistency**: Same name for all instances
+- **ID Uniqueness**: No duplicate ingameId per user
+
+## Benefits
+
+### 1. Clear Identification
+
+- **Visual Distinction**: Duplicate count badges make heroes easily identifiable
+- **Consistent Naming**: Original hero names preserved
+- **Instance Tracking**: Clear numbering system (1, 2, 3, etc.)
+
+### 2. Accurate Filtering
+
+- **Precise Selection**: Filter by specific hero instance
+- **No Ambiguity**: Eliminates confusion between duplicate heroes
+- **Reliable Results**: Always shows correct gear for selected hero
+
+### 3. User Experience
+
+- **Intuitive Display**: Clear visual indicators for duplicates
+- **Consistent Interface**: Same pattern across all components
+- **Error Prevention**: Prevents accidental selection of wrong hero
+
+### 4. Data Management
+
+- **Efficient Queries**: Indexed for fast duplicate counting
+- **Scalable Design**: Handles unlimited hero duplicates
+- **Data Integrity**: Maintains referential integrity
+
+## Implementation Status
+
+### ✅ Completed
+
+- [x] Database schema with count field
+- [x] Upload process with duplicate detection
+- [x] Hero filter component with duplicate display
+- [x] Hero table with duplicate count badges
+- [x] TypeScript types and validation
+- [x] Database indexing for performance
+- [x] Heroes page with DataTable integration
+- [x] API endpoint for hero data
+- [x] Client-side data fetching and state management
+
+### 🔄 Future Enhancements
+
+- [ ] Hero rename functionality
+- [ ] Bulk hero management
+- [ ] Hero statistics dashboard
+- [ ] Advanced filtering options
+
+## Technical Notes
+
+### Database Migration
+
+- **Field Addition**: `count` field added to Heroes table
+- **Index Creation**: Composite index on `[name, userId]`
+- **Data Migration**: Existing heroes get `count = 1`
+
+### Performance Considerations
+
+- **Indexing**: Efficient queries for duplicate counting
+- **Caching**: Hero options cached for filter performance
+- **Pagination**: Large hero lists handled with pagination
+
+### Error Handling
+
+- **Invalid IDs**: Graceful handling of missing heroes
+- **Duplicate Names**: Proper counting and assignment
+- **User Feedback**: Clear error messages for issues
+
+## Usage Examples
+
+### Upload Process
+
+```typescript
+// Fribbels export with multiple Rinak heroes
+const heroes = [
+  { id: 123, name: "Rinak", ... },
+  { id: 456, name: "Rinak", ... },
+  { id: 789, name: "Rinak", ... }
+];
+
+// Results in database:
+// Heroes: [
+//   { id: 1, name: "Rinak", count: 1, ingameId: 123 },
+//   { id: 2, name: "Rinak", count: 2, ingameId: 456 },
+//   { id: 3, name: "Rinak", count: 3, ingameId: 789 }
+// ]
+```
+
+### Filter Usage
+
+```typescript
+// User selects "Rinak (2)" from filter
+// URL becomes: /gears?hero=2
+// Database query: WHERE heroId = 2
+// Results: Only gear for the second Rinak instance
+```
+
+### Display Examples
+
+```typescript
+// Single hero: "Rinak"
+// Multiple heroes: "Rinak (1)", "Rinak (2)", "Rinak (3)"
+// With badges: "Rinak [2]" (in table view)
+```
+
+---
+
+**Last Updated**: Current implementation
+**Status**: ✅ Production Ready
+description: Hero duplicate handling business rules and implementation patterns for managing duplicate hero names
+globs: ["src/app/(dashboard)/heroes/**/*", "src/app/(dashboard)/upload/**/*", "src/app/api/heroes/**/*"]
+alwaysApply: true
+
+---

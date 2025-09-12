@@ -1,190 +1,93 @@
 import type { Prisma } from "#prisma";
-import { HeroElement, HeroClass, HeroRarity } from "#prisma";
+import { HeroElement, HeroRarity, HeroClass } from "#prisma";
 import prisma from "@/lib/prisma";
 
 // ============================================================================
 // TYPE DEFINITIONS
 // ============================================================================
 
-// Hero with basic information for list display
-export type HeroForList = Prisma.HeroesGetPayload<{
-  include: {
-    User: true;
-  };
-}>;
-
-// Hero with full equipment and gear details
-export type HeroWithEquipment = Prisma.HeroesGetPayload<{
-  include: {
-    User: true;
-    Gears: true;
-  };
-}>;
-
-// Hero with gear recommendations
-export type HeroWithRecommendations = Prisma.HeroesGetPayload<{
-  include: {
-    User: true;
-  };
-}>;
+export type HeroForTable = {
+  id: number;
+  ingameId: bigint;
+  name: string;
+  count: number;
+  element: HeroElement | null;
+  rarity: HeroRarity | null;
+  class: HeroClass | null;
+  attack: number | null;
+  defense: number | null;
+  health: number | null;
+  speed: number | null;
+  criticalHitChance: number | null;
+  criticalHitDamage: number | null;
+  effectiveness: number | null;
+  effectResistance: number | null;
+  createdAt: Date;
+  updatedAt: Date;
+  gearCount: number; // Number of gear pieces equipped
+};
 
 // ============================================================================
-// QUERY FUNCTIONS
+// DATA ACCESS CLASS
 // ============================================================================
 
 export class HeroesDataAccess {
   constructor(private userId: string) {}
 
   /**
-   * Get all heroes for the current user
+   * Get paginated heroes for table display
    */
-  async getAllHeroes(): Promise<HeroForList[]> {
-    return prisma.heroes.findMany({
-      where: { userId: this.userId },
-      include: {
-        User: true,
-      },
-      orderBy: { name: "asc" },
-    });
-  }
+  async getHeroesPage(params: {
+    page: number;
+    perPage: number;
+    where?: Prisma.HeroesWhereInput;
+    sortField?: string;
+    sortDirection?: string;
+  }): Promise<{ rows: HeroForTable[]; total: number }> {
+    const { page, perPage, where = {}, sortField, sortDirection } = params;
 
-  /**
-   * Get hero by ID with full equipment details
-   */
-  async getHeroById(id: number): Promise<HeroWithEquipment | null> {
-    return prisma.heroes.findFirst({
-      where: { id, userId: this.userId },
-      include: {
-        User: true,
-        Gears: true,
-      },
-    });
-  }
+    // Always scope to current user
+    const userScopedWhere = { ...where, userId: this.userId };
 
-  /**
-   * Get hero by Epic 7 ingame ID
-   */
-  async getHeroByIngameId(ingameId: bigint): Promise<HeroWithEquipment | null> {
-    return prisma.heroes.findFirst({
-      where: { ingameId, userId: this.userId },
-      include: {
-        User: true,
-        Gears: true,
-      },
-    });
-  }
+    // Build orderBy from sortField and sortDirection
+    let orderBy;
+    if (sortField && sortDirection) {
+      orderBy = [{ [sortField]: sortDirection }];
+    }
 
-  /**
-   * Get heroes by element for filtering
-   */
-  async getHeroesByElement(element: HeroElement): Promise<HeroForList[]> {
-    return prisma.heroes.findMany({
-      where: { userId: this.userId, element },
-      include: {
-        User: true,
-      },
-      orderBy: { name: "asc" },
-    });
-  }
+    const [rows, total] = await Promise.all([
+      prisma.heroes.findMany({
+        skip: (page - 1) * perPage,
+        take: perPage,
+        where: userScopedWhere,
+        orderBy,
+      }),
+      prisma.heroes.count({ where: userScopedWhere }),
+    ]);
 
-  /**
-   * Get heroes by class for filtering
-   */
-  async getHeroesByClass(heroClass: HeroClass): Promise<HeroForList[]> {
-    return prisma.heroes.findMany({
-      where: { userId: this.userId, class: heroClass },
-      include: {
-        User: true,
-      },
-      orderBy: { name: "asc" },
-    });
-  }
+    // Transform to include gear count - we'll calculate this separately since we don't need _count
+    const transformedRows: HeroForTable[] = rows.map((hero) => ({
+      id: hero.id,
+      ingameId: hero.ingameId,
+      name: hero.name,
+      count: hero.count,
+      element: hero.element,
+      rarity: hero.rarity,
+      class: hero.class,
+      attack: hero.attack,
+      defense: hero.defense,
+      health: hero.health,
+      speed: hero.speed,
+      criticalHitChance: hero.criticalHitChance,
+      criticalHitDamage: hero.criticalHitDamage,
+      effectiveness: hero.effectiveness,
+      effectResistance: hero.effectResistance,
+      createdAt: hero.createdAt,
+      updatedAt: hero.updatedAt,
+      gearCount: 0, // We'll calculate this separately if needed
+    }));
 
-  /**
-   * Get heroes by rarity for filtering
-   */
-  async getHeroesByRarity(rarity: HeroRarity): Promise<HeroForList[]> {
-    return prisma.heroes.findMany({
-      where: { userId: this.userId, rarity },
-      include: {
-        User: true,
-      },
-      orderBy: { name: "asc" },
-    });
-  }
-
-  /**
-   * Get heroes with gear recommendations for optimization
-   */
-  async getHeroesWithPriorities(): Promise<HeroWithEquipment[]> {
-    return prisma.heroes.findMany({
-      where: { userId: this.userId },
-      include: {
-        User: true,
-        Gears: true,
-      },
-      orderBy: { name: "asc" },
-    });
-  }
-
-  /**
-   * Create a new hero
-   */
-  async createHero(data: {
-    name: string;
-    ingameId: bigint;
-    element: HeroElement;
-    heroClass: HeroClass;
-    rarity: HeroRarity;
-    level: number;
-    awakening: number;
-    imprint: number;
-    skillEnhance: number;
-  }): Promise<HeroForList> {
-    return prisma.heroes.create({
-      data: { ...data, userId: this.userId },
-      include: {
-        User: true,
-      },
-    });
-  }
-
-  /**
-   * Update hero information
-   */
-  async updateHero(
-    id: number,
-    data: Partial<{
-      name: string;
-      level: number;
-      awakening: number;
-      imprint: number;
-      skillEnhance: number;
-    }>
-  ): Promise<HeroForList> {
-    return prisma.heroes.update({
-      where: { id, userId: this.userId },
-      data,
-      include: {
-        User: true,
-      },
-    });
-  }
-
-  /**
-   * Delete hero and clear equipment references
-   */
-  async deleteHero(id: number): Promise<void> {
-    // First, clear any gear that references this hero
-    await prisma.gears.updateMany({
-      where: { heroId: id, userId: this.userId },
-      data: { heroId: null, equipped: false },
-    });
-
-    // Then delete the hero
-    await prisma.heroes.delete({
-      where: { id, userId: this.userId },
-    });
+    return { rows: transformedRows, total };
   }
 
   /**
@@ -192,61 +95,51 @@ export class HeroesDataAccess {
    */
   async getHeroStats(): Promise<{
     total: number;
-    byElement: Record<HeroElement, number>;
-    byClass: Record<HeroClass, number>;
-    byRarity: Record<HeroRarity, number>;
-    maxLevel: number;
-    maxAwakening: number;
+    withGear: number;
+    byElement: Record<string, number>;
+    byClass: Record<string, number>;
   }> {
-    const heroes = await prisma.heroes.findMany({
-      where: { userId: this.userId },
-      select: {
-        element: true,
-        class: true,
-        rarity: true,
-      },
+    const [total, withGear, byElement, byClass] = await Promise.all([
+      prisma.heroes.count({ where: { userId: this.userId } }),
+      prisma.heroes.count({
+        where: {
+          userId: this.userId,
+          Gears: { some: {} },
+        },
+      }),
+      prisma.heroes.groupBy({
+        by: ["element"],
+        where: { userId: this.userId },
+        _count: { element: true },
+      }),
+      prisma.heroes.groupBy({
+        by: ["class"],
+        where: { userId: this.userId },
+        _count: { class: true },
+      }),
+    ]);
+
+    const elementStats: Record<string, number> = {};
+    byElement.forEach((group) => {
+      const element = group.element || "Unknown";
+      elementStats[element] = group._count.element;
     });
 
-    const byElement: Record<HeroElement, number> = {
-      FIRE: 0,
-      ICE: 0,
-      EARTH: 0,
-      LIGHT: 0,
-      DARK: 0,
-    };
+    const classStats: Record<string, number> = {};
+    byClass.forEach((group) => {
+      const heroClass = group.class || "Unknown";
+      classStats[heroClass] = group._count.class;
+    });
 
-    const byClass: Record<HeroClass, number> = {
-      WARRIOR: 0,
-      KNIGHT: 0,
-      RANGER: 0,
-      MAGE: 0,
-      SOUL_WEAVER: 0,
-      THIEF: 0,
-    };
+    return { total, withGear, byElement: elementStats, byClass: classStats };
+  }
 
-    const byRarity: Record<HeroRarity, number> = {
-      THREE_STAR: 0,
-      FOUR_STAR: 0,
-      FIVE_STAR: 0,
-      SIX_STAR: 0,
-    };
-
-    const maxLevel = 0;
-    const maxAwakening = 0;
-
-    for (const hero of heroes) {
-      if (hero.element) byElement[hero.element]++;
-      if (hero.class) byClass[hero.class]++;
-      if (hero.rarity) byRarity[hero.rarity]++;
-    }
-
-    return {
-      total: heroes.length,
-      byElement,
-      byClass,
-      byRarity,
-      maxLevel,
-      maxAwakening,
-    };
+  /**
+   * Delete hero and all related data
+   */
+  async deleteHero(heroId: number): Promise<void> {
+    await prisma.heroes.delete({
+      where: { id: heroId, userId: this.userId },
+    });
   }
 }

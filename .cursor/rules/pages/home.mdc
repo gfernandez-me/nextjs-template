@@ -19,8 +19,8 @@ _[Content to be provided by user]_
 ## User Experience
 
 _[Content to be provided by user]_
-description:
-globs:
+description: Home dashboard business rules and implementation patterns for the main landing page
+globs: ["src/app/(dashboard)/page.tsx", "src/app/page.tsx", "src/app/layout.tsx"]
 alwaysApply: false
 
 ---

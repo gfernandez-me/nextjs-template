@@ -19,8 +19,8 @@ _[Content to be provided by user]_
 ## User Experience
 
 _[Content to be provided by user]_
-description:
-globs:
+description: Heroes management business rules and implementation patterns for hero data management
+globs: ["src/app/(dashboard)/heroes/**/*", "src/app/api/heroes/**/*"]
 alwaysApply: false
 
 ---

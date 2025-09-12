@@ -203,8 +203,8 @@ const testCases = [
 - **Stat Rules**: See `.cursor/rules/stat-rules.mdc`
 - **Business Rules**: See `.cursor/rules/business-rules.mdc`
 - **Gear Types**: See `.cursor/rules/business-rules.mdc` for gear type definitions
-  description:
-  globs:
+  description: Main stat and substat validation business rules and implementation patterns for gear optimization
+  globs: ["src/app/(dashboard)/recommendations/**/*", "src/lib/stat-validation.ts"]
   alwaysApply: true
 
 ---

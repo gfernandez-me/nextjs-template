@@ -153,8 +153,8 @@ prisma/schema/
 
 ---
 
-description:
-globs:
+description: Prisma database best practices and implementation patterns for database operations
+globs: ["prisma/**/*", "src/lib/prisma.ts", "src/app/**/data/**/*"]
 alwaysApply: false
 
 ---

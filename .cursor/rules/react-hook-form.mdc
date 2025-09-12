@@ -1,18 +1,21 @@
 # React Hook Form + Zod: Complex Form Handling
 
 ## When to Use React Hook Form
+
 - Complex forms with dynamic fields (arrays, conditional fields)
 - Forms requiring fine-grained control over validation timing
 - Forms with complex state management needs
 - When you need to integrate with third-party form libraries
 
 ## Core Principles
+
 - Use zodResolver for schema validation
 - Leverage React Hook Form's performance optimizations
 - Maintain type safety with zod inference
 - Use controlled components when needed
 
 ## Basic Setup with Zod
+
 ```tsx
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -36,6 +39,7 @@ const {
 ```
 
 ## Form Submission
+
 ```tsx
 const onSubmit = async (data: FormData) => {
   try {
@@ -46,16 +50,17 @@ const onSubmit = async (data: FormData) => {
   }
 };
 
-<form onSubmit={handleSubmit(onSubmit)}>
-  {/* form fields */}
-</form>
+<form onSubmit={handleSubmit(onSubmit)}>{/* form fields */}</form>;
 ```
 
 ## Field Registration
+
 ```tsx
 // Basic input
-<input {...register("name")} />
-{errors.name && <p className="text-destructive">{errors.name.message}</p>}
+<input {...register("name")} />;
+{
+  errors.name && <p className="text-destructive">{errors.name.message}</p>;
+}
 
 // With validation options
 <input
@@ -66,10 +71,11 @@ const onSubmit = async (data: FormData) => {
       message: "Invalid email address",
     },
   })}
-/>
+/>;
 ```
 
 ## Complex Fields (Arrays, Objects)
+
 ```tsx
 import { useFieldArray } from "react-hook-form";
 
@@ -79,17 +85,20 @@ const { fields, append, remove } = useFieldArray({
 });
 
 // In JSX
-{fields.map((field, index) => (
-  <div key={field.id}>
-    <input {...register(`items.${index}.name`)} />
-    <button type="button" onClick={() => remove(index)}>
-      Remove
-    </button>
-  </div>
-))}
+{
+  fields.map((field, index) => (
+    <div key={field.id}>
+      <input {...register(`items.${index}.name`)} />
+      <button type="button" onClick={() => remove(index)}>
+        Remove
+      </button>
+    </div>
+  ));
+}
 ```
 
 ## Controlled Components
+
 ```tsx
 import { Controller } from "react-hook-form";
 
@@ -97,17 +106,15 @@ import { Controller } from "react-hook-form";
   name="category"
   control={control}
   render={({ field }) => (
-    <Select
-      value={field.value}
-      onValueChange={field.onChange}
-    >
+    <Select value={field.value} onValueChange={field.onChange}>
       {/* options */}
     </Select>
   )}
-/>
+/>;
 ```
 
 ## File Inputs
+
 ```tsx
 const schema = z.object({
   file: z
@@ -124,28 +131,32 @@ const schema = z.object({
       setValue("file", file);
     }
   }}
-/>
-{errors.file && <p className="text-destructive">{errors.file.message}</p>}
+/>;
+{
+  errors.file && <p className="text-destructive">{errors.file.message}</p>;
+}
 ```
 
 ## Error Handling
+
 ```tsx
 // Field-level errors
-{errors.fieldName && (
-  <p className="text-sm text-destructive">
-    {errors.fieldName.message}
-  </p>
-)}
+{
+  errors.fieldName && (
+    <p className="text-sm text-destructive">{errors.fieldName.message}</p>
+  );
+}
 
 // Form-level errors
-{errors.root && (
-  <p className="text-sm text-destructive">
-    {errors.root.message}
-  </p>
-)}
+{
+  errors.root && (
+    <p className="text-sm text-destructive">{errors.root.message}</p>
+  );
+}
 ```
 
 ## Performance Optimization
+
 ```tsx
 // Use defaultValues for initial form state
 const form = useForm<FormData>({
@@ -164,6 +175,7 @@ const form = useForm<FormData>({
 ```
 
 ## Integration with shadcn/ui
+
 ```tsx
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -182,9 +194,11 @@ import { Label } from "@/components/ui/label";
       {errors.name.message}
     </p>
   )}
-</div>
+</div>;
 ```
-description:
-globs:
+
+description: React Hook Form best practices and implementation patterns for form management
+globs: ["src/app/**/components/**/*form*.tsx", "src/app/**/components/**/*Form*.tsx"]
 alwaysApply: false
+
 ---

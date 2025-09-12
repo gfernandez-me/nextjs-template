@@ -1,0 +1,236 @@
+# Hero Filtering Business Rules
+
+## Overview
+
+In Epic 7, multiple heroes can have the same name but are different instances with unique gear sets. Each hero instance has its own `id` and `ingameId` even if they share the same name.
+
+## Business Rules
+
+### 1. Hero Uniqueness by ID
+
+- **Each hero instance is unique**: Even heroes with identical names are separate entities
+- **Gear ownership**: Each hero instance owns their own gear set
+- **Filtering by ID**: When filtering gear by hero, use hero ID, not name
+- **Display by name**: Show hero names in UI for user recognition
+
+### 2. Hero Filter Implementation
+
+#### Filter Logic
+
+- **Primary key**: Use `hero.id` for filtering gear
+- **Display key**: Use `hero.name` for user interface
+- **URL parameter**: Store hero ID in URL, not name
+- **Search functionality**: Search by name but filter by ID
+
+#### Data Structure
+
+```typescript
+interface HeroOption {
+  id: number; // Unique hero instance ID
+  name: string; // Hero name (may be duplicate)
+  element?: string | null;
+  class?: string | null;
+}
+```
+
+#### URL Parameter Handling
+
+- **Before**: `?hero=Abigail` (filters all heroes named Abigail)
+- **After**: `?hero=123` (filters specific hero with ID 123)
+
+### 3. User Experience Guidelines
+
+#### Hero Selection
+
+- **Display**: Show hero name with element/class for identification
+- **Selection**: When user clicks hero, store the specific hero ID
+- **URL**: Update URL with hero ID parameter
+- **Filter**: Apply gear filter using hero ID
+
+#### Search and Display
+
+- **Search by name**: Allow users to search heroes by name
+- **Results**: Show all heroes matching the search term
+- **Selection**: User selects specific hero instance
+- **Filter result**: Only show gear for that specific hero instance
+
+### 4. Implementation Requirements
+
+#### Frontend Changes
+
+1. **Hero Filter Component**: Update to use hero IDs for filtering
+2. **URL Management**: Store hero ID in URL parameters
+3. **Display Logic**: Show hero names but filter by IDs
+4. **Search Integration**: Search by name, filter by ID
+
+#### Backend Changes
+
+1. **API Endpoints**: Support filtering by hero ID
+2. **Database Queries**: Use hero ID in WHERE clauses
+3. **Data Structure**: Return hero objects with IDs
+4. **Error Handling**: Validate hero ID parameters before database queries
+5. **Graceful Degradation**: Handle invalid parameters without breaking queries
+
+### 5. Edge Cases
+
+#### Duplicate Names
+
+- **Multiple instances**: Handle heroes with identical names
+- **User confusion**: Provide additional context (element, class)
+- **Selection clarity**: Ensure user selects correct hero instance
+
+#### Missing Heroes
+
+- **Gear without hero**: Handle gear not assigned to any hero
+- **Orphaned gear**: Show gear with null hero reference
+
+#### Invalid Hero Parameters
+
+- **Invalid IDs**: Handle non-numeric hero parameters in URL
+- **Non-existent heroes**: Handle hero IDs that don't exist in database
+- **User feedback**: Show toast notifications for invalid parameters
+- **URL cleanup**: Automatically remove invalid parameters from URL
+
+### 6. Database Considerations
+
+#### Hero Table Structure
+
+```sql
+heroes {
+  id: Int (Primary Key)
+  ingameId: BigInt (Unique)
+  name: String
+  element: HeroElement
+  class: HeroClass
+  -- other fields
+}
+```
+
+#### Gear-Hero Relationship
+
+```sql
+gears {
+  id: Int
+  heroId: Int? (Foreign Key to heroes.id)
+  -- other fields
+}
+```
+
+### 7. Performance Considerations
+
+#### Indexing
+
+- **Hero ID**: Index on `heroes.id` for fast lookups
+- **Hero Name**: Index on `heroes.name` for search functionality
+- **Gear Hero ID**: Index on `gears.heroId` for filtering
+
+#### Query Optimization
+
+- **Efficient joins**: Use proper foreign key relationships
+- **Filtering**: Apply hero ID filter early in query chain
+- **Pagination**: Maintain performance with large datasets
+
+### 8. Testing Scenarios
+
+#### Test Cases
+
+1. **Single hero**: Filter by unique hero name
+2. **Duplicate names**: Filter by specific hero instance
+3. **Search functionality**: Search by name, select by ID
+4. **URL parameters**: Verify hero ID in URL
+5. **Gear filtering**: Ensure only correct hero's gear shown
+
+#### Validation
+
+- **Data integrity**: Verify hero ID exists in database
+- **Filter accuracy**: Confirm only target hero's gear displayed
+- **User experience**: Ensure intuitive hero selection process
+
+## Implementation Notes
+
+### Current Issue
+
+The hero filter was using hero names for both display and filtering, causing all heroes with the same name to be included in filter results.
+
+### Solution
+
+Separate display (name) from filtering (ID) to ensure only the specific hero instance's gear is shown.
+
+### Critical Bug Fix
+
+#### Problem: Circular Dependency in Hero Filter Initialization
+
+- **Issue**: Hero filter tried to find hero in current gear data to display name
+- **Problem**: When hero filter is applied, gear data might be empty (no results)
+- **Result**: Hero filter couldn't find hero name, cleared URL parameter, causing infinite loop
+
+#### Solution: Independent Hero Information Fetching
+
+```typescript
+// Before: Dependent on current gear data
+const hero = gears.find((g) => g.Hero?.id === parsedId)?.Hero;
+
+// After: Fetch from API independently
+const res = await fetch(`/api/heroes?limit=1000`);
+const data = await res.json();
+const hero = data.heroes?.find((h: HeroOption) => h.id === parsedId);
+```
+
+#### Benefits:
+
+- **No Circular Dependency**: Hero filter works regardless of current gear results
+- **Reliable Display**: Hero name always shows correctly when URL has valid hero ID
+- **Graceful Fallback**: Falls back to gear data if API fails
+- **Better UX**: Users see correct hero name even when filter returns no results
+
+### Migration Strategy
+
+1. Update hero filter component to use IDs
+2. Modify URL parameter handling
+3. Update API endpoints for ID-based filtering
+4. Test with duplicate hero names
+5. Verify user experience improvements
+6. Implement error handling for invalid parameters
+7. Add user feedback for parameter validation
+
+### Error Handling Implementation
+
+#### Invalid Hero ID Detection
+
+```typescript
+// Validate hero ID before database query
+const heroId = parseInt(filters.filters.hero, 10);
+return !isNaN(heroId)
+  ? {
+      Hero: { id: heroId },
+    }
+  : {};
+```
+
+#### URL Parameter Cleanup
+
+```typescript
+// Remove invalid parameters from URL
+if (!isNaN(parsedId)) {
+  // Valid ID - proceed with filtering
+} else {
+  // Invalid ID - clear parameter and show error
+  newUrl.searchParams.delete("hero");
+  window.history.replaceState({}, "", newUrl.toString());
+  toast.error(
+    `Invalid hero ID: "${heroId}". Please select a hero from the dropdown.`
+  );
+}
+```
+
+#### User Feedback
+
+- **Toast notifications**: Inform users about invalid parameters
+- **Automatic cleanup**: Remove invalid parameters from URL
+- **Graceful fallback**: Continue with unfiltered results
+- **Clear messaging**: Explain what went wrong and how to fix it
+  description: Hero filtering business rules and implementation patterns for hero selection and filtering
+  globs: ["src/app/(dashboard)/gears/components/gear-table/hero-filter.tsx", "src/app/(dashboard)/heroes/**/*"]
+  alwaysApply: false
+
+---

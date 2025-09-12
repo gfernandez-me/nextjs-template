@@ -19,8 +19,8 @@ _[Content to be provided by user]_
 ## User Experience
 
 _[Content to be provided by user]_
-description:
-globs:
+description: Authentication business rules and implementation patterns for user authentication and authorization
+globs: ["src/lib/auth/**/*", "src/app/api/auth/**/*", "src/middleware.ts"]
 alwaysApply: false
 
 ---

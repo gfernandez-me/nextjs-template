@@ -32,9 +32,6 @@ export default async function GearsPage({
   // Create data access layer for current user
   const dal = new GearsDataAccess(session.user.id);
 
-  // Debug: Test database queries
-  await dal.debugDatabaseQuery();
-
   // Create a new URLSearchParams and copy values from searchParams
   const params = new URLSearchParams();
 
@@ -87,11 +84,17 @@ export default async function GearsPage({
           },
         })),
       }),
-      ...(filters.filters.hero && {
-        Hero: {
-          name: { contains: filters.filters.hero, mode: "insensitive" },
-        },
-      }),
+      ...(filters.filters.hero &&
+        (() => {
+          const heroId = parseInt(filters.filters.hero, 10);
+          return !isNaN(heroId)
+            ? {
+                Hero: {
+                  id: heroId,
+                },
+              }
+            : {};
+        })()),
     },
   });
 

@@ -325,8 +325,8 @@ interface GearSetDisplay {
 - Update procedures
 - Configuration options
 - Troubleshooting steps
-  description:
-  globs:
+  description: Statistics and analytics business rules and implementation patterns for data visualization
+  globs: ["src/app/(dashboard)/admin/statistics/**/*", "src/app/(admin)/**/*"]
   alwaysApply: false
 
 ---

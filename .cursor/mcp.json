@@ -8,9 +8,6 @@
                 "READONLY": "false"
             },
             "args": []
-        },
-        "github": {
-            "command": "./start-mcp.sh"
         }
     }
 }

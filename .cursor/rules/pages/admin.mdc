@@ -19,8 +19,8 @@ _[Content to be provided by user]_
 ## User Experience
 
 _[Content to be provided by user]_
-description:
-globs:
+description: Admin management business rules and implementation patterns for user administration
+globs: ["src/app/(dashboard)/admin/**/*", "src/app/api/admin/**/*"]
 alwaysApply: false
 
 ---
