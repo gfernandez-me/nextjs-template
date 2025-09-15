@@ -25,7 +25,7 @@ export function createHeroTableColumns(): ColumnDef<HeroForTable>[] {
           <div className="flex items-center space-x-2">
             <span className="font-medium">
               {hero.name}
-              {hero.count > 1 && ` (${hero.count})`}
+              {hero.duplicateCount > 1 && ` (${hero.duplicateCount})`}
             </span>
           </div>
         );
@@ -125,7 +125,8 @@ export function createHeroTableColumns(): ColumnDef<HeroForTable>[] {
       header: "Speed",
       cell: ({ row }) => {
         const speed = row.getValue("speed") as number | null;
-        if (!speed) return <span className="text-muted-foreground">-</span>;
+        if (speed === null)
+          return <span className="text-muted-foreground">-</span>;
         return <span className="font-mono">{speed}</span>;
       },
     },
@@ -134,7 +135,8 @@ export function createHeroTableColumns(): ColumnDef<HeroForTable>[] {
       header: "Attack",
       cell: ({ row }) => {
         const attack = row.getValue("attack") as number | null;
-        if (!attack) return <span className="text-muted-foreground">-</span>;
+        if (attack === null)
+          return <span className="text-muted-foreground">-</span>;
         return <span className="font-mono">{attack.toLocaleString()}</span>;
       },
     },
@@ -143,7 +145,8 @@ export function createHeroTableColumns(): ColumnDef<HeroForTable>[] {
       header: "Health",
       cell: ({ row }) => {
         const health = row.getValue("health") as number | null;
-        if (!health) return <span className="text-muted-foreground">-</span>;
+        if (health === null)
+          return <span className="text-muted-foreground">-</span>;
         return <span className="font-mono">{health.toLocaleString()}</span>;
       },
     },
@@ -152,7 +155,8 @@ export function createHeroTableColumns(): ColumnDef<HeroForTable>[] {
       header: "Defense",
       cell: ({ row }) => {
         const defense = row.getValue("defense") as number | null;
-        if (!defense) return <span className="text-muted-foreground">-</span>;
+        if (defense === null)
+          return <span className="text-muted-foreground">-</span>;
         return <span className="font-mono">{defense.toLocaleString()}</span>;
       },
     },

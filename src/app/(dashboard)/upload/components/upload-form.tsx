@@ -26,10 +26,10 @@ export function UploadForm({ userSettings }: UploadFormProps) {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    
+
     const formData = new FormData(event.currentTarget);
     const file = formData.get("file") as File;
-    
+
     if (!file) {
       setUploadStatus("Please select a file first");
       return;
@@ -61,7 +61,7 @@ export function UploadForm({ userSettings }: UploadFormProps) {
         const result = await response.json();
         setUploadStatus(`Success! Imported ${result.count || 0} gear items.`);
         setTimeout(() => {
-          router.push("/");
+          router.push("/home");
         }, 2000);
       } else {
         const error = await response.json();
@@ -174,11 +174,7 @@ export function UploadForm({ userSettings }: UploadFormProps) {
               </div>
             )}
 
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={isUploading}
-            >
+            <Button type="submit" className="w-full" disabled={isUploading}>
               {isUploading ? (
                 <span className="flex items-center justify-center gap-2">
                   <span className="size-4 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
@@ -202,8 +198,8 @@ export function UploadForm({ userSettings }: UploadFormProps) {
               <h4 className="font-medium">1. Export from Fribbels Optimizer</h4>
               <p>
                 Open Fribbels Epic 7 Optimizer, go to the Importer tab, and use
-                &quot;Save/Load all optimizer data&quot; to export your gear data
-                as a .txt file.
+                &quot;Save/Load all optimizer data&quot; to export your gear
+                data as a .txt file.
               </p>
             </div>
 

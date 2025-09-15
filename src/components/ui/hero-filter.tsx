@@ -42,7 +42,7 @@ export function HeroFilter({
         const params = new URLSearchParams();
         if (heroQuery) params.set("q", heroQuery);
         params.set("limit", "50");
-        const res = await fetch(`/api/heroes?${params.toString()}`, {
+        const res = await fetch(`/api/heroes/search?${params.toString()}`, {
           signal: controller.signal,
           cache: "no-store",
         });

@@ -98,6 +98,26 @@ export default async function GearsPage({
     },
   });
 
+  // Calculate total pages
+  const totalPages = Math.ceil(result.total / filters.size);
+
+  // Redirect to page 1 if current page is greater than total pages
+  if (filters.page > totalPages && totalPages > 0) {
+    const newParams = new URLSearchParams();
+    for (const [key, value] of Object.entries(sp)) {
+      if (typeof value === "string") {
+        const values = value.split("|").filter(Boolean);
+        if (values.length > 1) {
+          newParams.set(key, values.join("|"));
+        } else if (value) {
+          newParams.set(key, value);
+        }
+      }
+    }
+    newParams.set("page", "1");
+    redirect(`/gears?${newParams.toString()}`);
+  }
+
   // Get user's score thresholds from settings
   const settingsDal = new SettingsDataAccess(session.user.id);
   const userSettings = await settingsDal.getScoringSettings();
@@ -125,7 +145,7 @@ export default async function GearsPage({
       <GearTable
         gears={result.rows}
         totalCount={result.total}
-        pageCount={Math.ceil(result.total / filters.size)}
+        pageCount={totalPages}
         currentPage={filters.page}
         pageSize={filters.size}
         scoreThresholds={scoreThresholds}

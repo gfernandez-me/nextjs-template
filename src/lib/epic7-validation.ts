@@ -6,6 +6,7 @@ import {
   HeroRarity,
   HeroClass,
 } from "#prisma";
+import { extractHeroMetadata } from "./epic7-hero-metadata";
 
 /**
  * Validation and casting utilities for Fribbels data
@@ -239,13 +240,16 @@ export function validateHeroClass(value: unknown): HeroClass | null {
  * Validate and cast hero data
  */
 export function validateHeroData(rawData: Record<string, unknown>) {
+  // Try to extract metadata from the hero data
+  const metadata = extractHeroMetadata(rawData);
+
   return {
     ingameId: safeBigInt(rawData.id || rawData.ingameId),
     name: safeString(rawData.name, "Unknown Hero") || "Unknown Hero", // Ensure name is never null
-    count: 1, // Will be calculated during upload process
-    element: validateHeroElement(rawData.element),
-    rarity: validateHeroRarity(rawData.rarity),
-    class: validateHeroClass(rawData.class),
+    duplicateCount: 1, // Will be calculated during upload process
+    element: metadata.element || validateHeroElement(rawData.element),
+    rarity: metadata.rarity || validateHeroRarity(rawData.rarity),
+    class: metadata.class || validateHeroClass(rawData.class),
     attack: safeNumber(rawData.attack),
     defense: safeNumber(rawData.defense),
     health: safeNumber(rawData.health),

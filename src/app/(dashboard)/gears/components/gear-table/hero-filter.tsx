@@ -42,7 +42,7 @@ export function HeroFilter({ gears }: HeroFilterProps) {
           // Fetch hero information from API instead of relying on current gear data
           const fetchHeroInfo = async () => {
             try {
-              const res = await fetch(`/api/heroes?limit=1000`);
+              const res = await fetch(`/api/heroes/search?limit=1000`);
               if (res.ok) {
                 const data = await res.json();
                 const hero = data.heroes?.find(
@@ -70,7 +70,7 @@ export function HeroFilter({ gears }: HeroFilterProps) {
                 setSelectedHero({
                   id: hero.id,
                   name: hero.name,
-                  count: hero.count || 1,
+                  count: hero.duplicateCount || 1,
                   element: hero.element,
                   class: hero.class,
                 });
@@ -110,10 +110,13 @@ export function HeroFilter({ gears }: HeroFilterProps) {
         const params = new URLSearchParams();
         if (heroQuery) params.set("q", heroQuery);
         params.set("limit", "50");
-        const res = await fetch(`/api/heroes?${params.toString()}` as string, {
-          signal: controller.signal,
-          cache: "no-store",
-        });
+        const res = await fetch(
+          `/api/heroes/search?${params.toString()}` as string,
+          {
+            signal: controller.signal,
+            cache: "no-store",
+          }
+        );
         if (!res.ok) return;
         const data = (await res.json()) as { heroes?: HeroOption[] };
         if (!ignore) setHeroResults(data.heroes ?? []);
@@ -137,7 +140,7 @@ export function HeroFilter({ gears }: HeroFilterProps) {
           heroMap.set(hero.id, {
             id: hero.id,
             name: hero.name.trim(),
-            count: hero.count || 1,
+            count: hero.duplicateCount || 1,
             element: hero.element,
             class: hero.class,
           });

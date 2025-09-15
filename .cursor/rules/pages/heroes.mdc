@@ -2,25 +2,96 @@
 
 ## Overview
 
-The Heroes page manages Epic 7 hero data, including hero information, equipment slots, and gear optimization preferences.
+The Heroes page manages Epic 7 hero data, including hero information, equipment slots, and gear optimization preferences. Heroes are imported from Fribbels Epic 7 Optimizer exports and displayed in a server-side rendered table with filtering and pagination.
 
 ## Business Rules
 
-_[Content to be provided by user]_
+### Hero Data Import
+
+- **Source**: Heroes are imported from Fribbels Epic 7 Optimizer export files
+- **Format**: JSON format with `heroes` array containing hero objects
+- **Required Fields**: `id`, `name`, `code`, `stars`, `awaken`
+- **Metadata Extraction**: Element, rarity, and class are dynamically extracted from hero data
+
+### Hero Metadata Extraction
+
+- **Rarity**: Extracted from `stars` field (3★, 4★, 5★, 6★)
+- **Element**: Determined from hero code pattern (c0001, c1017, c2022, etc.)
+  - Codes starting with 0-1: Fire element
+  - Codes starting with 2: Ice element
+  - Codes starting with 3: Earth element
+  - Codes starting with 4: Light element
+  - Codes starting with 5: Dark element
+- **Class**: Determined from code number ranges (simplified heuristic)
+  - 1000-1999: Warrior
+  - 2000-2999: Mage
+  - 3000-3999: Thief
+  - 4000-4999: Ranger
+  - 5000-5999: Knight
+  - 6000-6999: Soul Weaver
+
+### Hero Display
+
+- **Table Structure**: Server-side rendered table following gears page pattern
+- **Columns**: Name, Element, Class, Rarity, Gear Count, Speed, Attack, Health, Defense, Actions
+- **Element Display**: Colored badges (Fire=red, Ice=blue, Earth=green, Light=yellow, Dark=purple)
+- **Rarity Display**: Colored badges (3★=gray, 4★=blue, 5★=purple, 6★=yellow)
+- **Class Display**: Colored badges with proper formatting
+- **Stats Display**: Zero values show as "0", null values show as "-"
+
+### Hero Duplicates
+
+- **Duplicate Handling**: Multiple instances of same hero are tracked with `duplicateCount`
+- **Display**: Hero name shows duplicate count in parentheses (e.g., "Achates (3)")
+- **Database**: Each hero instance has unique `ingameId` and `duplicateCount`
 
 ## Page-Specific Requirements
 
-_[Content to be provided by user]_
+### Server Component Architecture
 
-## Data Flow
+- **Page Component**: Server component that fetches data directly from database
+- **Data Access**: Uses `HeroesDataAccess` class for database operations
+- **URL State**: Filtering and pagination state managed through URL search parameters
+- **Authentication**: Requires user session, redirects to login if unauthorized
 
-_[Content to be provided by user]_
+### Client Components
+
+- **HeroTable**: Client component for table interactions using @tanstack/react-table
+- **Pagination**: Client component for page navigation
+- **Columns**: Server-side column definitions with proper TypeScript types
+
+### Data Flow
+
+1. **Page Load**: Server component fetches hero data using `HeroesDataAccess`
+2. **URL Parsing**: Search parameters parsed using `parseHeroSearchParams`
+3. **Database Query**: Heroes fetched with filtering, sorting, and pagination
+4. **Data Transformation**: Hero data transformed for table display
+5. **Client Rendering**: HeroTable component renders data with interactions
 
 ## User Experience
 
-_[Content to be provided by user]_
-description: Heroes management business rules and implementation patterns for hero data management
-globs: ["src/app/(dashboard)/heroes/**/*", "src/app/api/heroes/**/*"]
-alwaysApply: false
+### Table Features
+
+- **Sorting**: Click column headers to sort by name, element, class, rarity, stats
+- **Pagination**: Navigate through pages with page size controls
+- **Filtering**: Filter heroes by element, class, rarity (future enhancement)
+- **Responsive**: Table adapts to different screen sizes
+
+### Data Display
+
+- **Visual Indicators**: Color-coded badges for elements, rarity, and class
+- **Stat Formatting**: Numbers formatted with proper locale (e.g., 1,234)
+- **Empty States**: Clear indication when data is missing or zero
+- **Loading States**: Proper loading indicators during data fetching
+
+### Performance
+
+- **Server-Side Rendering**: Initial data loaded on server for better performance
+- **Pagination**: Limits data loaded per page (default 20 items)
+- **Database Optimization**: Efficient queries with proper indexing
+- **Caching**: Server-side caching for better response times
+  description: Heroes management business rules and implementation patterns for hero data management
+  globs: ["src/app/(dashboard)/heroes/**/*", "src/app/api/heroes/**/*"]
+  alwaysApply: false
 
 ---

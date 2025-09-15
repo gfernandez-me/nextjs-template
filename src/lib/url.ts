@@ -4,7 +4,14 @@
  * @see https://nextjs.org/docs/app/guides/forms
  */
 
-import { GearType, GearRank, MainStatType } from "#prisma";
+import {
+  GearType,
+  GearRank,
+  MainStatType,
+  HeroElement,
+  HeroRarity,
+  HeroClass,
+} from "#prisma";
 
 // Types for gear table state
 export interface GearTableState {
@@ -23,6 +30,21 @@ export interface GearFilters {
   mainStatType?: MainStatType[];
   subStats?: string[];
   hero?: string;
+}
+
+// Types for hero table state
+export interface HeroTableState {
+  page: number;
+  size: number;
+  sort: Array<{ id: string; desc: boolean }>;
+  filters: HeroFilters;
+}
+
+export interface HeroFilters {
+  name?: string;
+  element?: HeroElement[];
+  rarity?: HeroRarity[];
+  class?: HeroClass[];
 }
 
 /**
@@ -153,5 +175,46 @@ export function getDefaultGearFilters(): GearFilters {
     enhance: undefined,
     mainStatType: undefined,
     subStats: [],
+    hero: undefined,
+  };
+}
+
+/**
+ * Parse search parameters from URL into structured hero filters
+ */
+export function parseHeroSearchParams(searchParams: URLSearchParams) {
+  return {
+    page: parseInt(searchParams.get("page") || "1", 10),
+    size: parseInt(searchParams.get("size") || "10", 10),
+    sort: searchParams.get("sort") || "",
+    dir: searchParams.get("dir") || "",
+    filters: parseHeroFilters(searchParams),
+  };
+}
+
+/**
+ * Parse hero filters from URL search parameters
+ */
+export function parseHeroFilters(searchParams: URLSearchParams): HeroFilters {
+  return {
+    name: searchParams.get("name") || undefined,
+    element: (searchParams.get("element")?.split("|").filter(Boolean) ||
+      []) as HeroElement[],
+    rarity: (searchParams.get("rarity")?.split("|").filter(Boolean) ||
+      []) as HeroRarity[],
+    class: (searchParams.get("class")?.split("|").filter(Boolean) ||
+      []) as HeroClass[],
+  };
+}
+
+/**
+ * Utility to reset hero filters to default values
+ */
+export function getDefaultHeroFilters(): HeroFilters {
+  return {
+    name: undefined,
+    element: [],
+    rarity: [],
+    class: [],
   };
 }

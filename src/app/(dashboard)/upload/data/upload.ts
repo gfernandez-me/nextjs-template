@@ -52,7 +52,7 @@ export class UploadDataAccess {
 
             const heroData = {
               ...validatedHeroData,
-              count,
+              duplicateCount: count,
               userId: this.userId,
             };
 

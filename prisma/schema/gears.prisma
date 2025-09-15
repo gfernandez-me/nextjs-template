@@ -89,7 +89,7 @@ model Heroes {
   id                Int          @id @default(autoincrement())
   ingameId          BigInt
   name              String
-  count             Int          @default(1) // Track duplicate instances
+  duplicateCount    Int          @default(1) // Track duplicate instances
   element           HeroElement?
   rarity            HeroRarity?
   class             HeroClass?

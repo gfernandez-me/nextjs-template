@@ -15,7 +15,7 @@ export default async function AdminUsersPage() {
 
   // Check if user is admin (using the admin ID from seed)
   if (session.user.id !== "admin-user") {
-    redirect("/");
+    redirect("/home");
   }
 
   const users = await getUsers();

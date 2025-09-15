@@ -9,12 +9,14 @@
     "build": "next build",
     "typecheck": "tsc --noEmit",
     "setup:env": "node -e \"const fs=require('fs'); if(!fs.existsSync('.env')&&fs.existsSync('.env.example')) fs.copyFileSync('.env.example','.env');\"",
-    "studio": "prisma studio",
-    "db:generate": "prisma generate",
-    "db:migrate:new": "prisma migrate dev --create-only=false",
-    "db:migrate:dev": "prisma migrate dev",
-    "db:reset": "prisma migrate reset --force",
-    "db:seed": "npx tsx prisma/seed.ts"
+    "studio": "dotenv -e .env -- prisma studio",
+    "db:generate": "dotenv -e .env -- prisma generate",
+    "db:migrate:new": "dotenv -e .env -- prisma migrate dev --create-only=false",
+    "db:migrate:dev": "dotenv -e .env -- prisma migrate dev",
+    "db:migrate:status": "dotenv -e .env -- prisma migrate status",
+    "db:reset": "dotenv -e .env -- prisma migrate reset --force",
+    "db:seed": "dotenv -e .env -- npx tsx prisma/seed.ts",
+    "db:validate": "dotenv -e .env -- prisma validate"
   },
   "dependencies": {
     "@conform-to/react": "^1.8.2",

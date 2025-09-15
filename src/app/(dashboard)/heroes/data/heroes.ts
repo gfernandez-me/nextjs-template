@@ -8,9 +8,9 @@ import prisma from "@/lib/prisma";
 
 export type HeroForTable = {
   id: number;
-  ingameId: bigint;
+  ingameId: string; // Serialized BigInt as string
   name: string;
-  count: number;
+  duplicateCount: number;
   element: HeroElement | null;
   rarity: HeroRarity | null;
   class: HeroClass | null;
@@ -50,9 +50,12 @@ export class HeroesDataAccess {
     const userScopedWhere = { ...where, userId: this.userId };
 
     // Build orderBy from sortField and sortDirection
-    let orderBy;
+    let orderBy: Prisma.HeroesOrderByWithRelationInput[] | undefined;
     if (sortField && sortDirection) {
-      orderBy = [{ [sortField]: sortDirection }];
+      const direction = sortDirection.toLowerCase() === "desc" ? "desc" : "asc";
+      orderBy = [
+        { [sortField]: direction } as Prisma.HeroesOrderByWithRelationInput,
+      ];
     }
 
     const [rows, total] = await Promise.all([
@@ -60,17 +63,24 @@ export class HeroesDataAccess {
         skip: (page - 1) * perPage,
         take: perPage,
         where: userScopedWhere,
-        orderBy,
+        orderBy: orderBy || [{ createdAt: "desc" }],
+        include: {
+          _count: {
+            select: {
+              Gears: true,
+            },
+          },
+        },
       }),
       prisma.heroes.count({ where: userScopedWhere }),
     ]);
 
-    // Transform to include gear count - we'll calculate this separately since we don't need _count
+    // Transform to include gear count from the included _count
     const transformedRows: HeroForTable[] = rows.map((hero) => ({
       id: hero.id,
-      ingameId: hero.ingameId,
+      ingameId: hero.ingameId.toString(), // Serialize BigInt to string
       name: hero.name,
-      count: hero.count,
+      duplicateCount: hero.duplicateCount,
       element: hero.element,
       rarity: hero.rarity,
       class: hero.class,
@@ -84,7 +94,7 @@ export class HeroesDataAccess {
       effectResistance: hero.effectResistance,
       createdAt: hero.createdAt,
       updatedAt: hero.updatedAt,
-      gearCount: 0, // We'll calculate this separately if needed
+      gearCount: hero._count.Gears, // Use actual gear count from database
     }));
 
     return { rows: transformedRows, total };

@@ -42,20 +42,20 @@ export async function GET(request: NextRequest) {
       sortDirection: "asc",
     });
 
-    // Handle duplicate hero names by adding index for unique keys
-    const heroNamesWithIndex = heroes.map((h, index) => ({
-      name: h.name,
-      key: `${h.name}-${index}`,
-      hero: h,
+    // Transform to the format expected by the filter components
+    const heroOptions = heroes.map((hero) => ({
+      id: hero.id,
+      name: hero.name,
+      count: hero.duplicateCount,
+      element: hero.element,
+      class: hero.class,
     }));
 
     return NextResponse.json({
-      names: heroNamesWithIndex.map((h) => h.name),
-      heroes: heroes,
-      heroNamesWithIndex: heroNamesWithIndex,
+      heroes: heroOptions,
     });
   } catch (error) {
-    console.error("Error fetching heroes:", error);
+    console.error("Error fetching heroes for search:", error);
     return NextResponse.json(
       { error: "Failed to fetch heroes" },
       { status: 500 }
