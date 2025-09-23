@@ -152,10 +152,3 @@ export async function computeCustomScore(row: GearForTable): Promise<number> {
 
   return Math.round(score * 100) / 100;
 }
-
-/**
- * Generic utility to strip percentage sign from any string
- */
-export function stripPercent(label: string): string {
-  return label.replace(/\s*%$/, "");
-}

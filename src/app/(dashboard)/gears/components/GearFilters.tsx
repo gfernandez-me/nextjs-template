@@ -15,7 +15,14 @@ import { Label } from "@/components/ui/label";
 
 import { MultiSelect } from "@/components/ui/multi-select";
 import { GearTableState, type GearFilters } from "@/lib/url";
-import { GearType, MainStatType, GearRank, StatTypes } from "#prisma";
+import {
+  GearType,
+  MainStatType,
+  GearRank,
+  StatTypes,
+  ScoreGrade,
+} from "#prisma";
+import { getGearSetFilterOptions } from "@/lib/gear-sets";
 
 // Use Prisma enums instead of hardcoded strings
 const gearTypes = [
@@ -39,6 +46,14 @@ const mainStats = [
   { value: MainStatType.CRI_DMG, label: "Crit Damage" },
   { value: MainStatType.ACC, label: "Effectiveness" },
   { value: MainStatType.RES, label: "Effect Resistance" },
+];
+
+const scoreGrades = [
+  { value: ScoreGrade.EXCELLENT, label: "Excellent" },
+  { value: ScoreGrade.GOOD, label: "Good" },
+  { value: ScoreGrade.AVERAGE, label: "Average" },
+  { value: ScoreGrade.POOR, label: "Poor" },
+  { value: ScoreGrade.TERRIBLE, label: "Terrible" },
 ];
 
 export function GearFilters() {
@@ -88,6 +103,15 @@ export function GearFilters() {
           tableStateUpdates.filters!.mainStatType = updates.mainStatType;
         if (updates.subStats !== undefined)
           tableStateUpdates.filters!.subStats = updates.subStats;
+        if (updates.fScoreGrade !== undefined)
+          tableStateUpdates.filters!.fScoreGrade = updates.fScoreGrade;
+        if (updates.scoreGrade !== undefined)
+          tableStateUpdates.filters!.scoreGrade = updates.scoreGrade;
+        if (updates.substatGrade !== undefined)
+          tableStateUpdates.filters!.substatGrade = updates.substatGrade;
+        if (updates.substatGradeCount !== undefined)
+          tableStateUpdates.filters!.substatGradeCount =
+            updates.substatGradeCount;
 
         updateFilters(tableStateUpdates);
       });
@@ -207,6 +231,19 @@ export function GearFilters() {
       </div>
 
       <div className="flex items-center gap-4">
+        <Label className="text-sm whitespace-nowrap">Gear Sets</Label>
+        <MultiSelect
+          options={getGearSetFilterOptions()}
+          selected={(searchParams.get("set") || "").split("|").filter(Boolean)}
+          onSelectionChange={(selected) => {
+            handleFilterUpdate({ set: selected });
+          }}
+          placeholder="Select gear sets"
+          searchable={true}
+        />
+      </div>
+
+      <div className="flex items-center gap-4">
         <Label className="text-sm whitespace-nowrap">Substats</Label>
         <MultiSelect
           options={substatTypes.map((stat) => ({
@@ -222,6 +259,115 @@ export function GearFilters() {
           placeholder="Select substats"
           searchable={true}
         />
+      </div>
+
+      <div className="flex flex-wrap items-center gap-4">
+        <div className="flex items-center gap-2">
+          <Label
+            htmlFor="fscore-grade-filter"
+            className="text-sm whitespace-nowrap"
+          >
+            F Score Grade
+          </Label>
+          <MultiSelect
+            options={scoreGrades.map((grade) => ({
+              value: grade.value,
+              label: grade.label,
+            }))}
+            selected={(searchParams.get("fScoreGrade") || "")
+              .split("|")
+              .filter(Boolean)}
+            onSelectionChange={(selected) => {
+              handleFilterUpdate({
+                fScoreGrade:
+                  selected.length > 0 ? (selected as ScoreGrade[]) : [],
+              });
+            }}
+            placeholder="Select F Score grade"
+            searchable={false}
+          />
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Label
+            htmlFor="score-grade-filter"
+            className="text-sm whitespace-nowrap"
+          >
+            Score Grade
+          </Label>
+          <MultiSelect
+            options={scoreGrades.map((grade) => ({
+              value: grade.value,
+              label: grade.label,
+            }))}
+            selected={(searchParams.get("scoreGrade") || "")
+              .split("|")
+              .filter(Boolean)}
+            onSelectionChange={(selected) => {
+              handleFilterUpdate({
+                scoreGrade:
+                  selected.length > 0 ? (selected as ScoreGrade[]) : [],
+              });
+            }}
+            placeholder="Select Score grade"
+            searchable={false}
+          />
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Label
+            htmlFor="substat-grade-filter"
+            className="text-sm whitespace-nowrap"
+          >
+            Substat Grade
+          </Label>
+          <MultiSelect
+            options={scoreGrades.map((grade) => ({
+              value: grade.value,
+              label: grade.label,
+            }))}
+            selected={(searchParams.get("substatGrade") || "")
+              .split("|")
+              .filter(Boolean)}
+            onSelectionChange={(selected) => {
+              handleFilterUpdate({
+                substatGrade:
+                  selected.length > 0 ? (selected as ScoreGrade[]) : [],
+              });
+            }}
+            placeholder="Select substat grade"
+            searchable={false}
+          />
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Label
+            htmlFor="substat-count-filter"
+            className="text-sm whitespace-nowrap"
+          >
+            Min Count
+          </Label>
+          <Input
+            id="substat-count-filter"
+            type="number"
+            min={1}
+            max={4}
+            value={searchParams.get("substatGradeCount") || "1"}
+            onChange={(e) => {
+              const value = e.target.value;
+              if (value) {
+                const numValue = parseInt(value, 10);
+                if (!isNaN(numValue) && numValue >= 1 && numValue <= 4) {
+                  handleFilterUpdate({ substatGradeCount: numValue });
+                }
+              } else {
+                handleFilterUpdate({ substatGradeCount: 1 });
+              }
+            }}
+            className="h-8 w-16"
+            placeholder="1-4"
+          />
+        </div>
       </div>
 
       <div className="flex items-center justify-between">

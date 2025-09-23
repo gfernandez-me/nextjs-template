@@ -22,8 +22,10 @@ export async function GET(request: NextRequest) {
     // Use the heroes data access layer
     const heroesDataAccess = new HeroesDataAccess(session.user.id);
 
+    console.log("[HERO SEARCH DEBUG] query=", query, "limit=", limit);
     // Build where clause for search
-    let whereClause = {};
+    let whereClause: Parameters<HeroesDataAccess["getHeroesPage"]>[0]["where"] =
+      {};
     if (query) {
       whereClause = {
         name: {
@@ -51,11 +53,12 @@ export async function GET(request: NextRequest) {
       class: hero.class,
     }));
 
+    console.log("[HERO SEARCH DEBUG] results=", heroes.length);
     return NextResponse.json({
       heroes: heroOptions,
     });
   } catch (error) {
-    console.error("Error fetching heroes for search:", error);
+    console.error("[HERO SEARCH DEBUG] error:", error);
     return NextResponse.json(
       { error: "Failed to fetch heroes" },
       { status: 500 }

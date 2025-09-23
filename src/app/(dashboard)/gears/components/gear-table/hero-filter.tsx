@@ -30,6 +30,7 @@ export function HeroFilter({ gears }: HeroFilterProps) {
   const [selectedHero, setSelectedHero] = React.useState<HeroOption | null>(
     null
   );
+  const inputRef = React.useRef<HTMLInputElement | null>(null);
 
   // Initialize hero filter from URL (?hero=...)
   React.useEffect(() => {
@@ -107,6 +108,10 @@ export function HeroFilter({ gears }: HeroFilterProps) {
     const controller = new AbortController();
     const run = async () => {
       try {
+        console.log("[HERO FILTER DEBUG] fetching heroes", {
+          heroOpen,
+          heroQuery,
+        });
         const params = new URLSearchParams();
         if (heroQuery) params.set("q", heroQuery);
         params.set("limit", "50");
@@ -119,6 +124,7 @@ export function HeroFilter({ gears }: HeroFilterProps) {
         );
         if (!res.ok) return;
         const data = (await res.json()) as { heroes?: HeroOption[] };
+        console.log("[HERO FILTER DEBUG] response", data?.heroes?.length);
         if (!ignore) setHeroResults(data.heroes ?? []);
       } catch {
         // ignore
@@ -157,6 +163,7 @@ export function HeroFilter({ gears }: HeroFilterProps) {
     setSelectedHero(hero);
     const url = new URL(window.location.href);
     url.searchParams.set("hero", hero.id.toString());
+    console.log("[HERO FILTER DEBUG] selecting hero", hero.id);
     window.location.href = url.toString();
   };
 
@@ -165,6 +172,7 @@ export function HeroFilter({ gears }: HeroFilterProps) {
     setSelectedHero(null);
     const url = new URL(window.location.href);
     url.searchParams.delete("hero");
+    console.log("[HERO FILTER DEBUG] clearing hero");
     window.location.href = url.toString();
   };
 
@@ -197,7 +205,16 @@ export function HeroFilter({ gears }: HeroFilterProps) {
           role="combobox"
           aria-expanded={heroOpen}
           className="h-8 w-[240px] justify-between text-xs"
-          onClick={() => setHeroOpen((v) => !v)}
+          onClick={() => {
+            setHeroOpen((v) => {
+              const next = !v;
+              if (!v) {
+                // opening now: focus the input on next paint
+                setTimeout(() => inputRef.current?.focus(), 0);
+              }
+              return next;
+            });
+          }}
         >
           {selectedHero
             ? `${selectedHero.name}${
@@ -215,6 +232,7 @@ export function HeroFilter({ gears }: HeroFilterProps) {
                 value={heroQuery}
                 onChange={(e) => setHeroQuery(e.target.value)}
                 onKeyDown={handleHeroQueryKeyDown}
+                ref={inputRef}
               />
             </div>
             <div className="max-h-64 overflow-auto p-1">

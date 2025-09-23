@@ -11,7 +11,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useRouter } from "next/navigation";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { HelpCircle } from "lucide-react";
 import { uploadSchema } from "../schema";
 import type { SettingsWithUser } from "@/app/(dashboard)/settings/data/settings";
 
@@ -20,9 +28,15 @@ interface UploadFormProps {
 }
 
 export function UploadForm({ userSettings }: UploadFormProps) {
-  const router = useRouter();
   const [isUploading, setIsUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<string>("");
+  const [summary, setSummary] = useState<{
+    count: number;
+    gearCount: number;
+    heroCount: number;
+    durationMs: number;
+    message: string;
+  } | null>(null);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -58,11 +72,24 @@ export function UploadForm({ userSettings }: UploadFormProps) {
       });
 
       if (response.ok) {
-        const result = await response.json();
-        setUploadStatus(`Success! Imported ${result.count || 0} gear items.`);
-        setTimeout(() => {
-          router.push("/home");
-        }, 2000);
+        const result = (await response.json()) as {
+          count?: number;
+          gearCount?: number;
+          heroCount?: number;
+          durationMs?: number;
+          message?: string;
+        };
+        const imported = result.count || 0;
+        setSummary({
+          count: imported,
+          gearCount: result.gearCount || imported,
+          heroCount: result.heroCount || 0,
+          durationMs: result.durationMs || 0,
+          message: result.message || "Upload completed",
+        });
+        setUploadStatus(
+          `Success! Imported ${imported} items. A detailed summary is shown below. Log files were written to upload-gear-log.txt and upload-hero-log.txt.`
+        );
       } else {
         const error = await response.json();
         setUploadStatus(`Error: ${error.message || "Upload failed"}`);
@@ -132,16 +159,61 @@ export function UploadForm({ userSettings }: UploadFormProps) {
   }, [subWeights, includeMain, mainWeights]);
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-5xl mx-auto space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            📤 Upload Gear Data
-          </CardTitle>
-          <CardDescription>
-            Upload your gear.txt file from Fribbels Epic 7 Optimizer to import
-            gear data
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                📤 Upload Gear Data
+              </CardTitle>
+              <CardDescription>
+                Upload your gear.txt file from Fribbels Epic 7 Optimizer to
+                import gear data
+              </CardDescription>
+            </div>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="ghost" size="icon" aria-label="Help">
+                  <HelpCircle className="h-5 w-5" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-xl">
+                <DialogHeader>
+                  <DialogTitle>How to upload</DialogTitle>
+                  <DialogDescription>
+                    Follow these steps to export and upload your data.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 text-sm">
+                  <div className="space-y-1">
+                    <h4 className="font-medium">
+                      1. Export from Fribbels Optimizer
+                    </h4>
+                    <p>
+                      Open Fribbels, go to Importer, and use "Save/Load all
+                      optimizer data" to export a .txt file.
+                    </p>
+                  </div>
+                  <div className="space-y-1">
+                    <h4 className="font-medium">2. Upload the file</h4>
+                    <p>
+                      Select the exported .txt file using the picker below. The
+                      file must contain JSON.
+                    </p>
+                  </div>
+                  <div className="space-y-1">
+                    <h4 className="font-medium">3. Results</h4>
+                    <p>
+                      When finished, a summary is shown on this page. Detailed
+                      logs are written to upload-gear-log.txt and
+                      upload-hero-log.txt.
+                    </p>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -188,40 +260,41 @@ export function UploadForm({ userSettings }: UploadFormProps) {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Instructions</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="text-sm text-muted-foreground">
-            <div className="space-y-2">
-              <h4 className="font-medium">1. Export from Fribbels Optimizer</h4>
-              <p>
-                Open Fribbels Epic 7 Optimizer, go to the Importer tab, and use
-                &quot;Save/Load all optimizer data&quot; to export your gear
-                data as a .txt file.
-              </p>
+      {summary && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Upload Summary</CardTitle>
+            <CardDescription>
+              Results for the last upload operation
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-2 text-sm md:grid-cols-2">
+            <div>
+              <span className="font-medium">Imported gears:</span>{" "}
+              {summary.count}
             </div>
-
-            <div className="space-y-2">
-              <h4 className="font-medium">2. Upload the File</h4>
-              <p>
-                Select the exported .txt file using the file picker above. The
-                file should contain JSON data with your gear information.
-              </p>
+            <div>
+              <span className="font-medium">Total gears processed:</span>{" "}
+              {summary.gearCount}
             </div>
-
-            <div className="space-y-2">
-              <h4 className="font-medium">3. Import Process</h4>
-              <p>
-                The system will automatically parse the gear data, validate it
-                against Epic 7 standards, and import it into your gear database.
-                You&apos;ll be redirected to the home page to view your gear.
-              </p>
+            <div>
+              <span className="font-medium">Heroes processed:</span>{" "}
+              {summary.heroCount}
             </div>
-          </div>
-        </CardContent>
-      </Card>
+            <div>
+              <span className="font-medium">Duration:</span>{" "}
+              {Math.round(summary.durationMs / 1000)}s
+            </div>
+            <div className="md:col-span-2">
+              <span className="font-medium">Status:</span> {summary.message}
+            </div>
+            <div className="md:col-span-2 text-muted-foreground">
+              Detailed logs saved to <code>upload-gear-log.txt</code> and
+              <code> upload-hero-log.txt</code> in the project root.
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>

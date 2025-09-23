@@ -126,7 +126,10 @@ alwaysApply: true
 | PenetrationSet | 2      | Ignores 15% Defense               | ⚡   |
 | UnitySet       | 2      | +4% Ally Dual Attack Chance       | 🤝   |
 | RageSet        | 4      | +30% Crit Dmg vs debuffed targets | 😠   |
-| ProtectionSet  | 2      | +15% Barrier strength             | 🛡️   |
+| ProtectionSet  | 4      | +15% Barrier strength             | 🛡️   |
+| ReversalSet    | 4      | +15% Speed, +50% CR on revive     | 🔄   |
+| RiposteSet     | 4      | 70% counterattack on evade        | ⚔️   |
+| RevengeSet     | 4      | +30% Atk when HP < 50%            | 💀   |
 
 ## 6. Hero Classes and Elements
 
@@ -331,3 +334,402 @@ alwaysApply: true
   - Optimization algorithms and calculation methods
   - Community-maintained gear and hero databases
   - Export/import functionality for gear management
+
+## 16. Visual Scoring System (Fribbels-Style)
+
+### Color-Coded Score Display
+
+**IMPORTANT**: The application uses a Fribbels-inspired color-coded scoring system for better visual identification of gear quality.
+
+#### Score Color Scheme
+
+**IMPORTANT**: All columns (F Score, Score, Main Stats, Substats) use the **same consistent color scheme** with inline styles for maximum compatibility:
+
+- **Dark Green** (`#16a34a`): Excellent scores (≥85) - **Best** tier gear
+- **Light Green** (`#22c55e`): Good scores (65-84) - **Good** tier gear
+- **Yellow** (`#fef08a`): Average scores (45-64) - **Mid** tier gear
+- **Light Red** (`#fca5a5`): Poor scores (25-44) - **Between mid and bad** tier gear
+- **Red** (`#dc2626`): Terrible scores (<25) - **Bad** tier gear
+
+**Note**: Thresholds adjusted based on Epic 7 gear score ranges (typically 0-100+). More green = better quality.
+
+#### Implementation
+
+- **File**: `src/lib/score-colors.ts` - **Single source of truth** for all color logic
+- **Functions**:
+  - `formatScoreWithColor()` - Overall scores (F Score, Score) with inline styles
+  - `formatSubstatWithColor()` - Main stats and substats with inline styles
+  - `getScoreQuality()` - Quality tier determination
+  - `getGearTypeIcon()` - Gear type icons (Fribbels-style)
+  - `getGearRankClasses()` - Gear rank color classes
+- **Usage**: Applied to **ALL** columns (F Score, Score, Main Stats, Substats) in gear tables
+- **Consistency**: All columns use the **same color scheme** and **inline styles** for maximum compatibility
+- **Customization**: Score thresholds can be adjusted via `ScoreColorConfig` interface
+
+#### Visual Benefits
+
+- **Instant Recognition**: Users can quickly identify gear quality at a glance
+- **Consistent UI**: Same color scheme across all pages with gear data
+- **Fribbels Compatibility**: Matches the visual language users expect from Fribbels Optimizer
+
+### Theme Toggle
+
+**IMPORTANT**: The application uses a simple light/dark theme toggle instead of a dropdown menu.
+
+#### Implementation
+
+- **File**: `src/components/mode-toggle.tsx`
+- **Functionality**: Simple toggle between light and dark themes
+- **Icons**: Sun icon for light mode, Moon icon for dark mode
+- **Behavior**: Clicking toggles between light and dark themes only (no system theme option)
+
+#### Usage
+
+- **Theme Toggle**: Located in the header/sidebar for easy access
+- **Persistence**: Theme preference is saved and restored on page reload
+- **Accessibility**: Includes screen reader support with proper ARIA labels
+
+## 17. GitHub MCP Server Usage Rules
+
+### Repository Configuration
+
+**IMPORTANT**: When using the GitHub MCP server, ALWAYS use the following configuration:
+
+- **owner**: `"gfernandez-me"`
+- **repo**: `"Fribbels-Epic-7-Optimizer"`
+
+### Usage Guidelines
+
+- **DO NOT** search or read from any other repository, even if search results look relevant
+- **Prefer** GitHub code search over generic web search for Epic 7 related queries
+- **Always** pass owner/repo explicitly if any tool requires repository parameters
+- **Focus** on the official Fribbels Epic 7 Optimizer repository as the authoritative source
+
+### Example Usage
+
+```typescript
+// ✅ CORRECT - Always specify the Fribbels repository
+mcp_GitHub_search_code({
+  query: "gear scoring calculation",
+  owner: "fribbels",
+  repo: "Fribbels-Epic-7-Optimizer",
+});
+
+// ❌ WRONG - Don't search other repositories
+mcp_GitHub_search_code({
+  query: "gear scoring calculation",
+  // Missing owner/repo specification
+});
+```
+
+## 18. Centralized Logic Architecture
+
+### Core Utility Files (Single Source of Truth)
+
+**IMPORTANT**: All core logic is centralized in specific files to avoid duplication and ensure consistency across the application.
+
+#### Hero Data Management
+
+- **File**: `src/lib/epic7-validation.ts`
+- **Purpose**: Centralized hero data processing, validation, and Fribbels API integration
+- **Key Functions**:
+  - `extractHeroMetadata()` - Extract hero element, class, rarity from Fribbels API
+  - `getHeroMetadataFromFribbels()` - Get hero data by code
+  - `getHeroMetadataByNameFromFribbels()` - Get hero data by name
+  - `validateHeroData()` - Validate and cast hero data
+  - `validateHeroElement()`, `validateHeroClass()`, `validateHeroRarity()` - Type validation
+  - `clearHeroDataCache()` - Clear Fribbels API cache
+
+#### Gear Set Management
+
+- **File**: `src/lib/gear-sets.ts`
+- **Purpose**: Centralized gear set definitions and utilities
+- **Key Functions**:
+  - `GEAR_SETS` - Complete registry of all gear sets
+  - `getGearSetFilterOptions()` - UI dropdown options
+  - `getGearSetInfo(setName)` - Get specific gear set info
+  - `getGearSetsByCategory()` - Filter by primary/secondary
+  - `isValidGearSet(setName)` - Validate gear set names
+
+#### Visual Scoring System
+
+- **File**: `src/lib/score-colors.ts`
+- **Purpose**: Centralized color-coded scoring display utilities
+- **Key Functions**:
+  - `formatScoreWithColor()` - Format scores with color coding
+  - `getScoreQuality()` - Determine score quality level
+  - `getScoreColorClasses()` - Get CSS classes for score colors
+  - `getGearTypeIcon()` - Get gear type icons (Fribbels-style)
+  - `getGearRankClasses()` - Get gear rank color classes
+  - `formatSubstatWithColor()` - Format individual substat values with color coding
+  - `getSubstatColorClasses()` - Get CSS classes for substat values based on quality
+
+**IMPORTANT**: This file consolidates all visual scoring and gear icon functionality. The old `src/components/icons.tsx` file has been removed and its functions (`getGearIcon`, `getRankColor`) have been replaced with the enhanced versions in this file.
+
+**Substat Color Coding**: Individual substat values now use color-coded backgrounds based on their quality relative to Epic 7's stat roll ranges:
+
+- **Super Light Green** (`bg-green-100 text-black`): Best rolls (excellent tier) - Attack%/Defense%/Health% 20%+, Critical Chance 12%+, Critical Damage 20%+, Speed 20%+, Flat HP 700%+
+- **Light Green** (`bg-green-200 text-black`): Very good rolls (good tier) - Attack%/Defense%/Health% 16%+, Critical Chance 10%+, Critical Damage 15%+, Speed 17%+, Flat HP 400%+
+- **Medium Green** (`bg-green-300 text-black`): Mid to good rolls (average tier) - Attack%/Defense%/Health% 12%+, Critical Chance 8%+, Critical Damage 10%+, Speed 15%+, Flat HP 300%+
+- **Yellow** (`bg-yellow-200 text-black`): Mid to bad rolls (poor tier) - Attack%/Defense%/Health% 8%+, Critical Chance 6%+, Critical Damage 6%+, Speed 12%+, Flat HP 200%+
+- **Dark Red** (`bg-red-600 text-white`): Worse rolls (terrible tier) - Below poor thresholds, most low flat stats
+
+**Contrast Improvements**: The color system now uses consistent text colors (black for light backgrounds, white for dark backgrounds) with high-contrast background colors for optimal visibility in both light and dark modes. The red color for bad stats uses `bg-red-600` with white text for maximum contrast and visibility.
+
+**Note**: Thresholds are based on Epic 7's actual substat ranges from user gear data analysis and are adjusted dynamically based on gear enhancement level. Speed 17+ now correctly shows as light green (very good), and flat HP 400+ shows as light green (very good).
+
+#### URL Parameter Management
+
+- **File**: `src/lib/url.ts`
+- **Purpose**: Centralized URL parameter parsing and state management
+- **Key Functions**:
+  - `parseGearSearchParams()` - Parse gear table filters
+  - `parseHeroSearchParams()` - Parse hero table filters
+  - `getDefaultGearFilters()` - Default gear filter values
+  - `getDefaultHeroFilters()` - Default hero filter values
+
+### Data Access Layer Pattern
+
+**IMPORTANT**: Each page has its own data access layer following the pattern:
+
+```
+src/app/(dashboard)/[page]/
+├── data/
+│   └── [page].ts          # Data access class
+├── components/
+│   └── [page]-table.tsx   # Table component
+└── page.tsx               # Server component
+```
+
+#### Example Structure
+
+- **Gears**: `src/app/(dashboard)/gears/data/gears.ts`
+- **Heroes**: `src/app/(dashboard)/heroes/data/heroes.ts`
+- **Upload**: `src/app/(dashboard)/upload/data/upload.ts`
+
+### Import Patterns
+
+**IMPORTANT**: Always use the centralized utilities and follow these import patterns:
+
+#### For Hero Data
+
+```typescript
+import {
+  extractHeroMetadata,
+  validateHeroData,
+  HeroMetadata,
+} from "@/lib/epic7-validation";
+```
+
+#### For Gear Sets
+
+```typescript
+import {
+  getGearSetFilterOptions,
+  getGearSetInfo,
+  GEAR_SETS,
+} from "@/lib/gear-sets";
+```
+
+#### For URL Management
+
+```typescript
+import {
+  parseGearSearchParams,
+  parseHeroSearchParams,
+  type GearFilters,
+  type HeroFilters,
+} from "@/lib/url";
+```
+
+### Development Guidelines
+
+#### When Adding New Hero Features
+
+1. **Check**: `src/lib/epic7-validation.ts` for existing hero functions
+2. **Add**: New hero functions to `epic7-validation.ts` (not separate files)
+3. **Update**: Import statements in consuming files
+4. **Test**: Ensure TypeScript compilation and no linting errors
+
+#### When Adding New Gear Sets
+
+1. **Check**: `src/lib/gear-sets.ts` for existing gear set definitions
+2. **Add**: New gear sets to `GEAR_SETS` object
+3. **Update**: `prisma/seed.ts` to include new sets in database
+4. **Test**: Verify gear set appears in UI filters
+
+#### When Adding New URL Parameters
+
+1. **Check**: `src/lib/url.ts` for existing parameter parsing
+2. **Add**: New parameters to appropriate filter interfaces
+3. **Update**: Parsing functions to handle new parameters
+4. **Test**: Verify URL state management works correctly
+
+### File Organization Rules
+
+#### DO NOT Create These Files
+
+- ❌ `src/lib/hero-*.ts` - Use `epic7-validation.ts` instead
+- ❌ `src/lib/gear-*.ts` - Use `gear-sets.ts` instead
+- ❌ `src/lib/url-*.ts` - Use `url.ts` instead
+- ❌ Duplicate utility files for the same purpose
+
+#### DO Create These Files
+
+- ✅ `src/app/(dashboard)/[page]/data/[page].ts` - Page-specific data access
+- ✅ `src/app/(dashboard)/[page]/components/[page]-table.tsx` - Page-specific components
+- ✅ `src/components/ui/[component].tsx` - Reusable UI components
+
+### Testing and Validation
+
+#### Before Making Changes
+
+1. **Check**: Existing centralized functions in core utility files
+2. **Verify**: No duplication of functionality
+3. **Test**: TypeScript compilation with `npm run typecheck`
+4. **Lint**: Run linting to ensure code quality
+
+#### After Making Changes
+
+1. **Update**: All import statements to use centralized functions
+2. **Remove**: Any duplicate or obsolete files
+3. **Test**: Full application functionality
+4. **Document**: Update this rules file if new patterns are established
+
+### Common Anti-Patterns to Avoid
+
+#### ❌ Duplicate Utility Files
+
+```typescript
+// DON'T DO THIS
+src / lib / hero - metadata.ts;
+src / lib / hero - validation.ts;
+src / lib / hero - api.ts;
+
+// DO THIS INSTEAD
+src / lib / epic7 - validation.ts; // All hero utilities here
+```
+
+#### ❌ Scattered Logic
+
+```typescript
+// DON'T DO THIS
+// Hero logic in multiple files
+src / components / hero - table.tsx; // Hero processing logic
+src / pages / heroes.tsx; // More hero processing logic
+
+// DO THIS INSTEAD
+src / lib / epic7 - validation.ts; // All hero logic centralized
+src / components / hero - table.tsx; // Just UI components
+```
+
+#### ❌ Hardcoded Values
+
+```typescript
+// DON'T DO THIS
+const gearSets = ["SpeedSet", "AttackSet", "HealthSet"];
+
+// DO THIS INSTEAD
+import { GEAR_SETS } from "@/lib/gear-sets";
+const gearSets = Object.keys(GEAR_SETS);
+```
+
+## 19. Upload Process and Logging
+
+### File-Based Logging System
+
+**IMPORTANT**: The upload process uses file-based logging to prevent console spam and provide detailed analysis.
+
+#### Log Files
+
+- **`upload-gear-log.txt`**: Detailed gear processing log with scores, grades, and summary statistics
+- **`upload-hero-log.txt`**: Detailed hero processing log with metadata and distribution analysis
+- **Location**: Root directory (`process.cwd()`)
+- **Replacement**: Log files are replaced on each upload (no accumulation)
+- **Git Ignore**: Both log files are added to `.gitignore`
+
+#### Log Content Structure
+
+**Gear Log Format:**
+
+```
+=== GEAR UPLOAD LOG - [timestamp] ===
+Total gears processed: [count]
+Showing first 5 gears with their scores and grades:
+
+Gear [id]: fScore=[score] ([grade]), score=[score] ([grade])
+  Substat [id]: [statName]=[value] ([grade])
+  ...
+
+=== SUMMARY ===
+✅ Successfully processed [count] gear items
+📊 Grade distribution:
+   - EXCELLENT: [count] gears
+   - GOOD: [count] gears
+   - AVERAGE: [count] gears
+   - POOR: [count] gears
+   - TERRIBLE: [count] gears
+
+🔧 New gear sets detected:
+   - ReversalSet: [count] gears
+   - RiposteSet: [count] gears
+   - RevengeSet: [count] gears
+```
+
+**Hero Log Format:**
+
+```
+=== HERO UPLOAD LOG - [timestamp] ===
+Total heroes processed: [count]
+Showing first 5 heroes with their metadata:
+
+Hero [id]: [name] ([element] [rarity] [class])
+...
+
+=== SUMMARY ===
+✅ Successfully processed [count] heroes
+📊 Hero distribution by element:
+   - FIRE: [count] heroes
+   - ICE: [count] heroes
+   - EARTH: [count] heroes
+   - LIGHT: [count] heroes
+   - DARK: [count] heroes
+
+📊 Hero distribution by class:
+   - WARRIOR: [count] heroes
+   - KNIGHT: [count] heroes
+   - RANGER: [count] heroes
+   - MAGE: [count] heroes
+   - SOUL_WEAVER: [count] heroes
+   - THIEF: [count] heroes
+```
+
+#### Upload Process Optimization
+
+- **Upsert Operations**: Uses `prisma.upsert()` for both gears and heroes to handle existing records
+- **Limited Logging**: Only logs first 5 items to prevent file bloat
+- **Clean Terminal**: Minimal console output (only essential progress logs)
+- **Performance**: Optimized for large datasets (1400+ gears, 300+ heroes)
+
+#### Debug State Management
+
+**IMPORTANT**: Debug logs are kept in place unless explicitly requested to be removed:
+
+- **Keep**: Essential upload progress logs (`[UPLOAD DEBUG]`)
+- **Keep**: Log file generation and summary
+- **Keep**: Error logging for troubleshooting
+- **Remove Only**: When user explicitly requests removal
+
+### Maintenance Checklist
+
+When working on heroes or gears:
+
+- [ ] Check centralized utility files first
+- [ ] Avoid creating duplicate functionality
+- [ ] Use proper import patterns
+- [ ] Follow data access layer pattern
+- [ ] Test TypeScript compilation
+- [ ] Update this rules file if needed
+- [ ] Remove obsolete files after refactoring
+- [ ] Check upload log files for processing verification
+- [ ] Maintain debug state unless explicitly requested to change

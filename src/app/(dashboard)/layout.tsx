@@ -29,7 +29,7 @@ export default async function DashboardLayout({
         <div className="flex flex-1 flex-col">
           <SiteHeader />
           <main className="flex-1 overflow-y-auto bg-background">
-            <div className="container mx-auto h-full max-w-[1600px] p-6">
+            <div className="mx-auto h-full w-full max-w-[1800px] px-4 py-6">
               {children}
             </div>
           </main>

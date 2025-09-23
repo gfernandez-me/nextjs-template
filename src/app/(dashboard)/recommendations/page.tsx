@@ -95,9 +95,14 @@ export default function RecommendationsPage() {
     <div className="container mx-auto py-10">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Recommendations</h1>
-        <Button asChild>
-          <Link href="/recommendations/edit">Create New</Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" asChild>
+            <Link href="/recommendations/analyze">Analyze Build</Link>
+          </Button>
+          <Button asChild>
+            <Link href="/recommendations/edit">Create New</Link>
+          </Button>
+        </div>
       </div>
 
       <DataTable columns={columns} data={recommendations} />

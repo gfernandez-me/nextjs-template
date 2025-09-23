@@ -5,14 +5,19 @@
 import React from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { GearForTable } from "@/dashboard/gears/data/gears";
-import { getGearIcon, getRankColor } from "@/components/icons";
 import {
   formatMainStatLabel,
   formatMainStatValue,
   abbreviateSubstatLabel,
 } from "@/lib/stats";
 import { stripPercent } from "@/lib/string-utils";
-import { getStatBadge, type StatThresholds } from "@/lib/gear-thresholds";
+import { type StatThresholds } from "@/lib/gear-thresholds";
+import {
+  formatScoreWithColor,
+  getGearTypeIcon,
+  getGearRankClasses,
+  formatSubstatWithColor,
+} from "@/lib/score-colors";
 
 interface CreateColumnsOptions {
   thresholds?: StatThresholds;
@@ -28,24 +33,20 @@ export function createGearTableColumns({
   thresholds,
   scoreThresholds,
 }: CreateColumnsOptions): ColumnDef<GearForTable>[] {
-  const getStatBadgeWithThresholds = (
-    statName: string,
-    statValue: number,
-    enhance: number
-  ) => getStatBadge(statName, statValue, enhance, thresholds);
-
   return [
     {
       accessorKey: "gear",
       header: () => <span>Type</span>,
       cell: ({ row }) => {
-        const iconSymbol = getGearIcon(row.original.type);
-        const rankClass = getRankColor(String(row.original.rank));
+        const iconSymbol = getGearTypeIcon(row.original.type);
+        const rankClasses = getGearRankClasses(String(row.original.rank));
         const displayName = row.original.type;
         return (
           <div className="flex items-center gap-2">
             <span className="text-lg leading-none">{iconSymbol}</span>
-            <span className={`text-xs font-semibold ${rankClass}`}>
+            <span
+              className={`text-xs font-semibold px-2 py-1 rounded ${rankClasses}`}
+            >
               {displayName}
             </span>
           </div>
@@ -59,23 +60,16 @@ export function createGearTableColumns({
       header: () => <span>F Score</span>,
       cell: ({ getValue }) => {
         const value = getValue<number | null>();
-        if (value === null) {
-          return <span className="text-muted-foreground">-</span>;
-        }
-
-        let scoreIcon = "";
-        if (scoreThresholds) {
-          if (value >= scoreThresholds.maxFScore) {
-            scoreIcon = "⭐"; // Over expected
-          } else if (value < scoreThresholds.minFScore) {
-            scoreIcon = "⚠️"; // Under minimum
-          }
-        }
+        const scoreData = formatScoreWithColor(value);
 
         return (
-          <div className="flex items-center gap-1">
-            <span className="font-mono text-xs">{value.toFixed(1)}</span>
-            {scoreIcon && <span className="text-sm">{scoreIcon}</span>}
+          <div className="flex items-center justify-center">
+            <span
+              className={`font-mono text-xs px-2 py-1 rounded border ${scoreData.className}`}
+              style={scoreData.style}
+            >
+              {scoreData.value}
+            </span>
           </div>
         );
       },
@@ -94,23 +88,16 @@ export function createGearTableColumns({
       header: () => <span>Score</span>,
       cell: ({ getValue }) => {
         const value = getValue<number | null>();
-        if (value === null) {
-          return <span className="text-muted-foreground">-</span>;
-        }
-
-        let scoreIcon = "";
-        if (scoreThresholds) {
-          if (value >= scoreThresholds.maxScore) {
-            scoreIcon = "⭐"; // Over expected
-          } else if (value < scoreThresholds.minScore) {
-            scoreIcon = "⚠️"; // Under minimum
-          }
-        }
+        const scoreData = formatScoreWithColor(value);
 
         return (
-          <div className="flex items-center gap-1">
-            <span className="font-mono text-xs">{value.toFixed(1)}</span>
-            {scoreIcon && <span className="text-sm">{scoreIcon}</span>}
+          <div className="flex items-center justify-center">
+            <span
+              className={`font-mono text-xs px-2 py-1 rounded border ${scoreData.className}`}
+              style={scoreData.style}
+            >
+              {scoreData.value}
+            </span>
           </div>
         );
       },
@@ -155,11 +142,11 @@ export function createGearTableColumns({
           return <span className="text-muted-foreground">-</span>;
         }
 
-        const badge = getStatBadge(
+        console.log(`[DEBUG] MAIN: ${mainStatType}=${mainStatValue}`);
+        const mainStatData = formatSubstatWithColor(
           mainStatType,
           mainStatValue,
-          enhance,
-          thresholds
+          enhance
         );
 
         return (
@@ -168,13 +155,9 @@ export function createGearTableColumns({
               {stripPercent(formatMainStatLabel(mainStatType))}
             </span>
             <span
-              className={`inline-flex items-center gap-1 font-medium ${
-                badge?.className ?? "text-slate-700"
-              }`}
+              className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium border ${mainStatData.className}`}
+              style={mainStatData.style}
             >
-              {badge?.icon === "rare" && <span className="mr-0.5">⭐</span>}
-              {badge?.icon === "good" && <span className="mr-0.5">▲</span>}
-              {badge?.icon === "bad" && <span className="mr-0.5">▼</span>}
               <span className="tabular-nums">
                 {formatMainStatValue(mainStatType, mainStatValue)}
               </span>
@@ -205,13 +188,12 @@ export function createGearTableColumns({
             return <span className="text-muted-foreground">-</span>;
           }
 
-          const badge = getStatBadgeWithThresholds(
+          const statValue = Number(s.statValue);
+          const substatData = formatSubstatWithColor(
             s.StatType.statName,
-            Number(s.statValue),
+            statValue,
             row.original.enhance
           );
-
-          const statValue = Number(s.statValue);
 
           return (
             <div className="flex items-center gap-2 text-[11px] leading-4">
@@ -219,15 +201,11 @@ export function createGearTableColumns({
                 {stripPercent(abbreviateSubstatLabel(s.StatType.statName))}
               </span>
               <span
-                className={`inline-flex items-center gap-1 font-medium ${
-                  badge?.className ?? "text-slate-700"
-                }`}
+                className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium border ${substatData.className}`}
+                style={substatData.style}
               >
-                {badge?.icon === "rare" && <span className="mr-0.5">⭐</span>}
-                {badge?.icon === "good" && <span className="mr-0.5">▲</span>}
-                {badge?.icon === "bad" && <span className="mr-0.5">▼</span>}
                 <span className="tabular-nums">
-                  {statValue.toString()}
+                  {substatData.value}
                   {s.StatType.statCategory === "PERCENTAGE" ? "%" : ""}
                 </span>
               </span>

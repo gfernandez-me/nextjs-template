@@ -50,3 +50,7 @@ next-env.d.ts
 
 # Local reference data (do not commit large or copyrighted data)
 /prisma/gear.txt
+
+# Upload debug logs
+upload-gear-log.txt
+upload-hero-log.txt

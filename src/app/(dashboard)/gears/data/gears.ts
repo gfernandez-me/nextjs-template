@@ -1,5 +1,5 @@
 import type { Prisma } from "#prisma";
-import { GearType, GearRank } from "#prisma";
+import { GearType, GearRank, ScoreGrade } from "#prisma";
 import prisma from "@/lib/prisma";
 import { convertDecimals } from "@/lib/decimal";
 
@@ -67,11 +67,60 @@ export class GearsDataAccess {
     where?: Prisma.GearsWhereInput;
     sortField?: string;
     sortDirection?: string;
+    // Optional relational filter: require at least N substats with given grades
+    substatGradeIn?: ScoreGrade[];
+    substatMinCount?: number;
   }): Promise<{ rows: GearForTable[]; total: number }> {
-    const { page, perPage, where = {}, sortField, sortDirection } = params;
+    const {
+      page,
+      perPage,
+      where = {},
+      sortField,
+      sortDirection,
+      substatGradeIn,
+      substatMinCount,
+    } = params;
 
     // Always scope to current user
-    const userScopedWhere = { ...where, userId: this.userId };
+    let userScopedWhere: Prisma.GearsWhereInput = {
+      ...where,
+      userId: this.userId,
+    };
+
+    // If we need a minimum count of substats by grade, compute matching gear IDs in-memory
+    if (
+      substatGradeIn &&
+      Array.isArray(substatGradeIn) &&
+      substatGradeIn.length > 0 &&
+      substatMinCount &&
+      substatMinCount > 1
+    ) {
+      const rows = await prisma.gearSubStats.findMany({
+        where: {
+          userId: this.userId,
+          grade: { in: substatGradeIn },
+        },
+        select: { gearId: true },
+      });
+      const counts = new Map<number, number>();
+      for (const row of rows) {
+        counts.set(row.gearId, (counts.get(row.gearId) || 0) + 1);
+      }
+      const gearIds = Array.from(counts.entries())
+        .filter(([, c]) => c >= substatMinCount)
+        .map(([id]) => id);
+      // If none matched, force an impossible condition to yield empty
+      userScopedWhere = {
+        ...userScopedWhere,
+        id: gearIds.length ? { in: gearIds } : -1,
+      } as unknown as Prisma.GearsWhereInput;
+    }
+
+    // Debug: Log the where clause being used
+    console.log(
+      `[GEARS DEBUG] Where clause:`,
+      JSON.stringify(userScopedWhere, null, 2)
+    );
 
     // Build orderBy from sortField and sortDirection
     let orderBy;

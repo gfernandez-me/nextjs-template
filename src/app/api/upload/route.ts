@@ -58,6 +58,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json({
         message: result.message,
         count: result.count,
+        gearCount: result.gearCount,
+        heroCount: result.heroCount,
+        durationMs: result.durationMs,
         errors: result.errors,
       });
     } else {

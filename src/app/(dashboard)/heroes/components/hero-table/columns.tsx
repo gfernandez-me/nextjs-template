@@ -17,6 +17,17 @@ import {
 export function createHeroTableColumns(): ColumnDef<HeroForTable>[] {
   return [
     {
+      accessorKey: "id",
+      header: "ID",
+      cell: ({ row }) => {
+        const id = row.getValue("id") as number;
+        return (
+          <span className="font-mono text-xs text-muted-foreground">{id}</span>
+        );
+      },
+      enableSorting: true,
+    },
+    {
       accessorKey: "name",
       header: "Name",
       cell: ({ row }) => {
@@ -30,6 +41,7 @@ export function createHeroTableColumns(): ColumnDef<HeroForTable>[] {
           </div>
         );
       },
+      enableSorting: true,
     },
     {
       accessorKey: "element",
@@ -120,44 +132,17 @@ export function createHeroTableColumns(): ColumnDef<HeroForTable>[] {
         );
       },
     },
+    // Replace empty stat columns with something useful: show duplicates count explicitly
     {
-      accessorKey: "speed",
-      header: "Speed",
+      accessorKey: "duplicateCount",
+      header: "Duplicates",
       cell: ({ row }) => {
-        const speed = row.getValue("speed") as number | null;
-        if (speed === null)
-          return <span className="text-muted-foreground">-</span>;
-        return <span className="font-mono">{speed}</span>;
-      },
-    },
-    {
-      accessorKey: "attack",
-      header: "Attack",
-      cell: ({ row }) => {
-        const attack = row.getValue("attack") as number | null;
-        if (attack === null)
-          return <span className="text-muted-foreground">-</span>;
-        return <span className="font-mono">{attack.toLocaleString()}</span>;
-      },
-    },
-    {
-      accessorKey: "health",
-      header: "Health",
-      cell: ({ row }) => {
-        const health = row.getValue("health") as number | null;
-        if (health === null)
-          return <span className="text-muted-foreground">-</span>;
-        return <span className="font-mono">{health.toLocaleString()}</span>;
-      },
-    },
-    {
-      accessorKey: "defense",
-      header: "Defense",
-      cell: ({ row }) => {
-        const defense = row.getValue("defense") as number | null;
-        if (defense === null)
-          return <span className="text-muted-foreground">-</span>;
-        return <span className="font-mono">{defense.toLocaleString()}</span>;
+        const count = row.getValue("duplicateCount") as number;
+        return count > 1 ? (
+          <Badge variant="secondary">x{count}</Badge>
+        ) : (
+          <span className="text-muted-foreground">-</span>
+        );
       },
     },
     {

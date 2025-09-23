@@ -31,20 +31,22 @@ model GearSets {
 }
 
 model GearSubStats {
-  id         Int       @id @default(autoincrement())
+  id         Int         @id @default(autoincrement())
   gearId     Int
   statTypeId Int
-  statValue  Decimal   @db.Decimal(10, 2)
+  statValue  Decimal     @db.Decimal(10, 2)
   rolls      Int
-  weight     Decimal   @db.Decimal(5, 2)
-  isModified Boolean   @default(false)
+  weight     Decimal     @db.Decimal(5, 2)
+  grade      ScoreGrade?
+  isModified Boolean     @default(false)
   userId     String
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-  Gear       Gears     @relation(fields: [gearId], references: [id], onDelete: Cascade)
-  StatType   StatTypes @relation(fields: [statTypeId], references: [id])
-  User       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  Gear       Gears       @relation(fields: [gearId], references: [id], onDelete: Cascade)
+  StatType   StatTypes   @relation(fields: [statTypeId], references: [id])
+  User       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([grade])
   @@map("gear_substats")
 }
 
@@ -58,6 +60,8 @@ model Gears {
   enhance           Int
   fScore            Float?
   score             Float?
+  fScoreGrade       ScoreGrade?
+  scoreGrade        ScoreGrade?
   mainStatType      MainStatType
   mainStatValue     Float
   mainStatBaseValue Float
@@ -82,6 +86,8 @@ model Gears {
   @@index([equipped])
   @@index([userId])
   @@index([set])
+  @@index([fScoreGrade])
+  @@index([scoreGrade])
   @@map("gears")
 }
 
@@ -178,4 +184,12 @@ enum HeroClass {
   MAGE
   SOUL_WEAVER
   THIEF
+}
+
+enum ScoreGrade {
+  EXCELLENT
+  GOOD
+  AVERAGE
+  POOR
+  TERRIBLE
 }

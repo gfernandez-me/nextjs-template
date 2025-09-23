@@ -406,9 +406,30 @@ async function main() {
       },
       {
         setName: "ProtectionSet",
-        piecesRequired: 2,
+        piecesRequired: 4,
         effectDescription: "+15% Barrier strength",
         icon: "🛡️",
+      },
+      {
+        setName: "RevengeSet",
+        piecesRequired: 4,
+        effectDescription:
+          "15% chance to decrease buff duration by 1 turn when attacking",
+        icon: "⚡",
+      },
+      {
+        setName: "ReversalSet",
+        piecesRequired: 4,
+        effectDescription:
+          "Increases Speed by 15%. Upon reviving, increases Combat Readiness by 50%",
+        icon: "🔄",
+      },
+      {
+        setName: "RiposteSet",
+        piecesRequired: 4,
+        effectDescription:
+          "When successfully evading, has a 70% chance to counterattack",
+        icon: "⚔️",
       },
     ];
 

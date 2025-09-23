@@ -6,7 +6,7 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { parseGearSearchParams } from "@/lib/url";
-import { GearType, GearRank, MainStatType } from "#prisma";
+import { GearType, GearRank, MainStatType, ScoreGrade } from "#prisma";
 import { fetchStatThresholds } from "@/lib/gear-thresholds";
 
 /**
@@ -49,6 +49,23 @@ export default async function GearsPage({
 
   // Parse URL parameters for server-side filtering
   const filters = parseGearSearchParams(params);
+
+  // Debug: Log active filters
+  const activeFilters = Object.entries(filters.filters).filter(
+    ([_, value]) =>
+      value !== undefined &&
+      value !== null &&
+      (Array.isArray(value) ? value.length > 0 : true)
+  );
+  console.log(
+    `[GEARS DEBUG] Active filters:`,
+    activeFilters
+      .map(
+        ([key, value]) =>
+          `${key}=${Array.isArray(value) ? value.join(",") : value}`
+      )
+      .join(", ")
+  );
 
   // Fetch data with filters applied server-side
   const result = await dal.getGearsPage({
@@ -95,11 +112,34 @@ export default async function GearsPage({
               }
             : {};
         })()),
+      ...(filters.filters.set?.length && {
+        set: { in: filters.filters.set },
+      }),
+      ...(filters.filters.fScoreGrade?.length && {
+        fScoreGrade: { in: filters.filters.fScoreGrade },
+      }),
+      ...(filters.filters.scoreGrade?.length && {
+        scoreGrade: { in: filters.filters.scoreGrade },
+      }),
+      ...(filters.filters.substatGrade?.length &&
+        filters.filters.substatGradeCount &&
+        {
+          // handled via substatGradeIn + substatMinCount to enforce min count
+        }),
     },
+    substatGradeIn: filters.filters.substatGrade?.length
+      ? (filters.filters.substatGrade as any)
+      : undefined,
+    substatMinCount: filters.filters.substatGradeCount,
   });
 
   // Calculate total pages
   const totalPages = Math.ceil(result.total / filters.size);
+
+  // Debug: Log query results
+  console.log(
+    `[GEARS DEBUG] Query results: ${result.rows.length} gears found, total=${result.total}, page=${filters.page}/${totalPages}`
+  );
 
   // Redirect to page 1 if current page is greater than total pages
   if (filters.page > totalPages && totalPages > 0) {

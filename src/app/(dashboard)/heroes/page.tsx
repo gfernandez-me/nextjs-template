@@ -1,4 +1,5 @@
 import { HeroTable } from "./components/hero-table";
+import { HeroFilters } from "./components/HeroFilters";
 import { HeroesDataAccess } from "./data/heroes";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
@@ -50,8 +51,8 @@ export default async function HeroesPage({
   const result = await dal.getHeroesPage({
     page: filters.page,
     perPage: filters.size,
-    sortField: filters.sort,
-    sortDirection: filters.dir,
+    sortField: filters.sort || "name",
+    sortDirection: filters.dir || "asc",
     where: {
       ...(filters.filters.name && {
         name: {
@@ -81,6 +82,7 @@ export default async function HeroesPage({
         </p>
       </div>
 
+      <HeroFilters />
       <HeroTable
         heroes={result.rows}
         totalCount={result.total}

@@ -11,6 +11,7 @@ import {
   HeroElement,
   HeroRarity,
   HeroClass,
+  ScoreGrade,
 } from "#prisma";
 
 // Types for gear table state
@@ -30,6 +31,11 @@ export interface GearFilters {
   mainStatType?: MainStatType[];
   subStats?: string[];
   hero?: string;
+  set?: string[];
+  fScoreGrade?: ScoreGrade[];
+  scoreGrade?: ScoreGrade[];
+  substatGrade?: ScoreGrade[];
+  substatGradeCount?: number; // Number of substats that must match the grade
 }
 
 // Types for hero table state
@@ -81,6 +87,18 @@ export function parseGearFilters(searchParams: URLSearchParams): GearFilters {
       .filter(Boolean) || []) as MainStatType[],
     subStats: searchParams.get("subStats")?.split("|").filter(Boolean) || [],
     hero: searchParams.get("hero") || undefined,
+    set: searchParams.get("set")?.split("|").filter(Boolean) || [],
+    fScoreGrade: (searchParams.get("fScoreGrade")?.split("|").filter(Boolean) ||
+      []) as ScoreGrade[],
+    scoreGrade: (searchParams.get("scoreGrade")?.split("|").filter(Boolean) ||
+      []) as ScoreGrade[],
+    substatGrade: (searchParams
+      .get("substatGrade")
+      ?.split("|")
+      .filter(Boolean) || []) as ScoreGrade[],
+    substatGradeCount: searchParams.get("substatGradeCount")
+      ? parseInt(searchParams.get("substatGradeCount")!, 10)
+      : 1, // Default to 1 if not specified
   };
 }
 
@@ -176,6 +194,11 @@ export function getDefaultGearFilters(): GearFilters {
     mainStatType: undefined,
     subStats: [],
     hero: undefined,
+    set: [],
+    fScoreGrade: [],
+    scoreGrade: [],
+    substatGrade: [],
+    substatGradeCount: 1,
   };
 }
 
