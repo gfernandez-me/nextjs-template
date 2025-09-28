@@ -30,17 +30,34 @@ export function useDebouncedGearSearchParams(delay: number = 300) {
         const currentUrl = new URL(window.location.href);
         const currentParams = new URLSearchParams(currentUrl.search);
 
-        // Build new parameters, preserving existing ones
+        // Build new parameters from updates (filters are already merged in GearFilters)
         const newParams = buildGearSearchParams(updates);
 
-        // Merge current and new parameters
+        // Preserve non-filter parameters from current URL
+        const filterKeys = [
+          "name",
+          "type",
+          "rank",
+          "level",
+          "enhance",
+          "mainStatType",
+          "subStats",
+          "hero",
+          "set",
+          "fScoreGrade",
+          "scoreGrade",
+          "substatGrade",
+          "substatGradeCount",
+        ];
+
         for (const [key, value] of currentParams.entries()) {
-          if (!newParams.has(key)) {
+          // Only preserve non-filter parameters
+          if (!filterKeys.includes(key) && !newParams.has(key)) {
             newParams.set(key, value);
           }
         }
 
-        // Update URL with merged parameters
+        // Update URL with new parameters
         router.replace(`?${newParams.toString()}`, { scroll: false });
       }, delay);
     },

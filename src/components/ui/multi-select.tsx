@@ -58,7 +58,11 @@ export function MultiSelect({
   };
 
   const handleRemove = (value: string) => {
-    onSelectionChange(selected.filter((item) => item !== value));
+    console.log("[MULTI SELECT DEBUG] Removing value:", value);
+    console.log("[MULTI SELECT DEBUG] Current selected:", selected);
+    const newSelection = selected.filter((item) => item !== value);
+    console.log("[MULTI SELECT DEBUG] New selection:", newSelection);
+    onSelectionChange(newSelection);
   };
 
   const handleClearAll = () => {
@@ -73,65 +77,61 @@ export function MultiSelect({
     <div className={cn("relative", className)}>
       <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
         <div className="flex items-center gap-2">
+          {/* Selected badges outside dropdown trigger */}
+          <div className="flex flex-wrap gap-1 flex-1">
+            {displayOptions.map((value) => {
+              const option = options.find((opt) => opt.value === value);
+              return (
+                <Badge
+                  key={value}
+                  variant="secondary"
+                  className="px-1 py-0.5 text-xs flex items-center gap-1"
+                >
+                  <span>{option?.label || value}</span>
+                  <span
+                    className="h-4 w-4 p-0 hover:bg-muted-foreground/20 ml-1 cursor-pointer inline-flex items-center justify-center rounded-sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRemove(value);
+                    }}
+                    title={`Remove ${option?.label || value}`}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleRemove(value);
+                      }
+                    }}
+                  >
+                    <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                  </span>
+                </Badge>
+              );
+            })}
+            {remainingCount > 0 && (
+              <Badge variant="secondary" className="px-1 py-0.5 text-xs">
+                +{remainingCount} more
+              </Badge>
+            )}
+          </div>
+
+          {/* Dropdown trigger button */}
           <DropdownMenuTrigger asChild>
             <Button
               variant="outline"
               role="combobox"
               aria-expanded={isOpen}
-              className="flex-1 justify-between"
+              className="shrink-0"
               disabled={disabled}
             >
-              <div className="flex flex-wrap gap-1 max-w-[calc(100%-20px)]">
-                {displayCount === 0 ? (
-                  <span className="text-muted-foreground">{placeholder}</span>
-                ) : (
-                  <>
-                    {displayOptions.map((value) => {
-                      const option = options.find((opt) => opt.value === value);
-                      return (
-                        <Badge
-                          key={value}
-                          variant="secondary"
-                          className="mr-1 px-1 py-0.5 text-xs"
-                        >
-                          {option?.label || value}
-                        </Badge>
-                      );
-                    })}
-                    {remainingCount > 0 && (
-                      <Badge
-                        variant="secondary"
-                        className="px-1 py-0.5 text-xs"
-                      >
-                        +{remainingCount} more
-                      </Badge>
-                    )}
-                  </>
-                )}
-              </div>
+              <span className="text-muted-foreground text-sm">
+                {displayCount === 0 ? placeholder : "Add"}
+              </span>
               <ChevronDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
           </DropdownMenuTrigger>
-
-          {/* Separate remove buttons outside dropdown trigger */}
-          {displayOptions.map((value) => {
-            const option = options.find((opt) => opt.value === value);
-            return (
-              <Button
-                key={`remove-${value}`}
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0 hover:bg-muted"
-                onClick={() => {
-                  handleRemove(value);
-                }}
-                title={`Remove ${option?.label || value}`}
-              >
-                <X className="h-4 w-4 text-muted-foreground hover:text-foreground" />
-              </Button>
-            );
-          })}
         </div>
         <DropdownMenuContent className="w-full min-w-[200px] p-2">
           {searchable && (

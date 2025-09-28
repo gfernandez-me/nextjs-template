@@ -1,0 +1,148 @@
+# Hydration Anti-Patterns - What NOT to Do
+
+## ❌ NEVER Use These Patterns
+
+### 1. `setIsClient` Pattern - FORBIDDEN
+
+```typescript
+// ❌ NEVER DO THIS
+const [isClient, setIsClient] = useState(false);
+useEffect(() => {
+  setIsClient(true);
+}, []);
+
+return <div>{isClient && <InteractiveComponent />}</div>;
+```
+
+**Why this is bad:**
+
+- Creates unnecessary re-renders
+- Poor user experience (content flashes)
+- Not the proper Next.js way
+- Causes layout shifts
+- Anti-pattern that should never be used
+
+### 2. `typeof window !== 'undefined'` Checks - AVOID
+
+```typescript
+// ❌ AVOID THIS
+if (typeof window !== "undefined") {
+  // client-side code
+}
+```
+
+**Why this is bad:**
+
+- Causes hydration mismatches
+- Content flashes on page load
+- Poor SEO and performance
+
+## ✅ Proper Solutions for Hydration Issues
+
+### 1. Fix the Root Cause
+
+**Most hydration issues are caused by inconsistent data between server and client:**
+
+```typescript
+// ❌ BAD - searchParams.get() can return null on server, string on client
+selected={searchParams.get("set")?.split("|").filter(Boolean) || []}
+
+// ✅ GOOD - Ensure consistent string handling
+selected={String(searchParams.get("set") || "").split("|").filter(Boolean)}
+```
+
+### 2. Use Proper Next.js Patterns
+
+```typescript
+// ✅ GOOD - Use dynamic imports for client-only components
+import dynamic from "next/dynamic";
+
+const ClientOnlyComponent = dynamic(() => import("./ClientOnly"), {
+  ssr: false,
+});
+
+// ✅ GOOD - Use proper state initialization
+const [state, setState] = useState(initialValue); // Always use consistent initial values
+```
+
+### 3. Ensure Consistent Props
+
+```typescript
+// ✅ GOOD - Always ensure props are consistent
+interface ComponentProps {
+  selected: string[]; // Always array, never undefined
+  options: Array<{ value: string; label: string }>;
+}
+
+// ✅ GOOD - Validate and normalize props
+const safeSelected = Array.isArray(selected) ? selected : [];
+```
+
+## 🔍 How to Debug Hydration Issues
+
+1. **Check browser console** for hydration mismatch errors
+2. **Look for inconsistent data** between server and client
+3. **Check URLSearchParams handling** - most common cause
+4. **Verify prop types** are consistent
+5. **Use React DevTools** to inspect component state
+
+## 📋 Common Hydration Issues in This Codebase
+
+### Nested Button Elements
+
+```typescript
+// ❌ BAD - Nested buttons cause hydration errors
+<Button>
+  <Badge>
+    <Button onClick={handleRemove}>X</Button> // Invalid HTML!
+  </Badge>
+</Button>
+
+// ✅ GOOD - Use span with proper accessibility
+<Button>
+  <Badge>
+    <span
+      role="button"
+      tabIndex={0}
+      onClick={handleRemove}
+      onKeyDown={handleKeyDown}
+    >
+      X
+    </span>
+  </Badge>
+</Button>
+```
+
+### URLSearchParams Issues
+
+```typescript
+// ❌ BAD
+value={searchParams.get("param") || "default"}
+
+// ✅ GOOD
+value={String(searchParams.get("param") || "default")}
+```
+
+### Array Handling
+
+```typescript
+// ❌ BAD
+const items = data?.items || [];
+
+// ✅ GOOD
+const items = Array.isArray(data?.items) ? data.items : [];
+```
+
+## 🚨 Enforcement Rules
+
+1. **NEVER** use `setIsClient` pattern
+2. **ALWAYS** use `String()` wrapper for `searchParams.get()`
+3. **ALWAYS** ensure consistent prop types
+4. **ALWAYS** provide consistent initial state
+5. **ALWAYS** test hydration in development
+
+## 📚 References
+
+- [Next.js Hydration Documentation](https://nextjs.org/docs/messages/react-hydration-error)
+- [React Hydration Guide](https://react.dev/reference/react-dom/client/hydrateRoot)
+- [Next.js Dynamic Imports](https://nextjs.org/docs/pages/building-your-application/optimizing/dynamic-imports)

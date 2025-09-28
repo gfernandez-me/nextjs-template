@@ -14,7 +14,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 import { MultiSelect } from "@/components/ui/multi-select";
-import { GearTableState, type GearFilters } from "@/lib/url";
+import {
+  GearTableState,
+  type GearFilters,
+  parseGearSearchParams,
+} from "@/lib/url";
+import { applyFilterUpdates } from "@/lib/filter-utils";
 import {
   GearType,
   MainStatType,
@@ -81,38 +86,32 @@ export function GearFilters() {
 
   const handleFilterUpdate = useCallback(
     (updates: Partial<GearFilters>) => {
+      console.log(
+        "[GEAR FILTERS DEBUG] handleFilterUpdate called with:",
+        updates
+      );
       startTransition(() => {
+        // Get current filters from URL to merge with updates
+        const currentUrl = new URL(window.location.href);
+        const currentParams = new URLSearchParams(currentUrl.search);
+        const currentState = parseGearSearchParams(currentParams);
+        const currentFilters = currentState.filters;
+
+        // Apply updates to current filters using centralized utility
+        console.log("[GEAR FILTERS DEBUG] Updates:", updates);
+        const mergedFilters = applyFilterUpdates(currentFilters, updates);
+        console.log("[GEAR FILTERS DEBUG] Merged filters:", mergedFilters);
+
         // Convert to GearTableState format
         const tableStateUpdates: Partial<GearTableState> = {
-          filters: {},
+          filters: mergedFilters,
           page: 1, // Reset to first page when filters change
         };
 
-        // Type-safe filter updates
-        if (updates.name !== undefined)
-          tableStateUpdates.filters!.name = updates.name;
-        if (updates.type !== undefined)
-          tableStateUpdates.filters!.type = updates.type;
-        if (updates.rank !== undefined)
-          tableStateUpdates.filters!.rank = updates.rank;
-        if (updates.level !== undefined)
-          tableStateUpdates.filters!.level = updates.level;
-        if (updates.enhance !== undefined)
-          tableStateUpdates.filters!.enhance = updates.enhance;
-        if (updates.mainStatType !== undefined)
-          tableStateUpdates.filters!.mainStatType = updates.mainStatType;
-        if (updates.subStats !== undefined)
-          tableStateUpdates.filters!.subStats = updates.subStats;
-        if (updates.fScoreGrade !== undefined)
-          tableStateUpdates.filters!.fScoreGrade = updates.fScoreGrade;
-        if (updates.scoreGrade !== undefined)
-          tableStateUpdates.filters!.scoreGrade = updates.scoreGrade;
-        if (updates.substatGrade !== undefined)
-          tableStateUpdates.filters!.substatGrade = updates.substatGrade;
-        if (updates.substatGradeCount !== undefined)
-          tableStateUpdates.filters!.substatGradeCount =
-            updates.substatGradeCount;
-
+        console.log(
+          "[GEAR FILTERS DEBUG] Final tableStateUpdates:",
+          tableStateUpdates
+        );
         updateFilters(tableStateUpdates);
       });
     },
@@ -131,7 +130,7 @@ export function GearFilters() {
               value: type.value,
               label: type.label,
             }))}
-            selected={(searchParams.get("type") || "")
+            selected={String(searchParams.get("type") || "")
               .split("|")
               .filter(Boolean)}
             onSelectionChange={(selected) => {
@@ -148,8 +147,9 @@ export function GearFilters() {
         <div className="flex items-center gap-2">
           <Label className="text-sm whitespace-nowrap">Rank</Label>
           {[GearRank.EPIC, GearRank.HEROIC].map((rank) => {
-            const currentRanks =
-              searchParams.get("rank")?.split("|").filter(Boolean) || [];
+            const currentRanks = String(searchParams.get("rank") || "")
+              .split("|")
+              .filter(Boolean);
             const isActive = currentRanks.includes(rank);
 
             return (
@@ -187,7 +187,7 @@ export function GearFilters() {
             type="number"
             min={0}
             max={15}
-            value={searchParams.get("enhance") || "15"}
+            value={String(searchParams.get("enhance") || "15")}
             onChange={(e) => {
               const value = e.target.value;
               if (value) {
@@ -213,7 +213,7 @@ export function GearFilters() {
               value: stat.value,
               label: stat.label,
             }))}
-            selected={(searchParams.get("mainStatType") || "")
+            selected={String(searchParams.get("mainStatType") || "")
               .split("|")
               .filter(Boolean)}
             onSelectionChange={(selected) => {
@@ -234,7 +234,9 @@ export function GearFilters() {
         <Label className="text-sm whitespace-nowrap">Gear Sets</Label>
         <MultiSelect
           options={getGearSetFilterOptions()}
-          selected={(searchParams.get("set") || "").split("|").filter(Boolean)}
+          selected={String(searchParams.get("set") || "")
+            .split("|")
+            .filter(Boolean)}
           onSelectionChange={(selected) => {
             handleFilterUpdate({ set: selected });
           }}
@@ -250,7 +252,7 @@ export function GearFilters() {
             value: stat.statName,
             label: stat.statName,
           }))}
-          selected={(searchParams.get("subStats") || "")
+          selected={String(searchParams.get("subStats") || "")
             .split("|")
             .filter(Boolean)}
           onSelectionChange={(selected) => {
@@ -274,7 +276,7 @@ export function GearFilters() {
               value: grade.value,
               label: grade.label,
             }))}
-            selected={(searchParams.get("fScoreGrade") || "")
+            selected={String(searchParams.get("fScoreGrade") || "")
               .split("|")
               .filter(Boolean)}
             onSelectionChange={(selected) => {
@@ -300,7 +302,7 @@ export function GearFilters() {
               value: grade.value,
               label: grade.label,
             }))}
-            selected={(searchParams.get("scoreGrade") || "")
+            selected={String(searchParams.get("scoreGrade") || "")
               .split("|")
               .filter(Boolean)}
             onSelectionChange={(selected) => {
@@ -326,7 +328,7 @@ export function GearFilters() {
               value: grade.value,
               label: grade.label,
             }))}
-            selected={(searchParams.get("substatGrade") || "")
+            selected={String(searchParams.get("substatGrade") || "")
               .split("|")
               .filter(Boolean)}
             onSelectionChange={(selected) => {
@@ -352,7 +354,7 @@ export function GearFilters() {
             type="number"
             min={1}
             max={4}
-            value={searchParams.get("substatGradeCount") || "1"}
+            value={String(searchParams.get("substatGradeCount") || "1")}
             onChange={(e) => {
               const value = e.target.value;
               if (value) {

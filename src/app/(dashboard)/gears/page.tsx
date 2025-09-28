@@ -116,7 +116,7 @@ export default async function GearsPage({
   // Redirect to page 1 if current page is greater than total pages
   if (filters.page > totalPages && totalPages > 0) {
     const newParams = new URLSearchParams();
-    for (const [key, value] of Object.entries(searchParams)) {
+    for (const [key, value] of Object.entries(awaitedSearchParams)) {
       if (typeof value === "string") {
         const values = value.split("|").filter(Boolean);
         if (values.length > 1) {
