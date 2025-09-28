@@ -26,8 +26,6 @@ export interface GearForOptimization extends Omit<Gears, "GearSubStats"> {
  * Calculate and update scores for all gear in the database
  */
 export async function calculateAllGearScores() {
-  console.log("Starting score calculation for all gear...");
-
   // Get all gear with substats
   const gears = await prisma.gears.findMany({
     include: {
@@ -38,8 +36,6 @@ export async function calculateAllGearScores() {
       },
     },
   });
-
-  console.log(`Found ${gears.length} gears to process`);
 
   let updated = 0;
   let errors = 0;
@@ -58,19 +54,10 @@ export async function calculateAllGearScores() {
       });
 
       updated++;
-
-      if (updated % 100 === 0) {
-        console.log(`Processed ${updated}/${gears.length} gears...`);
-      }
     } catch (error) {
-      console.error(`Error calculating scores for gear ${gear.id}:`, error);
       errors++;
     }
   }
-
-  console.log(
-    `Score calculation complete. Updated: ${updated}, Errors: ${errors}`
-  );
   return { updated, errors };
 }
 
@@ -209,8 +196,6 @@ export function calculateScore(gear: GearForOptimization): number {
  * Calculate scores for a specific user's gear
  */
 export async function calculateUserGearScores(userId: string) {
-  console.log(`Starting score calculation for user ${userId}...`);
-
   const gears = await prisma.gears.findMany({
     where: { userId },
     include: {
@@ -221,8 +206,6 @@ export async function calculateUserGearScores(userId: string) {
       },
     },
   });
-
-  console.log(`Found ${gears.length} gears for user`);
 
   let updated = 0;
   let errors = 0;
@@ -242,13 +225,8 @@ export async function calculateUserGearScores(userId: string) {
 
       updated++;
     } catch (error) {
-      console.error(`Error calculating scores for gear ${gear.id}:`, error);
       errors++;
     }
   }
-
-  console.log(
-    `User score calculation complete. Updated: ${updated}, Errors: ${errors}`
-  );
   return { updated, errors };
 }

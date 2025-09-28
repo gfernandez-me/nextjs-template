@@ -53,7 +53,7 @@ async function fetchFribbelsHeroData(): Promise<Map<string, FribbelsHeroData>> {
 
     // Convert the API data to our format
     for (const [name, heroData] of Object.entries(data)) {
-      const hero = heroData as any;
+      const hero = heroData as Record<string, unknown>;
       if (hero.code && hero.attribute && hero.role && hero.rarity) {
         heroMap.set(hero.code, {
           code: hero.code,

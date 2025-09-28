@@ -160,13 +160,7 @@ export function createHeroTableColumns(): ColumnDef<HeroForTable>[] {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onClick={() => {
-                  // TODO: Implement delete functionality
-                  console.log("Delete hero:", hero.id);
-                }}
-                className="text-red-600"
-              >
+              <DropdownMenuItem className="text-red-600">
                 <Trash2 className="mr-2 h-4 w-4" />
                 Delete
               </DropdownMenuItem>

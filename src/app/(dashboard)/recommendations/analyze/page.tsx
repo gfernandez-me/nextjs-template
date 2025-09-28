@@ -40,7 +40,10 @@ export default function AnalyzeRecommendationsPage() {
   const [submitted, setSubmitted] = React.useState<MinimalBuildSpec | null>(
     null
   );
-  const [serverResult, setServerResult] = React.useState<any>(null);
+  const [serverResult, setServerResult] = React.useState<Record<
+    string,
+    unknown
+  > | null>(null);
   const [heroOptions, setHeroOptions] = React.useState<
     Array<{ id: number; name: string }>
   >([]);
@@ -50,17 +53,15 @@ export default function AnalyzeRecommendationsPage() {
   const [setC, setSetC] = React.useState<string>("");
 
   React.useEffect(() => {
-    try {
-      const names = Object.keys(GEAR_SETS ?? {});
-      setSets(names);
-    } catch (e) {
-      console.log("[ANALYZE DEBUG] failed to load GEAR_SETS", e);
-    }
+    const names = Object.keys(GEAR_SETS ?? {});
+    setSets(names);
   }, []);
 
   const piecesFor = (setName: string): number => {
     try {
-      return (GEAR_SETS as any)[setName]?.pieces ?? 2;
+      return (
+        (GEAR_SETS as Record<string, { pieces?: number }>)[setName]?.pieces ?? 2
+      );
     } catch {
       return 2;
     }
@@ -77,7 +78,7 @@ export default function AnalyzeRecommendationsPage() {
       setPlans,
       slotConstraints: {
         BOOTS:
-          spec.bootsMain !== ("ANY" as any)
+          spec.bootsMain !== ("ANY" as unknown as MainStatType)
             ? { mainStats: [spec.bootsMain] }
             : { mainStats: "ANY" },
       },
@@ -226,15 +227,17 @@ export default function AnalyzeRecommendationsPage() {
                       Missing (shopping list draft)
                     </div>
                     <ul className="list-disc pl-5 text-sm">
-                      {serverResult.missing.map((m: any, i: number) => (
-                        <li key={i}>
-                          {m.slot}: main{" "}
-                          {Array.isArray(m.requiredMainStats)
-                            ? m.requiredMainStats.join(", ")
-                            : m.requiredMainStats}{" "}
-                          in sets [{m.sets.join(", ")}]
-                        </li>
-                      ))}
+                      {serverResult.missing.map(
+                        (m: Record<string, unknown>, i: number) => (
+                          <li key={i}>
+                            {m.slot}: main{" "}
+                            {Array.isArray(m.requiredMainStats)
+                              ? m.requiredMainStats.join(", ")
+                              : m.requiredMainStats}{" "}
+                            in sets [{m.sets.join(", ")}]
+                          </li>
+                        )
+                      )}
                     </ul>
                   </div>
                 ) : null}

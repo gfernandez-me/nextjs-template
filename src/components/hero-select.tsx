@@ -21,14 +21,12 @@ export function HeroSelect({ value, onChange }: HeroSelectProps) {
         const params = new URLSearchParams();
         if (query) params.set("q", query);
         params.set("limit", "50");
-        console.log("[HERO SELECT DEBUG] fetch", params.toString());
         const res = await fetch(`/api/heroes/search?${params.toString()}`, {
           signal: controller.signal,
           cache: "no-store",
         });
         if (!res.ok) return;
         const data = (await res.json()) as { heroes?: HeroOption[] };
-        console.log("[HERO SELECT DEBUG] results", data.heroes?.length ?? 0);
         setOptions(data.heroes ?? []);
       } catch {
         /* ignore */

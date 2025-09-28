@@ -142,7 +142,6 @@ export function createGearTableColumns({
           return <span className="text-muted-foreground">-</span>;
         }
 
-        console.log(`[DEBUG] MAIN: ${mainStatType}=${mainStatValue}`);
         const mainStatData = formatSubstatWithColor(
           mainStatType,
           mainStatValue,

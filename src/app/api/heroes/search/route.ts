@@ -16,7 +16,6 @@ export async function GET(request: NextRequest) {
     // Use the heroes data access layer
     const heroesDataAccess = new HeroesDataAccess(getUserId(session));
 
-    console.log("[HERO SEARCH DEBUG] query=", query, "limit=", limit);
     // Build where clause for search
     let whereClause: Parameters<HeroesDataAccess["getHeroesPage"]>[0]["where"] =
       {};
@@ -47,7 +46,6 @@ export async function GET(request: NextRequest) {
       class: hero.class,
     }));
 
-    console.log("[HERO SEARCH DEBUG] results=", heroes.length);
     return NextResponse.json({
       heroes: heroOptions,
     });

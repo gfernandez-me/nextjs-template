@@ -188,7 +188,6 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
 
       const result = await response.json();
       setStatus("Scores recalculated successfully!");
-      console.log("Score calculation result:", result);
     } catch (error) {
       setStatus(
         `Error recalculating scores: ${

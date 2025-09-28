@@ -29,7 +29,8 @@ export default async function GearsPage({
   const params = new URLSearchParams();
 
   // Safely iterate through the awaited searchParams
-  for (const [key, value] of Object.entries(searchParams)) {
+  const awaitedSearchParams = await searchParams;
+  for (const [key, value] of Object.entries(awaitedSearchParams)) {
     if (typeof value === "string") {
       const values = value.split("|").filter(Boolean);
       if (values.length > 1) {

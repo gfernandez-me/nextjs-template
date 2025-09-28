@@ -58,12 +58,10 @@ export function MultiSelect({
   };
 
   const handleRemove = (value: string) => {
-    console.log("handleRemove called with:", value);
     onSelectionChange(selected.filter((item) => item !== value));
   };
 
   const handleClearAll = () => {
-    console.log("handleClearAll called");
     onSelectionChange([]);
   };
 
@@ -126,7 +124,6 @@ export function MultiSelect({
                 size="sm"
                 className="h-8 w-8 p-0 hover:bg-muted"
                 onClick={() => {
-                  console.log("Remove button clicked for:", value);
                   handleRemove(value);
                 }}
                 title={`Remove ${option?.label || value}`}
@@ -170,7 +167,6 @@ export function MultiSelect({
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  console.log("Clear all button clicked");
                   handleClearAll();
                 }}
                 className="w-full text-xs text-muted-foreground hover:text-foreground hover:bg-muted"

@@ -116,12 +116,6 @@ export class GearsDataAccess {
       } as unknown as Prisma.GearsWhereInput;
     }
 
-    // Debug: Log the where clause being used
-    console.log(
-      `[GEARS DEBUG] Where clause:`,
-      JSON.stringify(userScopedWhere, null, 2)
-    );
-
     // Build orderBy from sortField and sortDirection
     let orderBy;
     if (sortField && sortDirection) {
@@ -205,8 +199,6 @@ export class GearsDataAccess {
    * Debug method to test database queries without filters
    */
   async debugDatabaseQuery() {
-    console.log("=== DEBUG DATABASE QUERY ===");
-
     // Test 1: Get all gears for user without any filters
     const allGears = await prisma.gears.findMany({
       where: { userId: this.userId },

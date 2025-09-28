@@ -191,8 +191,8 @@ export function UploadForm({ userSettings }: UploadFormProps) {
                       1. Export from Fribbels Optimizer
                     </h4>
                     <p>
-                      Open Fribbels, go to Importer, and use "Save/Load all
-                      optimizer data" to export a .txt file.
+                      Open Fribbels, go to Importer, and use &quot;Save/Load all
+                      optimizer data&quot; to export a .txt file.
                     </p>
                   </div>
                   <div className="space-y-1">

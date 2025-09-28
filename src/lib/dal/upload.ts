@@ -166,10 +166,6 @@ export class UploadDataAccess {
     ].join("\n");
 
     writeFileSync(join(process.cwd(), "upload-hero-log.txt"), heroLogContent);
-
-    console.log(
-      `[UPLOAD DEBUG] Logged ${this.gearCount} gears and ${this.heroCount} heroes to files`
-    );
   }
 
   /**
@@ -188,18 +184,11 @@ export class UploadDataAccess {
     let importedCount = 0;
     const errors: string[] = [];
 
-    console.log(
-      `[UPLOAD DEBUG] Starting upload process - Items: ${
-        data.items?.length || 0
-      }, Heroes: ${data.heroes?.length || 0}`
-    );
-
     try {
       // STEP 1: Import heroes first if present
       const heroMap: Map<bigint, number> = new Map(); // ingameId -> database id mapping
 
       if (data.heroes && Array.isArray(data.heroes)) {
-        console.log(`[UPLOAD DEBUG] Processing ${data.heroes.length} heroes`);
         // Seed per-name counters from existing DB state to ensure stable numbering
         const existingNameCounts = await prisma.heroes.groupBy({
           by: ["name"],
@@ -252,7 +241,6 @@ export class UploadDataAccess {
               heroData.class || "Unknown"
             );
           } catch (error) {
-            console.log(`[UPLOAD DEBUG] Hero import error: ${error}`);
             errors.push(
               `Failed to import hero ${
                 (hero as Record<string, unknown>).id
@@ -274,7 +262,6 @@ export class UploadDataAccess {
         });
       }
 
-      console.log(`[UPLOAD DEBUG] Processing ${data.items.length} gear items`);
       for (const item of data.items) {
         try {
           const itemObj = item as Record<string, unknown>;
@@ -435,7 +422,6 @@ export class UploadDataAccess {
           const badId =
             (item as { id?: string; ingameId?: string })?.id ??
             (item as { id?: string; ingameId?: string })?.ingameId;
-          console.log(`[UPLOAD DEBUG] Gear import error: ${error}`);
           errors.push(
             `Failed to import item ${String(badId ?? "unknown")}: ${error}`
           );

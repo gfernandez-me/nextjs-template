@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { getSessionCookie } from "better-auth/cookies";
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -25,15 +25,9 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Get session using Better Auth's session validation
-  let session = null;
-  try {
-    session = await auth.api.getSession({
-      headers: request.headers,
-    });
-  } catch (error) {
-    console.error("Middleware session error:", error);
-  }
+  // Get session cookie using Better Auth's middleware helper
+  const sessionCookie = getSessionCookie(request);
+  const session = sessionCookie ? { user: sessionCookie } : null;
 
   // Handle root path '/'
   if (pathname === "/") {
