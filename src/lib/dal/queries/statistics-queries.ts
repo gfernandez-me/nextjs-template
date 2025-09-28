@@ -8,8 +8,14 @@ import type {
   GearScoreStats,
   LegacyGearSetStats,
 } from "../types/statistics";
-import { calculateCompletionRate, sortAndLimit } from "../utils/statistics-utils";
-import { TOP_SCORES_LIMIT, TOP_SETS_LIMIT } from "../constants/statistics-constants";
+import {
+  calculateCompletionRate,
+  sortAndLimit,
+} from "../utils/statistics-utils";
+import {
+  TOP_SCORES_LIMIT,
+  TOP_SETS_LIMIT,
+} from "../constants/statistics-constants";
 
 // ============================================================================
 // DATABASE QUERY FUNCTIONS
@@ -168,7 +174,9 @@ export async function getRecentActivity(userId: string) {
 /**
  * Get gear rank distribution
  */
-export async function getGearRankDistribution(userId: string): Promise<GearRankDistribution[]> {
+export async function getGearRankDistribution(
+  userId: string
+): Promise<GearRankDistribution[]> {
   const ranks = await prisma.gears.groupBy({
     by: ["rank"],
     where: { userId },
@@ -187,7 +195,9 @@ export async function getGearRankDistribution(userId: string): Promise<GearRankD
 /**
  * Get gear type distribution
  */
-export async function getGearTypeDistribution(userId: string): Promise<GearTypeDistribution[]> {
+export async function getGearTypeDistribution(
+  userId: string
+): Promise<GearTypeDistribution[]> {
   const types = await prisma.gears.groupBy({
     by: ["type"],
     where: { userId },
@@ -216,17 +226,16 @@ export async function getGearTypeDistribution(userId: string): Promise<GearTypeD
 /**
  * Get gear enhancement distribution
  */
-export async function getGearEnhancementDistribution(userId: string): Promise<GearEnhancementDistribution[]> {
+export async function getGearEnhancementDistribution(
+  userId: string
+): Promise<GearEnhancementDistribution[]> {
   const enhancements = await prisma.gears.groupBy({
     by: ["enhance"],
     where: { userId },
     _count: { enhance: true },
   });
 
-  const total = enhancements.reduce(
-    (sum, enh) => sum + enh._count.enhance,
-    0
-  );
+  const total = enhancements.reduce((sum, enh) => sum + enh._count.enhance, 0);
 
   return enhancements
     .sort((a, b) => a.enhance - b.enhance)
@@ -240,7 +249,9 @@ export async function getGearEnhancementDistribution(userId: string): Promise<Ge
 /**
  * Get gear score statistics
  */
-export async function getGearScoreStats(userId: string): Promise<GearScoreStats> {
+export async function getGearScoreStats(
+  userId: string
+): Promise<GearScoreStats> {
   const scoredGears = await prisma.gears.findMany({
     where: {
       userId,
@@ -311,7 +322,9 @@ export async function listStatTypes() {
 /**
  * Get gear set stats in the old format for backward compatibility
  */
-export async function getGearSetStatsLegacy(userId: string): Promise<LegacyGearSetStats> {
+export async function getGearSetStatsLegacy(
+  userId: string
+): Promise<LegacyGearSetStats> {
   // Get total counts for percentage calculations
   const [totalGears, totalEquipped] = await Promise.all([
     prisma.gears.count({ where: { userId } }),

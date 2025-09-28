@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { SettingsDataAccess } from "@/dashboard/settings/data/settings";
+import { SettingsDataAccess } from "@/lib/dal/settings";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import prisma from "@/lib/prisma";

@@ -1,8 +1,8 @@
 "use client";
 
 import React from "react";
-import { Button } from "@/ui/button";
-import { Input } from "@/ui/input";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { ChevronsUpDown, X } from "lucide-react";
 
 interface HeroFilterProps {

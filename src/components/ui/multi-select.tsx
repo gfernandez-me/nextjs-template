@@ -2,14 +2,14 @@
 
 import * as React from "react";
 import { ChevronDownIcon, X } from "lucide-react";
-import { Button } from "@/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuTrigger,
-} from "@/ui/dropdown-menu";
-import { Badge } from "@/ui/badge";
+} from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 export interface MultiSelectOption {

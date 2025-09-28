@@ -1,19 +1,12 @@
 import { UploadForm } from "./components/upload-form";
-import { SettingsDataAccess } from "@/dashboard/settings/data/settings";
-import { auth } from "@/lib/auth";
-import { redirect } from "next/navigation";
-import { headers } from "next/headers";
+import { SettingsDataAccess } from "@/lib/dal/settings";
+import { requireAuth, getUserId } from "@/lib/auth-utils";
 
 async function getUserSettings() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  // Get session from layout context - no need to fetch again
+  const session = await requireAuth();
 
-  if (!session?.user?.id) {
-    redirect("/login");
-  }
-
-  const dal = new SettingsDataAccess(session.user.id);
+  const dal = new SettingsDataAccess(getUserId(session));
   return await dal.getSettings();
 }
 

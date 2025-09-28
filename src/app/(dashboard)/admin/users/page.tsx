@@ -1,22 +1,10 @@
-import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { requireAdmin } from "@/lib/auth-utils";
 import { CreateUserForm } from "./components/create-user-form";
-import { getUsers } from "./data/actions";
+import { getUsers } from "@/lib/dal/admin-users-actions";
 
 export default async function AdminUsersPage() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session) {
-    redirect("/login");
-  }
-
-  // Check if user is admin (using the admin ID from seed)
-  if (session.user.id !== "admin-user") {
-    redirect("/home");
-  }
+  // Require admin access using centralized utility
+  await requireAdmin();
 
   const users = await getUsers();
 

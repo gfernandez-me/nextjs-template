@@ -12,7 +12,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/ui/table";
+} from "@/components/ui/table";
 import {
   flexRender,
   getCoreRowModel,
@@ -21,7 +21,7 @@ import {
   ColumnFiltersState,
   VisibilityState,
 } from "@tanstack/react-table";
-import type { GearForTable } from "@/dashboard/gears/data/gears";
+import type { GearForTable } from "@/lib/dal/gears";
 import { HeroFilter } from "./gear-table/hero-filter";
 import { Pagination } from "./gear-table/pagination";
 import { createGearTableColumns } from "./gear-table/columns";

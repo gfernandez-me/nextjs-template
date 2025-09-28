@@ -12,7 +12,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/ui/table";
+} from "@/components/ui/table";
 import {
   flexRender,
   getCoreRowModel,
@@ -21,7 +21,7 @@ import {
   ColumnFiltersState,
   VisibilityState,
 } from "@tanstack/react-table";
-import type { HeroForTable } from "../data/heroes";
+import type { HeroForTable } from "@/lib/dal/heroes";
 import { Pagination } from "./hero-table/pagination";
 import { createHeroTableColumns } from "./hero-table/columns";
 

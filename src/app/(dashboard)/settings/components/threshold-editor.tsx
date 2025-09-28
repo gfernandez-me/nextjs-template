@@ -5,9 +5,9 @@
 "use client";
 
 import React from "react";
-import { Label } from "@/ui/label";
-import { Input } from "@/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/ui/card";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface ThresholdEditorProps {
   thresholds: Record<string, { plus15: number[] }>;

@@ -5,11 +5,11 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/ui/card";
-import { Label } from "@/ui/label";
-import { Button } from "@/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/ui/tabs";
-import type { SettingsWithUser } from "@/dashboard/settings/data/settings";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { SettingsWithUser } from "@/lib/dal/settings";
 import { WeightEditor } from "./weight-editor";
 import { ThresholdEditor } from "./threshold-editor";
 // WeightEditor and ThresholdEditor components will be implemented later

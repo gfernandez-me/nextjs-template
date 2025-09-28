@@ -2,7 +2,7 @@
  * Gear scoring utilities for Epic 7 gear optimization
  */
 
-import type { GearForTable } from "@/dashboard/gears/data/gears";
+import type { GearForTable } from "@/lib/dal/gears";
 
 /**
  * Default substat weights for scoring

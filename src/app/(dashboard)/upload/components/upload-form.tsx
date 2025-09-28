@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { HelpCircle } from "lucide-react";
 import { uploadSchema } from "../schema";
-import type { SettingsWithUser } from "@/app/(dashboard)/settings/data/settings";
+import type { SettingsWithUser } from "@/lib/dal/settings";
 
 interface UploadFormProps {
   userSettings: SettingsWithUser | null;

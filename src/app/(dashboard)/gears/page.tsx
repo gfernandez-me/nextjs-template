@@ -1,16 +1,16 @@
 import { GearTable } from "./components/gear-table";
 import { GearFilters } from "./components/GearFilters";
-import { GearsDataAccess } from "./data/gears";
-import { SettingsDataAccess } from "@/dashboard/settings/data/settings";
-import { auth } from "@/lib/auth";
-import { redirect } from "next/navigation";
-import { headers } from "next/headers";
+import { GearsDataAccess } from "@/lib/dal/gears";
+import { SettingsDataAccess } from "@/lib/dal/settings";
+import { requireAuth, getUserId } from "@/lib/auth-utils";
 import { parseGearSearchParams } from "@/lib/url";
 import { GearType, GearRank, MainStatType, ScoreGrade } from "#prisma";
 import { fetchStatThresholds } from "@/lib/gear-thresholds";
+import { redirect } from "next/navigation";
 
 /**
  * Server Component that fetches gear data based on URL search parameters
+ * Session is already validated by middleware and passed from layout
  *
  * @see https://nextjs.org/docs/app/guides/forms
  */
@@ -19,24 +19,17 @@ export default async function GearsPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  // Get current session and search params in parallel
-  const [session, sp] = await Promise.all([
-    auth.api.getSession({
-      headers: await headers(),
-    }),
-    searchParams,
-  ]);
-
-  if (!session?.user) redirect("/login");
+  // Get session from layout context - no need to fetch again
+  const session = await requireAuth();
 
   // Create data access layer for current user
-  const dal = new GearsDataAccess(session.user.id);
+  const dal = new GearsDataAccess(getUserId(session));
 
   // Create a new URLSearchParams and copy values from searchParams
   const params = new URLSearchParams();
 
   // Safely iterate through the awaited searchParams
-  for (const [key, value] of Object.entries(sp)) {
+  for (const [key, value] of Object.entries(searchParams)) {
     if (typeof value === "string") {
       const values = value.split("|").filter(Boolean);
       if (values.length > 1) {
@@ -49,23 +42,6 @@ export default async function GearsPage({
 
   // Parse URL parameters for server-side filtering
   const filters = parseGearSearchParams(params);
-
-  // Debug: Log active filters
-  const activeFilters = Object.entries(filters.filters).filter(
-    ([_, value]) =>
-      value !== undefined &&
-      value !== null &&
-      (Array.isArray(value) ? value.length > 0 : true)
-  );
-  console.log(
-    `[GEARS DEBUG] Active filters:`,
-    activeFilters
-      .map(
-        ([key, value]) =>
-          `${key}=${Array.isArray(value) ? value.join(",") : value}`
-      )
-      .join(", ")
-  );
 
   // Fetch data with filters applied server-side
   const result = await dal.getGearsPage({
@@ -128,7 +104,7 @@ export default async function GearsPage({
         }),
     },
     substatGradeIn: filters.filters.substatGrade?.length
-      ? (filters.filters.substatGrade as any)
+      ? (filters.filters.substatGrade as ScoreGrade[])
       : undefined,
     substatMinCount: filters.filters.substatGradeCount,
   });
@@ -136,15 +112,10 @@ export default async function GearsPage({
   // Calculate total pages
   const totalPages = Math.ceil(result.total / filters.size);
 
-  // Debug: Log query results
-  console.log(
-    `[GEARS DEBUG] Query results: ${result.rows.length} gears found, total=${result.total}, page=${filters.page}/${totalPages}`
-  );
-
   // Redirect to page 1 if current page is greater than total pages
   if (filters.page > totalPages && totalPages > 0) {
     const newParams = new URLSearchParams();
-    for (const [key, value] of Object.entries(sp)) {
+    for (const [key, value] of Object.entries(searchParams)) {
       if (typeof value === "string") {
         const values = value.split("|").filter(Boolean);
         if (values.length > 1) {
@@ -159,7 +130,7 @@ export default async function GearsPage({
   }
 
   // Get user's score thresholds from settings
-  const settingsDal = new SettingsDataAccess(session.user.id);
+  const settingsDal = new SettingsDataAccess(getUserId(session));
   const userSettings = await settingsDal.getScoringSettings();
   const thresholds = await fetchStatThresholds();
   const scoreThresholds = userSettings

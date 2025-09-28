@@ -1,18 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
-import { UploadDataAccess } from "@/app/(dashboard)/upload/data/upload";
+import { requireAuth, getUserId } from "@/lib/auth-utils";
+import { UploadDataAccess } from "@/lib/dal/upload";
 import { type FribbelsExport } from "@/lib/validation/uploadSchemas";
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
-    // Get current user using Better Auth
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-    if (!session?.user?.id) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-    }
+    // Get current user using centralized auth utility
+    const session = await requireAuth();
 
     const formData = await request.formData();
     const file = formData.get("file") as File;
@@ -51,7 +45,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     // Use the data access layer to process the upload
-    const uploadDal = new UploadDataAccess(session.user.id);
+    const uploadDal = new UploadDataAccess(getUserId(session));
     const result = await uploadDal.processFribbelsExport(data);
 
     if (result.success) {

@@ -1,21 +1,14 @@
 import { Suspense } from "react";
 import { HomeStatistics } from "./components/home-statistics";
-import { HomeStatsDataAccess } from "./data/home-stats";
-import { auth } from "@/lib/auth";
-import { redirect } from "next/navigation";
-import { headers } from "next/headers";
+import { HomeStatsDataAccess } from "@/lib/dal/home-stats";
+import { requireAuth, getUserId } from "@/lib/auth-utils";
 
 async function getHomeStats() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session?.user?.id) {
-    redirect("/login");
-  }
+  // Get session from layout context - no need to fetch again
+  const session = await requireAuth();
 
   // Create data access layer for current user
-  const dal = new HomeStatsDataAccess(session.user.id);
+  const dal = new HomeStatsDataAccess(getUserId(session));
 
   // Fetch home-specific stats
   return await dal.getHomeStats();

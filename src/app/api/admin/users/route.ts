@@ -1,27 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
-import { createUser } from "@/app/(dashboard)/admin/users/data/actions";
+import { requireAdmin } from "@/lib/auth-utils";
+import { createUser } from "@/lib/dal/admin-users-actions";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Check if user is admin (using the admin ID from seed)
-    if (session.user.id !== "admin-user") {
-      return NextResponse.json(
-        { error: "Forbidden: Admin access required" },
-        { status: 403 }
-      );
-    }
+    // Require admin access using centralized utility
+    await requireAdmin();
 
     const body = await request.json();
     const { name, email, password } = body;

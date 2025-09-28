@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { requireAuth, getUserId } from "@/lib/auth-utils";
 import prisma from "@/lib/prisma";
 import { convertDecimals } from "@/lib/decimal";
 
@@ -8,18 +7,12 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    // Get current user using Better Auth
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    if (!session?.user) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-    }
+    // Get current user using centralized auth utility
+    const session = await requireAuth();
 
     // Get all recommendations for the current user
     const recommendations = await prisma.gearRecommendation.findMany({
-      where: { userId: session.user.id },
+      where: { userId: getUserId(session) },
       include: {
         GearRecommendationItem: {
           include: {
@@ -50,14 +43,8 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    // Get current user using Better Auth
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    if (!session?.user) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-    }
+    // Get current user using centralized auth utility
+    const session = await requireAuth();
 
     const body = await request.json();
     const isUpdate = body.id && typeof body.id === "number";
@@ -67,7 +54,7 @@ export async function POST(request: NextRequest) {
       const recommendation = await prisma.gearRecommendation.update({
         where: {
           id: body.id,
-          userId: session.user.id, // Ensure user owns this recommendation
+          userId: getUserId(session), // Ensure user owns this recommendation
         },
         data: {
           name: body.name,
@@ -114,7 +101,7 @@ export async function POST(request: NextRequest) {
       const recommendation = await prisma.gearRecommendation.create({
         data: {
           name: body.name,
-          userId: session.user.id,
+          userId: getUserId(session),
           heroName: body.heroName || null,
           GearRecommendationItem: {
             create: body.items.map(

@@ -1,21 +1,21 @@
 "use client";
 import React, { useState } from "react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/ui/card";
-import { Input } from "@/ui/input";
-import { Label } from "@/ui/label";
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 import { useRouter } from "next/navigation";
 
 import { authClient } from "@/lib/auth-client";
-import { Alert, AlertDescription } from "@/ui/alert";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Terminal } from "lucide-react";
 
 import { IconLoader } from "@tabler/icons-react";

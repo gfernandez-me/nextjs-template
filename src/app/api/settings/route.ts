@@ -1,23 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { SettingsDataAccess } from "@/dashboard/settings/data/settings";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { SettingsDataAccess } from "@/lib/dal/settings";
+import { requireAuth, getUserId } from "@/lib/auth-utils";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    // Get current user using Better Auth
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    if (!session?.user) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-    }
+    // Get current user using centralized auth utility
+    const session = await requireAuth();
 
     // Create data access layer for current user
-    const dal = new SettingsDataAccess(session.user.id);
+    const dal = new SettingsDataAccess(getUserId(session));
 
     // Get user's settings
     const settings = await dal.getSettings();
@@ -34,17 +27,11 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    // Get current user using Better Auth
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    if (!session?.user) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-    }
+    // Get current user using centralized auth utility
+    const session = await requireAuth();
 
     // Create data access layer for current user
-    const dal = new SettingsDataAccess(session.user.id);
+    const dal = new SettingsDataAccess(getUserId(session));
 
     const body = await request.json();
 

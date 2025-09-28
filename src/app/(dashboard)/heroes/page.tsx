@@ -1,13 +1,12 @@
 import { HeroTable } from "./components/hero-table";
 import { HeroFilters } from "./components/HeroFilters";
-import { HeroesDataAccess } from "./data/heroes";
-import { auth } from "@/lib/auth";
-import { redirect } from "next/navigation";
-import { headers } from "next/headers";
+import { HeroesDataAccess } from "@/lib/dal/heroes";
+import { requireAuth, getUserId } from "@/lib/auth-utils";
 import { parseHeroSearchParams } from "@/lib/url";
 
 /**
  * Server Component that fetches hero data based on URL search parameters
+ * Session is already validated by middleware and passed from layout
  *
  * @see https://nextjs.org/docs/app/guides/forms
  */
@@ -16,18 +15,14 @@ export default async function HeroesPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  // Get current session and search params in parallel
-  const [session, sp] = await Promise.all([
-    auth.api.getSession({
-      headers: await headers(),
-    }),
-    searchParams,
-  ]);
+  // Get session from layout context - no need to fetch again
+  const session = await requireAuth();
 
-  if (!session?.user) redirect("/login");
+  // Get search params
+  const sp = await searchParams;
 
   // Create data access layer for current user
-  const dal = new HeroesDataAccess(session.user.id);
+  const dal = new HeroesDataAccess(getUserId(session));
 
   // Create a new URLSearchParams and copy values from searchParams
   const params = new URLSearchParams();

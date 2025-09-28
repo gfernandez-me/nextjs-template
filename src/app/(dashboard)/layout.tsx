@@ -1,23 +1,16 @@
 import { AppSidebar } from "@/components/app-sidebar";
 import { SiteHeader } from "@/components/site-header";
 import { SidebarProvider } from "@/components/ui/sidebar/sidebar-context";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
+import { requireAuth } from "@/lib/auth-utils";
+import { SessionProvider } from "./session-provider";
 
 export default async function DashboardLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session?.user) {
-    // Redirect unauthenticated users to login with a reason
-    redirect("/login?reason=auth");
-  }
+  // Get session once at layout level - middleware already validated it
+  const session = await requireAuth();
 
   return (
     <div className="relative flex min-h-screen">
@@ -30,7 +23,8 @@ export default async function DashboardLayout({
           <SiteHeader />
           <main className="flex-1 overflow-y-auto bg-background">
             <div className="mx-auto h-full w-full max-w-[1800px] px-4 py-6">
-              {children}
+              {/* Pass session data to children via context */}
+              <SessionProvider session={session}>{children}</SessionProvider>
             </div>
           </main>
         </div>

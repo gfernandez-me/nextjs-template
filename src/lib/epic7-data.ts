@@ -1,6 +1,5 @@
-import { StatisticsDataAccess } from "@/admin/data/statistics";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { StatisticsDataAccess } from "@/lib/dal/statistics";
+import { requireAuth, getUserId } from "@/lib/auth-utils";
 import { MainStatType, GearSets, StatTypes } from "#prisma";
 
 export interface Epic7Data {
@@ -14,17 +13,11 @@ export interface Epic7Data {
  * Used across multiple pages to avoid duplication
  */
 export async function getEpic7Data(): Promise<Epic7Data> {
-  // Get current user using Better Auth
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session?.user) {
-    throw new Error("Unauthorized");
-  }
+  // Get current user using centralized auth utility
+  const session = await requireAuth();
 
   // Create data access layer for current user
-  const dal = new StatisticsDataAccess(session.user.id);
+  const dal = new StatisticsDataAccess(getUserId(session));
 
   // Fetch real data from database
   const [gearSets, substats] = await Promise.all([

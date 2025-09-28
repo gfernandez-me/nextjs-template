@@ -1,14 +1,14 @@
 import { ColumnDef } from "@tanstack/react-table";
-import { HeroForTable } from "../../data/heroes";
-import { Badge } from "@/ui/badge";
-import { Button } from "@/ui/button";
+import { HeroForTable } from "@/lib/dal/heroes";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { MoreHorizontal, Trash2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/ui/dropdown-menu";
+} from "@/components/ui/dropdown-menu";
 
 // ============================================================================
 // COLUMN DEFINITIONS

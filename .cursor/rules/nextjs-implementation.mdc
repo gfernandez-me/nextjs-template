@@ -35,32 +35,45 @@ src/
 │   │   │   │   ├── gear-table/ # Gear table components
 │   │   │   │   ├── GearFilters.tsx
 │   │   │   │   └── gear-recommendations-form.tsx
-│   │   │   ├── data/      # Page-specific data access
-│   │   │   │   └── gears.ts # GearsDataAccess class
-│   │   │   └── page.tsx   # Main page component
+│   │   │   └── page.tsx   # Main page component (uses centralized DAL)
+│   │   ├── heroes/        # Hero management page
+│   │   │   ├── components/ # Page-specific components
+│   │   │   │   ├── hero-table/ # Hero table components
+│   │   │   │   └── HeroFilters.tsx
+│   │   │   └── page.tsx   # Main page component (uses centralized DAL)
 │   │   ├── settings/      # User settings page
 │   │   │   ├── components/ # Page-specific components
 │   │   │   │   └── settings-form.tsx
-│   │   │   ├── data/      # Page-specific data access
-│   │   │   │   └── settings.ts # SettingsDataAccess class
-│   │   │   └── page.tsx   # Settings page
+│   │   │   └── page.tsx   # Settings page (uses centralized DAL)
 │   │   ├── admin/         # Admin management pages
 │   │   │   ├── components/ # Page-specific components
 │   │   │   │   └── statistics-content.tsx
-│   │   │   ├── data/      # Page-specific data access
+│   │   │   ├── data/      # Admin-specific data access
 │   │   │   │   └── statistics.ts # StatisticsDataAccess class
 │   │   │   └── gear-sets/ # Gear sets management
 │   │   │       └── page.tsx
-│   │   └── layout.tsx     # Dashboard layout
-│   ├── api/               # API routes
-│   │   └── upload/        # File upload endpoint
-│   │       └── route.ts   # POST handler for gear import
+│   │   ├── session-provider.tsx # Session context provider
+│   │   └── layout.tsx     # Dashboard layout with auth
+│   ├── api/               # API routes (client interactions)
+│   │   ├── upload/        # File upload endpoint
+│   │   ├── gears/         # Gear API endpoints
+│   │   ├── heroes/        # Hero API endpoints
+│   │   ├── settings/      # Settings API endpoints
+│   │   ├── recommendations/ # Recommendations API
+│   │   └── admin/         # Admin API endpoints
 │   └── globals.css        # Global styles with shadcn/ui
 ├── components/            # Shared/reusable components
 │   ├── navigation.tsx     # Main navigation component
 │   ├── data-table.tsx     # Generic data table
 │   └── ui/               # shadcn/ui components
 ├── lib/                  # Utilities and configuration
+│   ├── auth-utils.ts     # Centralized authentication utilities
+│   ├── dal/              # Centralized Data Access Layer
+│   │   ├── gears.ts      # GearsDataAccess class
+│   │   ├── heroes.ts     # HeroesDataAccess class
+│   │   ├── settings.ts   # SettingsDataAccess class
+│   │   ├── upload.ts     # UploadDataAccess class
+│   │   └── home-stats.ts # HomeStatsDataAccess class
 │   ├── db.ts            # Prisma database singleton
 │   ├── utils.ts         # shadcn/ui utilities
 │   ├── url.ts           # URL parameter management
@@ -498,35 +511,53 @@ import { Button } from "@/ui/button";
 - Tailwind CSS configuration is correct with `tailwindcss-animate` properly installed
 - All custom code passes linting without errors
 
-### Data Access Layer Refactoring (Major Improvement ✅)
+### Centralized Architecture Refactoring (Major Improvement ✅)
 
-**Problem**: Monolithic data access layer in `src/lib/data-access.ts` was hard to maintain and organize
-**Solution**: Refactored to page-specific data access layers following modern architecture patterns:
+**Problem**: Mixed data fetching patterns and duplicate authentication logic across the application
+**Solution**: Implemented unified architecture with centralized DAL and authentication utilities:
 
-#### New Structure
+#### New Architecture Pattern
 
-- **Page-specific DAL classes**: Each page has its own `data/` folder with DAL classes
-- **Page-specific components**: Each page has its own `components/` folder
-- **Shared components**: Generic/reusable components remain in `src/components/`
-- **Clean imports**: Each page imports only what it needs
+- **Centralized DAL**: All data access classes in `src/lib/dal/` for consistency
+- **Hybrid Approach**: Server Components for initial data, API Routes for client interactions
+- **Centralized Auth**: Single source of truth for authentication in `src/lib/auth-utils.ts`
+- **Session Context**: Layout-level session management with context provider
+
+#### Architecture Flow
+
+```
+Page Load: Server Component → Centralized DAL → Database
+Interactions: Client Component → API Route → Centralized DAL → Database
+Authentication: Middleware → Layout → Session Context → Components
+```
 
 #### Benefits Achieved
 
-- ✅ **Better Organization**: Each page manages its own data and components
-- ✅ **Easier Maintenance**: Changes to one page don't affect others
-- ✅ **Clearer Dependencies**: Each page explicitly shows what it needs
-- ✅ **Better Scalability**: New pages can follow the same pattern
-- ✅ **Reduced Coupling**: Pages don't depend on a central DAL
+- ✅ **Consistent Patterns**: All pages follow same data fetching approach
+- ✅ **Eliminated Duplication**: Single auth source, no redundant session fetches
+- ✅ **Better Performance**: Reduced database calls and session validations
+- ✅ **Easier Maintenance**: Centralized DAL and auth logic
+- ✅ **Type Safety**: Consistent TypeScript patterns across all routes
 
 #### Migration Completed
 
-1. ✅ **Created new folder structure** for each page
-2. ✅ **Moved data access files** to page-specific `data/` folders
-3. ✅ **Moved page-specific components** to page-specific `components/` folders
-4. ✅ **Updated all import paths** to use new file locations
-5. ✅ **Removed old monolithic DAL** (`src/lib/data-access.ts`)
-6. ✅ **Updated API routes** to use new DAL structure
-7. ✅ **Updated utility files** to use new import paths
+1. ✅ **Created centralized DAL** in `src/lib/dal/`
+2. ✅ **Moved all data access classes** from page-specific folders to centralized location
+3. ✅ **Implemented centralized auth utilities** in `src/lib/auth-utils.ts`
+4. ✅ **Updated middleware** for proper session validation
+5. ✅ **Created session provider** for layout-level session management
+6. ✅ **Updated all pages** to use centralized DAL and auth utilities
+7. ✅ **Updated all API routes** to use centralized auth patterns
+8. ✅ **Removed old data folders** and duplicate auth logic
+9. ✅ **Updated import paths** throughout the application
+
+#### Authentication Architecture
+
+- **Middleware**: Validates sessions at request level
+- **Layout**: Single session fetch with context provider
+- **Pages**: Use `requireAuth()` utility (no duplicate fetches)
+- **API Routes**: Use centralized auth utilities
+- **Components**: Access session via context when needed
 
 ## 16. Testing Strategy
 

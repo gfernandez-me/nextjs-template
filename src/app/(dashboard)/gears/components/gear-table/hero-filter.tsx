@@ -5,11 +5,11 @@
 "use client";
 
 import React from "react";
-import { Button } from "@/ui/button";
-import { Input } from "@/ui/input";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { ChevronsUpDown, X } from "lucide-react";
 import { toast } from "sonner";
-import type { GearWithFullRelations } from "@/dashboard/gears/data/gears";
+import type { GearWithFullRelations } from "@/lib/dal/gears";
 
 interface HeroFilterProps {
   gears: GearWithFullRelations[];

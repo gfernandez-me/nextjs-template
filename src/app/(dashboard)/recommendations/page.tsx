@@ -15,7 +15,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "../../../ui/alert-dialog";
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 
 export default function RecommendationsPage() {

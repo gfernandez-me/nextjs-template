@@ -27,9 +27,9 @@ const routes = [
     description: "Configure scoring and thresholds",
   },
   {
-    href: "/statistics",
-    label: "Statistics",
-    description: "View gear statistics and analytics",
+    href: "/home",
+    label: "Home",
+    description: "View dashboard and statistics",
   },
 ];
 

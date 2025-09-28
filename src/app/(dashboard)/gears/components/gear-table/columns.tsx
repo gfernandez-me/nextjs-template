@@ -4,7 +4,7 @@
 
 import React from "react";
 import type { ColumnDef } from "@tanstack/react-table";
-import type { GearForTable } from "@/dashboard/gears/data/gears";
+import type { GearForTable } from "@/lib/dal/gears";
 import {
   formatMainStatLabel,
   formatMainStatValue,

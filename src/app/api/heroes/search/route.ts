@@ -1,26 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
-import { HeroesDataAccess } from "@/app/(dashboard)/heroes/data/heroes";
+import { requireAuth, getUserId } from "@/lib/auth-utils";
+import { HeroesDataAccess } from "@/lib/dal/heroes";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   try {
-    // Check authentication
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    // Check authentication using centralized utility
+    const session = await requireAuth();
 
     const { searchParams } = new URL(request.url);
     const query = searchParams.get("q");
     const limit = parseInt(searchParams.get("limit") || "50");
 
     // Use the heroes data access layer
-    const heroesDataAccess = new HeroesDataAccess(session.user.id);
+    const heroesDataAccess = new HeroesDataAccess(getUserId(session));
 
     console.log("[HERO SEARCH DEBUG] query=", query, "limit=", limit);
     // Build where clause for search

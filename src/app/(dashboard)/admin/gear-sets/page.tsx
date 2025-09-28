@@ -1,20 +1,13 @@
-import { StatisticsDataAccess } from "../data/statistics";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { StatisticsDataAccess } from "@/lib/dal/statistics";
+import { requireAuth, getUserId } from "@/lib/auth-utils";
 import { GearSetsTable } from "../components/gear-sets-table";
 
 async function getGearSets() {
-  // Get current user using Better Auth
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session?.user) {
-    return [];
-  }
+  // Get current user using centralized auth utility
+  const session = await requireAuth();
 
   // Create data access layer for current user
-  const dal = new StatisticsDataAccess(session.user.id);
+  const dal = new StatisticsDataAccess(getUserId(session));
 
   // Fetch gear sets from database
   return await dal.listGearSets();

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSessionCookie } from "better-auth/cookies";
+import { auth } from "@/lib/auth";
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -12,6 +12,7 @@ export async function middleware(request: NextRequest) {
     "/signup",
     "/favicon.ico",
     "/.well-known",
+    "/api/public", // Add any public API routes
   ];
 
   // Check if the current path is public
@@ -24,37 +25,19 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const sessionCookie = getSessionCookie(request);
-
-  // If no session cookie, redirect to login
-  if (!sessionCookie && pathname !== "/login") {
-    return NextResponse.redirect(new URL("/login", request.url));
-  }
-
-  // If there's a session cookie, allow access (session validation will happen in the page)
-  if (sessionCookie) {
-    // Special handling for recent logins - allow a grace period
-    const sessionToken = request.cookies.get("better-auth.session_token");
-
-    if (sessionToken?.value) {
-      // If we have a session token, allow access to all authenticated routes
-      // This prevents the race condition during session establishment
-      return NextResponse.next();
-    }
-
-    // If session is valid and user is on login page, redirect to home
-    if (pathname === "/login") {
-      return NextResponse.redirect(new URL("/home", request.url));
-    }
-
-    // Valid session, allow request
-    return NextResponse.next();
+  // Get session using Better Auth's session validation
+  let session = null;
+  try {
+    session = await auth.api.getSession({
+      headers: request.headers,
+    });
+  } catch (error) {
+    console.error("Middleware session error:", error);
   }
 
   // Handle root path '/'
   if (pathname === "/") {
-    if (sessionCookie) {
-      // If we have a session cookie, redirect to home
+    if (session?.user) {
       return NextResponse.redirect(new URL("/home", request.url));
     } else {
       return NextResponse.redirect(new URL("/login", request.url));
@@ -62,12 +45,11 @@ export async function middleware(request: NextRequest) {
   }
 
   // Redirect authenticated users away from login/signup pages
-  if (sessionCookie && ["/login", "/signup"].includes(pathname)) {
-    // Valid session, redirect to home
+  if (session?.user && ["/login", "/signup"].includes(pathname)) {
     return NextResponse.redirect(new URL("/home", request.url));
   }
 
-  // List of protected routes (update as per current structure)
+  // Define protected routes
   const protectedRoutes = [
     "/home",
     "/gears",
@@ -79,31 +61,26 @@ export async function middleware(request: NextRequest) {
     "/(dashboard)",
   ];
 
-  // Protect /admin routes for admin users only
+  // Check if current path is protected
+  const isProtectedRoute = protectedRoutes.some((route) =>
+    pathname.startsWith(route)
+  );
+
+  // If accessing protected route without valid session, redirect to login
+  if (isProtectedRoute && !session?.user) {
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
+
+  // Handle admin routes - basic check here, detailed validation in components
   if (
     pathname.startsWith("/admin") ||
     pathname.startsWith("/(dashboard)/admin")
   ) {
-    if (!sessionCookie) {
+    if (!session?.user) {
       return NextResponse.redirect(new URL("/login", request.url));
     }
-    // Admin validation will happen in the page component
-  }
-
-  // Protect other routes for authenticated users
-  if (
-    !sessionCookie &&
-    protectedRoutes.some((route) => pathname.startsWith(route))
-  ) {
-    return NextResponse.redirect(new URL("/login", request.url));
-  }
-
-  // For protected routes, if cookie exists, allow access (validation happens in page)
-  if (
-    sessionCookie &&
-    protectedRoutes.some((route) => pathname.startsWith(route))
-  ) {
-    return NextResponse.next();
+    // Admin role validation will happen in the page component
+    // This prevents non-authenticated users from accessing admin routes
   }
 
   return NextResponse.next();
